@@ -8,6 +8,7 @@
   <link rel="shortcut icon" href="../favicon.ico" />
   <link rel="stylesheet" href="../asserts/layout.css">
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
   <title>Dashboard</title>
 </head>
 
@@ -25,11 +26,17 @@
 <script type="text/javascript">
   function initIframeHeight() {
     var iframe = document.getElementById('contentIframe');
-    var parentHeight = $('#content').height();
-    $(iframe).height(parentHeight - 20);
+    var clientHeight = $('#content').height(); //iframe.contentDocument.body.clientHeight;
+    $(iframe).height(clientHeight - 20);
   }
 
   window.onload = function () {
+    initIframeHeight();
+    //TODO get token data from cookie
+    sessionStorage.setItem('user_token', '2ec04e77-3072-4806-8b8c-c6b7896ee1b9');
+  }
+
+  window.onresize = function () {
     initIframeHeight();
   }
 </script>

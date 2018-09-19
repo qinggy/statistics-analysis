@@ -1,42 +1,122 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height:100%">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="shortcut icon" href="../../favicon.ico" />
+  <link rel="stylesheet" href="../../asserts/fonts/iconfont.css">
+  <link rel="stylesheet" href="../../asserts/statistics.css?t=20180918125">
+  <link rel="stylesheet" href="../../dist/lib/layui-v2.4.3/css/layui.css">
+  <link rel="stylesheet" href="../../dist/lib/jstree/dist/themes/default/style.min.css">
+  <link rel="stylesheet" href="../../dist/lib/perfectscroll/perfect-scroll.css">
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/jquery.blockUI/2.70.0-2014.11.23/jquery.blockUI.min.js"></script>
+  <script src="https://cdn.bootcss.com/lodash.js/4.17.10/lodash.min.js"></script>
+  <script src="../../dist/lib/perfectscroll/perfect-scroll.min.js"></script>
+  <script src="../../dist/lib/perfectscroll/mousewheel.min.js"></script>
+  <script src="../../dist/lib/jstree/dist/jstree.min.js"></script>
+  <script src="../../dist/lib/arttemplate-3.0/lib/template-web.js"></script>
+  <script src="../../dist/lib/layui-v2.4.3/layui.js"></script>
   <title>Statistics</title>
 </head>
 
-<body style="height: 100%;">
-  <div>Statistics</div>
-  <div>Statistics</div>
-  <div>Statistics</div>
-
-  <div>Statistics</div>
-  <div>Statistics</div>
-  <div>Statistics</div>
-
-  <div>Statistics</div>
-  <div>Statistics</div>
-
-  <div>Statistics</div>
-
-  <div>Statistics</div>
-  <div>Statistics</div>
-
-  <div>Statistics</div>
-
-  <div>Statistics</div>
-
-  <div>Statistics</div>
-  <div>Statistics</div>
-  <div>Statistics</div>
-  <div>Statistics</div>
-
-  <div>Statistics</div>
+<body class="statistics">
+  <div class="statistics__nav">
+    <div class="statistics__nav--content"><span>统计分析&gt;</span><span>星巴克</span><span>-仪表数据详情</span></div>
+  </div>
+  <div class="main">
+    <div class="structtree">
+      <div class="search">
+        <input type="text" class="search__input" placeholder="输入仪表关键词" id="searchbox">
+        <input type="button" class="layui-btn layui-btn-normal search__btn" value="查询">
+      </div>
+      <div class="tree-container">
+        <div id="metertree"></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="content__header">
+        <div class="content__header--title"><span>星巴克-仪表数据详情</span></div>
+        <div class="content__header--info" id="onShowMeterInfo"><span>展开表计详情<i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
+        <div class="content__header--btngrp">
+          <div class="alarm-container"><i class="icon iconfont icon-warning1 title-margin"></i>报警中心</div>
+          <div class="subscribe">+关注</div>
+        </div>
+      </div>
+      <div class="meter-info-container hidden close">
+        <table class="info-table">
+          <tr>
+            <td>区域名称：万达广场>商户用电>一层商户用电</td>
+            <td>仪表地址：003</td>
+            <td>数据类型：电</td>
+          </tr>
+          <tr>
+            <td>仪表型号：PEC-01542</td>
+            <td>串口：对接</td>
+            <td>信号连接：在线</td>
+          </tr>
+        </table>
+      </div>
+      <div class="condition">
+        <div class="parameter-container">
+          <div class="parameter">
+            <div class="parameter-left">
+              <div class="param-title">当前表参数</div>
+              <div class="param-choose">选择参数<i class="icon iconfont icon-xiaotuziCduan_"></i></div>
+            </div>
+            <div class="parameter-right">
+              <div class="choose-para para-active">有功电能</div>
+              <div class="choose-para">有功功率</div>
+            </div>
+          </div>
+          <div class="comparsion">
+            <div class="comparsion-left">
+              <div class="meter-title">当前对比表</div>
+              <div class="meter-choose">+增加对比</div>
+            </div>
+            <div class="comparsion-right">
+              <div class="choose-meter meter-item">星巴克<i class="icon iconfont icon-delete remove-btn"></i></div>
+              <div class="choose-meter meter-item">BOSS<i class="icon iconfont icon-delete remove-btn"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="search-container">
+          <div class="btn-grp">
+            <div class="btn date-active" data-value="d">日</div>
+            <div class="btn" data-value="m">月</div>
+            <div class="btn" data-value="y">年</div>
+          </div>
+          <div class="date-grp">
+            <input type="hidden" id="datevalue">
+            <div class="date-component icon iconfont icon-rili" id="day">
+              <input type="text" id="daycontainer" class="date-input">
+            </div>
+            <div class="date-component icon iconfont icon-rili hidden" id="month">
+              <input type="text" id="monthcontainer" class="date-input">
+            </div>
+            <div class="date-component icon iconfont icon-rili hidden" id="year">
+              <input type="text" id="yearcontainer" class="date-input">
+            </div>
+          </div>
+          <div class="operate-grp">
+            <i class="icon iconfont icon-RMB" data-value="rmb"></i>
+            <i class="icon iconfont icon-icon-" data-value="stock"></i>
+            <i class="icon iconfont icon-line-chart_icon" data-value="line"></i>
+            <i class="icon iconfont icon-Group-" data-value="download"></i>
+            <i class="icon iconfont icon-tooltip-outline" data-value="tip"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div></div>
 
 </body>
+
+<script src="../../dist/lib/jquery.namespace.js" type="text/javascript"></script>
+<script src="../../dist/lib/esdpec.common.js" type="text/javascript"></script>
+<script src="../../dist/statistics.domain.js" type="text/javascript"></script>
 
 </html>
 <script>

@@ -40,25 +40,27 @@ Date.prototype.addDays = function (days) {
 }
 
 esdpec.framework.core.Config = {
-  APIBaseUrl: 'http://172.17.0.21/api/',
+  APIBaseUrl: 'http://172.17.0.21:88/api/',
   BaseWebSiteUrl: 'http://172.17.0.48/',
   // APIBaseUrl: 'http://120.76.22.80:8089/api/',
   // BaseWebSiteUrl: 'http://cloud.esdgd.com/',
   BaseSiteRoot: 'statisticsapp/',
+  AssertSite: 'http://cloud.esdgd.com',
   ajaxProcessingText: "加载中....",
   ajaxProcessedText: "完成",
   dismissTime: 6000
 }
 
+esdpec.framework.core.authtype = "";
 esdpec.framework.core.BaseWeb = esdpec.framework.core.Config.BaseWebSiteUrl + esdpec.framework.core.Config.BaseSiteRoot;
-esdpec.framework.core.user_token = () => localStorage.getItem('user_token');
-esdpec.framework.core.redirectUrl = esdpec.framework.core.BaseWeb + 'src/login.html';
+esdpec.framework.core.user_token = () => sessionStorage.getItem('user_token');
+esdpec.framework.core.redirectUrl = esdpec.framework.core.BaseWeb + '/dist/index.html';
 
 esdpec.framework.core.completeRequest = function (XMLHttpRequest, textStatus, onCompleteCallBack) {
   var sessionstatus = XMLHttpRequest.getResponseHeader("sessionstatus");
   var unauthorize = XMLHttpRequest.getResponseHeader("authorize");
   if (sessionstatus === "timeout" || unauthorize === "unauthorize") {
-    window.location.href = esdpec.framework.core.redirectUrl;
+    // window.location.href = esdpec.framework.core.redirectUrl;
   }
   if (onCompleteCallBack != null) onCompleteCallBack;
 };
@@ -71,13 +73,13 @@ esdpec.framework.core.getRequestRandom = function (url) {
 };
 
 esdpec.framework.core.getJsonResult = function (url, successCallBack, failureCallBack) {
-  $.showPreloader('Please Wait ...');
+  GlobalLoader.ShowLoader();
   setTimeout(function () {
-    $.hidePreloader();
+    GlobalLoader.HideLoader();
   }, esdpec.framework.core.Config.dismissTime);
   $.ajaxSetup({
     beforeSend: function (xhr) {
-      xhr.setRequestHeader("Authorization", "BasicAuth " + esdpec.framework.core.user_token());
+      xhr.setRequestHeader("Authorization", esdpec.framework.core.authtype + esdpec.framework.core.user_token());
     },
     complete: function (XMLHttpRequest, textStatus) {
       esdpec.framework.core.completeRequest(XMLHttpRequest, textStatus);
@@ -85,15 +87,15 @@ esdpec.framework.core.getJsonResult = function (url, successCallBack, failureCal
   });
   $.getJSON(this.Config.APIBaseUrl + url + esdpec.framework.core.getRequestRandom(url))
     .done(function (data) {
-      $.hidePreloader();
+      GlobalLoader.HideLoader();
       if (data.Code != undefined && data.Code != null && data.Code == 401) {
-        window.location.href = esdpec.framework.core.redirectUrl;
+        // window.location.href = esdpec.framework.core.redirectUrl;
       }
       successCallBack(data);
     })
     .fail(function OnError(xhr, textStatus, err) {
       if (err == "Unauthorized") {
-        window.location.href = esdpec.framework.core.redirectUrl;
+        // window.location.href = esdpec.framework.core.redirectUrl;
       }
       if (failureCallBack != null) {
         failureCallBack($.parseJSON(xhr.responseText));
@@ -104,7 +106,7 @@ esdpec.framework.core.getJsonResult = function (url, successCallBack, failureCal
 esdpec.framework.core.getJsonResultSilent = function (url, successCallBack, failureCallBack) {
   $.ajaxSetup({
     beforeSend: function (xhr) {
-      xhr.setRequestHeader("Authorization", "BasicAuth " + esdpec.framework.core.user_token());
+      xhr.setRequestHeader("Authorization", esdpec.framework.core.authtype + esdpec.framework.core.user_token());
     },
     complete: function (XMLHttpRequest, textStatus) {
       esdpec.framework.core.completeRequest(XMLHttpRequest, textStatus);
@@ -113,7 +115,7 @@ esdpec.framework.core.getJsonResultSilent = function (url, successCallBack, fail
   $.getJSON(this.Config.APIBaseUrl + url + esdpec.framework.core.getRequestRandom(url))
     .done(function (data) {
       if (data.Code != undefined && data.Code != null && data.Code == 401) {
-        window.location.href = esdpec.framework.core.redirectUrl;
+        // window.location.href = esdpec.framework.core.redirectUrl;
       }
       successCallBack(data);
     })
@@ -138,7 +140,7 @@ esdpec.framework.core.doPutOperation = function (url, object, successCallBack, f
       }
     },
     beforeSend: function (xhr) {
-      xhr.setRequestHeader("Authorization", "BasicAuth " + esdpec.framework.core.user_token());
+      xhr.setRequestHeader("Authorization", esdpec.framework.core.authtype + esdpec.framework.core.user_token());
     },
     complete: function (XMLHttpRequest, textStatus) {
       esdpec.framework.core.completeRequest(XMLHttpRequest, textStatus);
@@ -166,14 +168,14 @@ esdpec.framework.core.doPostOperation = function (url, object, successCallBack, 
       }
     },
     beforeSend: function (xhr) {
-      $.showPreloader('Please Wait ...');
+      GlobalLoader.ShowLoader();
       setTimeout(function () {
-        $.hidePreloader();
+        GlobalLoader.HideLoader();
       }, esdpec.framework.core.Config.dismissTime);
-      xhr.setRequestHeader("Authorization", "BasicAuth " + esdpec.framework.core.user_token());
+      xhr.setRequestHeader("Authorization", esdpec.framework.core.authtype + esdpec.framework.core.user_token());
     },
     complete: function (XMLHttpRequest, textStatus) {
-      $.hidePreloader();
+      GlobalLoader.HideLoader();
       esdpec.framework.core.completeRequest(XMLHttpRequest, textStatus);
     },
     error: function OnError(xhr, textStatus, err) {
@@ -198,7 +200,7 @@ esdpec.framework.core.doDeleteOperation = function (url, object, successCallBack
       }
     },
     beforeSend: function (xhr) {
-      xhr.setRequestHeader("Authorization", "BasicAuth " + esdpec.framework.core.user_token());
+      xhr.setRequestHeader("Authorization", esdpec.framework.core.authtype + esdpec.framework.core.user_token());
     },
     complete: function (XMLHttpRequest, textStatus) {
       esdpec.framework.core.completeRequest(XMLHttpRequest, textStatus);
@@ -208,4 +210,37 @@ esdpec.framework.core.doDeleteOperation = function (url, object, successCallBack
         failureCallBack(xhr, textStatus, err);
     }
   });
+}
+
+let GlobalLoader = {
+  ShowLoader: function () {
+    if ($('.blockUI').length == 0) {
+      //var common = EsdPec.Cloud.NewGeneration.lang.Common;
+      $.blockUI({
+        message: '<img src="../../asserts/loadinganimation.gif" />',
+        css: {
+          border: 'transparent',
+          backgroundColor: 'transparent'
+        }
+      });
+    }
+  },
+  HideLoader: function () {
+    $.unblockUI();
+  }
+}
+if ($.blockUI) {
+  //var common = EsdPec.Cloud.NewGeneration.lang.Common;
+  $(document).ajaxStart(
+    $.blockUI({
+      message: '<img src="../../asserts/loadinganimation.gif" />',
+      css: {
+        border: 'transparent',
+        backgroundColor: 'transparent'
+      }
+    })
+
+  ).ajaxStop(
+    $.unblockUI()
+  );
 }
