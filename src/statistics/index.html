@@ -10,12 +10,11 @@
   <link rel="stylesheet" href="../../asserts/statistics.css?t=20180918125">
   <link rel="stylesheet" href="../../dist/lib/layui-v2.4.3/css/layui.css">
   <link rel="stylesheet" href="../../dist/lib/jstree/dist/themes/default/style.min.css">
-  <link rel="stylesheet" href="../../dist/lib/perfectscroll/perfect-scroll.css">
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdn.bootcss.com/jquery.blockUI/2.70.0-2014.11.23/jquery.blockUI.min.js"></script>
+  <script src="https://cdn.bootcss.com/echarts/4.1.0.rc2/echarts.min.js"></script>
   <script src="https://cdn.bootcss.com/lodash.js/4.17.10/lodash.min.js"></script>
-  <script src="../../dist/lib/perfectscroll/perfect-scroll.min.js"></script>
-  <script src="../../dist/lib/perfectscroll/mousewheel.min.js"></script>
+  <script src="../../dist/lib/echarts/macarons.js"></script>
   <script src="../../dist/lib/jstree/dist/jstree.min.js"></script>
   <script src="../../dist/lib/arttemplate-3.0/lib/template-web.js"></script>
   <script src="../../dist/lib/layui-v2.4.3/layui.js"></script>
@@ -36,81 +35,125 @@
         <div id="metertree"></div>
       </div>
     </div>
-    <div class="content">
-      <div class="content__header">
-        <div class="content__header--title"><span>星巴克-仪表数据详情</span></div>
-        <div class="content__header--info" id="onShowMeterInfo"><span>展开表计详情<i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
-        <div class="content__header--btngrp">
-          <div class="alarm-container"><i class="icon iconfont icon-warning1 title-margin"></i>报警中心</div>
-          <div class="subscribe">+关注</div>
+    <div class="main-content">
+      <div class="content-right">
+        <div class="content">
+          <div class="content__header">
+            <div class="content__header--title"><span>星巴克-仪表数据详情</span></div>
+            <div class="content__header--info" id="onShowMeterInfo"><span>展开表计详情<i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
+            <div class="content__header--btngrp">
+              <div class="alarm-container"><i class="icon iconfont icon-warning1 title-margin"></i>报警中心</div>
+              <div class="subscribe">+关注</div>
+            </div>
+          </div>
+          <div class="meter-info-container hidden close">
+            <table class="info-table">
+              <tr>
+                <td>区域名称：万达广场>商户用电>一层商户用电</td>
+                <td>仪表地址：003</td>
+                <td>数据类型：电</td>
+              </tr>
+              <tr>
+                <td>仪表型号：PEC-01542</td>
+                <td>串口：对接</td>
+                <td>信号连接：在线</td>
+              </tr>
+            </table>
+          </div>
+          <div class="condition">
+            <div class="parameter-overlay hidden close">
+              <div class="triangle-overlay-border"></div>
+              <div class="triangle-overlay"></div>
+            </div>
+            <div class="parameter-container">
+              <div class="parameter">
+                <div class="parameter-left">
+                  <div class="param-title">当前表参数</div>
+                  <div id="onchooseparameter" class="param-choose">选择参数<i class="icon iconfont icon-xiaotuziCduan_"></i></div>
+                </div>
+                <div class="parameter-right">
+                  <div class="para-item choose-para para-active">有功电能<i class="icon iconfont icon-delete remove-btn"></i></div>
+                  <div class="para-item choose-para">有功功率<i class="icon iconfont icon-delete remove-btn"></i></div>
+                </div>
+              </div>
+              <div class="comparsion">
+                <div class="comparsion-left">
+                  <div class="meter-title">当前对比表</div>
+                  <div class="meter-choose">+增加对比</div>
+                </div>
+                <div class="comparsion-right">
+                  <div class="choose-meter meter-item">星巴克<i class="icon iconfont icon-delete remove-btn"></i></div>
+                  <div class="choose-meter meter-item">BOSS<i class="icon iconfont icon-delete remove-btn"></i></div>
+                </div>
+              </div>
+            </div>
+            <div class="search-container">
+              <div class="btn-grp">
+                <div class="btn date-active" data-value="d">日</div>
+                <div class="btn" data-value="m">月</div>
+                <div class="btn" data-value="y">年</div>
+              </div>
+              <div class="date-grp">
+                <input type="hidden" id="datevalue">
+                <div class="date-component icon iconfont icon-rili" id="day">
+                  <input type="text" id="daycontainer" class="date-input">
+                </div>
+                <div class="date-component icon iconfont icon-rili hidden" id="month">
+                  <input type="text" id="monthcontainer" class="date-input">
+                </div>
+                <div class="date-component icon iconfont icon-rili hidden" id="year">
+                  <input type="text" id="yearcontainer" class="date-input">
+                </div>
+              </div>
+              <div class="operate-grp">
+                <i class="icon iconfont icon-RMB" data-value="rmb"></i>
+                <i class="icon iconfont icon-icon-" data-value="stock"></i>
+                <i class="icon iconfont icon-line-chart_icon" data-value="line"></i>
+                <i class="icon iconfont icon-tubiao-bingtu" data-value="bar"></i>
+                <i class="icon iconfont icon-Group-" data-value="download"></i>
+                <i class="icon iconfont icon-tooltip-outline" data-value="tip"></i></div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div id="chart-instance" class="chart"></div>
+          </div>
+          <div class="summary-container">
+            <div class="summary-header">
+              <div class="dosage-value"><span>日用量对比昨日同期</span><span class="icon iconfont negative">+23.00%</span></div>
+              <div class="average-value"><span>对比同期平均</span><span class="icon iconfont positive">-23.00%</span></div>
+              <div class="operate-box" id="onshowdata">收起展示<i class="icon iconfont icon-xiaotuziCduan_1"></i></div>
+            </div>
+            <div class="progress-container">
+              <div style="width:98.0%">
+                <!--remark: Set the maximum to 98%, then divide by the maximum and multiply by 98% -->
+                <div class="progress-title"><span>今日用量</span><span>2350.11kWh</span></div>
+                <div class="usage-value-progress"></div>
+              </div>
+              <div style="width: 62.7%">
+                <div class="progress-title"><span>昨日同期</span><span>1505.11kWh</span></div>
+                <div class="usage-value-progress same-time-value"></div>
+              </div>
+              <div style="width: 76.1%">
+                <div class="progress-title"><span>同期平均值</span><span>1825.11kWh</span></div>
+                <div class="usage-value-progress average-comparsion-value"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="func-tab">
+          <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+            <ul class="layui-tab-title">
+              <li class="layui-this">图形数据</li>
+              <li>表底数</li>
+              <li>峰谷平统计</li>
+            </ul>
+            <div class="layui-tab-content"></div>
+          </div>
         </div>
       </div>
-      <div class="meter-info-container hidden close">
-        <table class="info-table">
-          <tr>
-            <td>区域名称：万达广场>商户用电>一层商户用电</td>
-            <td>仪表地址：003</td>
-            <td>数据类型：电</td>
-          </tr>
-          <tr>
-            <td>仪表型号：PEC-01542</td>
-            <td>串口：对接</td>
-            <td>信号连接：在线</td>
-          </tr>
-        </table>
-      </div>
-      <div class="condition">
-        <div class="parameter-container">
-          <div class="parameter">
-            <div class="parameter-left">
-              <div class="param-title">当前表参数</div>
-              <div class="param-choose">选择参数<i class="icon iconfont icon-xiaotuziCduan_"></i></div>
-            </div>
-            <div class="parameter-right">
-              <div class="choose-para para-active">有功电能</div>
-              <div class="choose-para">有功功率</div>
-            </div>
-          </div>
-          <div class="comparsion">
-            <div class="comparsion-left">
-              <div class="meter-title">当前对比表</div>
-              <div class="meter-choose">+增加对比</div>
-            </div>
-            <div class="comparsion-right">
-              <div class="choose-meter meter-item">星巴克<i class="icon iconfont icon-delete remove-btn"></i></div>
-              <div class="choose-meter meter-item">BOSS<i class="icon iconfont icon-delete remove-btn"></i></div>
-            </div>
-          </div>
-        </div>
-        <div class="search-container">
-          <div class="btn-grp">
-            <div class="btn date-active" data-value="d">日</div>
-            <div class="btn" data-value="m">月</div>
-            <div class="btn" data-value="y">年</div>
-          </div>
-          <div class="date-grp">
-            <input type="hidden" id="datevalue">
-            <div class="date-component icon iconfont icon-rili" id="day">
-              <input type="text" id="daycontainer" class="date-input">
-            </div>
-            <div class="date-component icon iconfont icon-rili hidden" id="month">
-              <input type="text" id="monthcontainer" class="date-input">
-            </div>
-            <div class="date-component icon iconfont icon-rili hidden" id="year">
-              <input type="text" id="yearcontainer" class="date-input">
-            </div>
-          </div>
-          <div class="operate-grp">
-            <i class="icon iconfont icon-RMB" data-value="rmb"></i>
-            <i class="icon iconfont icon-icon-" data-value="stock"></i>
-            <i class="icon iconfont icon-line-chart_icon" data-value="line"></i>
-            <i class="icon iconfont icon-Group-" data-value="download"></i>
-            <i class="icon iconfont icon-tooltip-outline" data-value="tip"></i></div>
-        </div>
-      </div>
+      <div class="content-footer"></div>
     </div>
   </div>
-  <div></div>
 
 </body>
 
