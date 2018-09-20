@@ -85,18 +85,32 @@ html body {
 
 
 
-
-
-
-
-.content {
+.main-content {
   flex: 1;
   height: 100%;
-  background-color: #fff;
   width: calc(100% - 340px);
-  min-height: 300px;
+  border-top: 20px solid #fff;
   margin-left: 20px;
   margin-right: 20px;
+  padding-bottom: 20px;
+}
+
+.content-right {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: calc(100% - 40px);
+}
+
+.content-footer {
+  height: 20px;
+  background-color: #fff;
+}
+
+.content {
+  background-color: #fff;
+  min-height: 300px;
+  position: relative;
+  padding-bottom: 5px;
 }
 
 .content__header {
@@ -218,6 +232,11 @@ html body {
 .comparsion-right {
   flex: 1;
   display: flex;
+}
+
+.para-item {
+  position: relative;
+  padding-right: 15px;
 }
 
 .choose-para,
@@ -344,7 +363,8 @@ html body {
 }
 
 .operate-grp>i:nth-of-type(2),
-.operate-grp>i:nth-of-type(3) {
+.operate-grp>i:nth-of-type(3),
+.operate-grp>i:nth-of-type(4) {
   font-size: 18px;
   font-weight: bold;
   margin-top: 3px;
@@ -354,7 +374,12 @@ html body {
   margin-top: 4px;
 }
 
-.operate-grp>i:nth-of-type(5) {
+.operate-grp>i:nth-of-type(4) {
+  font-size: 21px;
+  margin-top: 2px;
+}
+
+.operate-grp>i:nth-of-type(6) {
   font-size: 21px;
   margin-top: 3px;
 }
@@ -389,4 +414,187 @@ html body {
   border: transparent;
   outline: transparent;
   text-align: center;
+}
+
+.parameter-overlay {
+  position: absolute;
+  width: 300px;
+  min-height: 200px;
+  box-shadow: 5px 5px 20px 0px #aaa;
+  z-index: 10086;
+  background-color: #fff;
+  top: 195px;
+}
+
+.triangle-overlay {
+  position: absolute;
+  top: -10px;
+  left: 50px;
+  width: 0;
+  height: 0;
+  border-bottom: 10px solid #fff;
+  border-right: 10px solid transparent;
+  border-left: 10px solid transparent;
+}
+
+.triangle-overlay-border {
+  position: absolute;
+  top: -11px;
+  left: 49px;
+  width: 0;
+  height: 0;
+  border-bottom: 11px solid #dce3e6;
+  border-right: 11px solid transparent;
+  border-left: 11px solid transparent;
+}
+
+.triangle-transform {
+  transform: rotate(180deg);
+  -ms-transform: rotate(180deg);
+  -webkit-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  display: inline-block;
+  transition: .3s;
+}
+
+.chart-container {
+  min-height: 370px;
+  width: 100%;
+  padding: 20px 30px;
+}
+
+.chart {
+  height: 345px;
+  width: 100%;
+}
+
+
+
+
+.summary-container {
+  margin: 0 30px 30px;
+  background-color: #f4f7fc;
+  border: 1px solid #e0e5ec;
+}
+
+.summary-header {
+  display: flex;
+  position: relative;
+}
+
+.dosage-value {
+  flex: 1;
+  margin: 20px 0 66px 30px;
+  display: flex;
+}
+
+.dosage-value>span:first-of-type {
+  color: #28323d;
+  margin-top: 10px;
+}
+
+.dosage-value>.negative {
+  color: #fa4f33;
+  font-size: 24px;
+  margin-left: 30px;
+  font-weight: bold;
+}
+
+.negative:after {
+  content: "\e608";
+  margin-left: 5px;
+  transform: rotate(180deg);
+  display: inline-block;
+  font-size: 28px;
+}
+
+.average-value {
+  flex: 1;
+  margin: 20px 0 66px 0;
+  display: flex;
+}
+
+.average-value>span:first-of-type {
+  color: #28323d;
+  margin-top: 10px;
+}
+
+.average-value>.positive {
+  color: #1fbe89;
+  font-size: 24px;
+  margin-left: 30px;
+  font-weight: bold;
+}
+
+.positive::after {
+  content: "\e608";
+  margin-left: 5px;
+  font-size: 28px;
+}
+
+.operate-box {
+  position: absolute;
+  right: 0;
+  border-left: 1px solid #dce3e6;
+  border-bottom: 1px solid #dce3e6;
+  height: 34px;
+  line-height: 32px;
+  text-align: center;
+  padding: 0 10px;
+  color: #4b89dc;
+  cursor: pointer;
+}
+
+.collapse-height {
+  height: 80px;
+}
+
+.usage-value-progress {
+  height: 14px;
+  width: 100%;
+  background-color: #4b89dc;
+  border-radius: 0 14px 14px 0;
+  margin: 5px 0 60px 0;
+  clear: both;
+}
+
+.same-time-value {
+  background-color: #f6bb43;
+}
+
+.average-comparsion-value {
+  background-color: #38bc9b;
+}
+
+.progress-title {
+  float: right;
+  margin-bottom: 5px;
+  margin-right: 10px;
+  font-size: 12px;
+}
+
+.func-tab {
+  min-height: 400px;
+  background-color: #fff;
+  margin-top: 20px;
+  padding: 34px 30px 40px 30px;
+}
+
+.layui-tab-title li {
+  font-size: 18px !important;
+  font-weight: bold;
+}
+
+.layui-tab-brief>.layui-tab-title .layui-this {
+  color: #4b89dc !important;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.layui-tab-brief>.layui-tab-more li.layui-this:after,
+.layui-tab-brief>.layui-tab-title .layui-this:after {
+  border: none;
+  border-radius: 0;
+  border-bottom: 4px solid #4b89dc !important;
 }
