@@ -316,7 +316,6 @@ html body {
 
 .btn-grp {
   position: absolute;
-
 }
 
 .btn-grp>.btn:first-of-type {
@@ -695,4 +694,19 @@ html body {
 .original-table tr>td:last-of-type {
   color: #4b89dc !important;
   cursor: pointer;
+}
+
+.btn-group>.btn:first-of-type {
+  border-radius: 4px 0 0 4px;
+}
+
+.btn-group>.btn:nth-last-of-type(2) {
+  border-left: transparent;
+  border-right: transparent;
+  margin-left: -4px;
+  margin-right: -4px;
+}
+
+.btn-group>.btn:last-of-type {
+  border-radius: 0 4px 4px 0;
 }
