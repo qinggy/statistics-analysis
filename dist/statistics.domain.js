@@ -176,6 +176,7 @@ $(function () {
     };
     var chart = echarts.init(document.getElementById('chart-instance'), e_macarons);
     chart.setOption(option, true);
+    window.onresize = chart.resize;
   }
 
   $('#onShowMeterInfo').on('click', function (e) {
@@ -250,6 +251,15 @@ $(function () {
       $('.progress-container').show();
     }
   });
+
+  $('.layui-tab-title>li').on('click', function (e) {
+    e.stopPropagation();
+    let currentDom = e.currentTarget;
+    $('.layui-tab-title>li').removeClass("layui-this");
+    $('.layui-tab-content>div').hide();
+    $(currentDom).addClass('layui-this');
+    $('#' + $(currentDom).attr('data-id')).show();
+  })
 
   layui.use('laydate', function () {
     let laydate = layui.laydate;

@@ -72,8 +72,8 @@
                   <div id="onchooseparameter" class="param-choose">选择参数<i class="icon iconfont icon-xiaotuziCduan_"></i></div>
                 </div>
                 <div class="parameter-right">
-                  <div class="para-item choose-para para-active">有功电能<i class="icon iconfont icon-delete remove-btn"></i></div>
-                  <div class="para-item choose-para">有功功率<i class="icon iconfont icon-delete remove-btn"></i></div>
+                  <div class="para-item choose-para para-active">有功电能</div>
+                  <div class="para-item choose-para">有功功率</div>
                 </div>
               </div>
               <div class="comparsion">
@@ -143,11 +143,48 @@
         <div class="func-tab">
           <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
             <ul class="layui-tab-title">
-              <li class="layui-this">图形数据</li>
-              <li>表底数</li>
-              <li>峰谷平统计</li>
+              <li class="layui-this" data-id="graph-data">图形数据</li>
+              <li data-id="original-data">表底数</li>
+              <li data-id="peak-data">峰谷平统计</li>
             </ul>
-            <div class="layui-tab-content"></div>
+            <div class="layui-tab-content">
+              <div id="graph-data" class="graph-data">
+                <div class="exception-manager"><span>异常数据管理<i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
+                <div class="graph-data-container">
+                  <div class="choose-param-list">
+                    <div class="list-header"><span>参数</span></div>
+                    <div class="list-body">
+                      <div class="choose-param-item param-item-active">A相电流</div>
+                      <div class="choose-param-item">B相电流</div>
+                    </div>
+                  </div>
+                  <div class="original-data-list">
+                    <table class="original-table">
+                      <thead>
+                        <th>采集时间</th>
+                        <th>用量(kWh)</th>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>2018-08-18 12:55</td>
+                          <td>562,524.23</td>
+                        </tr>
+                        <tr>
+                          <td>2018-08-18 13:00</td>
+                          <td>562,684.23</td>
+                        </tr>
+                        <tr>
+                          <td>2018-08-18 13:05</td>
+                          <td>562,854.23</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div id="original-data" class="original-data hidden">original-data</div>
+              <div id="peak-data" class="peak-data hidden">peak-data</div>
+            </div>
           </div>
         </div>
       </div>

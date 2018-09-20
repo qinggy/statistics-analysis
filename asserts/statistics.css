@@ -236,7 +236,6 @@ html body {
 
 .para-item {
   position: relative;
-  padding-right: 15px;
 }
 
 .choose-para,
@@ -578,7 +577,11 @@ html body {
   min-height: 400px;
   background-color: #fff;
   margin-top: 20px;
-  padding: 34px 30px 40px 30px;
+  padding: 34px 30px 20px 30px;
+}
+
+.layui-tab {
+  margin-bottom: 0px !important;
 }
 
 .layui-tab-title li {
@@ -597,4 +600,86 @@ html body {
   border: none;
   border-radius: 0;
   border-bottom: 4px solid #4b89dc !important;
+}
+
+.layui-tab-content {
+  padding: 30px 0 0 0 !important;
+}
+
+.graph-data {
+  padding: 0;
+}
+
+.exception-manager {
+  cursor: pointer;
+  color: #4b89dc;
+  float: right;
+  margin-bottom: 10px;
+}
+
+.graph-data-container {
+  clear: both;
+  border: 1px solid #dce3e6;
+  min-height: 300px;
+  display: flex;
+  padding: 30px 30px 0 30px;
+}
+
+.choose-param-list {
+  flex: 1;
+  margin-right: 78px;
+}
+
+.list-header {
+  text-align: center;
+  font-size: 14px;
+  color: #28323d;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.original-data-list {
+  flex: 2;
+  margin-top: -18px;
+}
+
+.choose-param-item {
+  text-align: center;
+  height: 50px;
+  line-height: 50px;
+  font-size: 14px;
+  color: #28323d;
+  border-top: 1px solid #dce3e6;
+  border-left: 1px solid #dce3e6;
+  border-right: 1px solid #dce3e6;
+  cursor: pointer;
+}
+
+.list-body>.choose-param-item:last-of-type {
+  border-bottom: 1px solid #dce3e6;
+}
+
+.param-item-active {
+  color: #4b89dc;
+  background-color: #f4f7fc;
+}
+
+.original-table {
+  width: 100%;
+}
+
+.original-table tr {
+  border-bottom: 1px solid #dce3e6;
+}
+
+.original-table th {
+  font-size: 14px;
+  width: 50%;
+  height: 58px;
+}
+
+.original-table td {
+  height: 54px;
+  font-size: 12px;
+  color: #3e4b5b;
 }
