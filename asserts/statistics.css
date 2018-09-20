@@ -638,6 +638,7 @@ html body {
   margin-bottom: 20px;
 }
 
+.graph-data-list,
 .original-data-list {
   flex: 2;
   margin-top: -18px;
@@ -664,22 +665,34 @@ html body {
   background-color: #f4f7fc;
 }
 
+.graph-table,
 .original-table {
   width: 100%;
 }
 
+.graph-table tr,
 .original-table tr {
   border-bottom: 1px solid #dce3e6;
 }
 
-.original-table th {
+.graph-table th {
   font-size: 14px;
   width: 50%;
   height: 58px;
 }
 
+.graph-table td,
 .original-table td {
   height: 54px;
   font-size: 12px;
   color: #3e4b5b;
+}
+
+.original-table th {
+  height: 54px;
+}
+
+.original-table tr>td:last-of-type {
+  color: #4b89dc !important;
+  cursor: pointer;
 }
