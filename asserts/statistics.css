@@ -189,6 +189,19 @@ html body {
   cursor: pointer;
 }
 
+.module-container {
+  display: inline-block;
+  width: 116px;
+  height: 34px;
+  border: 1px solid #4b89dc;
+  line-height: 34px;
+  text-align: center;
+  border-radius: 34px;
+  margin-right: 20px;
+  color: #4b89dc;
+  cursor: pointer;
+}
+
 .title-margin {
   margin-right: 5px;
 }
@@ -232,6 +245,7 @@ html body {
 .comparsion-right {
   flex: 1;
   display: flex;
+  flex-wrap: wrap;
 }
 
 .para-item {
@@ -245,10 +259,11 @@ html body {
   line-height: 20px;
   border: 1px solid #4b89dc;
   margin-right: 5px;
-  width: 68px;
+  padding: 0 10px;
   color: #4b89dc;
   border-radius: 2px;
   cursor: pointer;
+  margin-bottom: 5px;
 }
 
 .para-active {
@@ -285,7 +300,7 @@ html body {
   background-color: #4b89dc;
   color: #fff;
   position: relative;
-  padding-right: 15px;
+  padding-right: 25px;
 }
 
 .remove-btn {
@@ -331,6 +346,9 @@ html body {
 
 .btn-grp>.btn:last-of-type {
   border-radius: 0 4px 4px 0;
+  margin-left: -4px;
+  margin-right: -4px;
+  border-left: transparent;
 }
 
 .date-active {
@@ -388,7 +406,7 @@ html body {
 
 .date-grp {
   position: absolute;
-  left: 254px;
+  left: 354px;
   top: 20px;
 }
 
@@ -403,6 +421,7 @@ html body {
 
 .date-component:before {
   position: absolute;
+  font-size: 18px;
   right: 10px;
   top: 0;
 }
@@ -492,14 +511,15 @@ html body {
   margin-top: 10px;
 }
 
-.dosage-value>.negative {
+.dosage-value>.icon-negative,
+.average-value>.icon-negative {
   color: #fa4f33;
   font-size: 24px;
   margin-left: 30px;
   font-weight: bold;
 }
 
-.negative:after {
+.icon-negative:after {
   content: "\e608";
   margin-left: 5px;
   transform: rotate(180deg);
@@ -518,14 +538,15 @@ html body {
   margin-top: 10px;
 }
 
-.average-value>.positive {
+.average-value>.icon-positive,
+.dosage-value>.icon-positive {
   color: #1fbe89;
   font-size: 24px;
   margin-left: 30px;
   font-weight: bold;
 }
 
-.positive::after {
+.icon-positive::after {
   content: "\e608";
   margin-left: 5px;
   font-size: 28px;
@@ -554,7 +575,7 @@ html body {
   background-color: #4b89dc;
   border-radius: 0 14px 14px 0;
   margin: 5px 0 60px 0;
-  clear: both;
+  position: relative;
 }
 
 .same-time-value {
@@ -566,10 +587,11 @@ html body {
 }
 
 .progress-title {
-  float: right;
-  margin-bottom: 5px;
-  margin-right: 10px;
   font-size: 12px;
+  position: absolute;
+  bottom: 20px;
+  min-width: 120px;
+  left: 0;
 }
 
 .func-tab {
@@ -674,6 +696,11 @@ html body {
   border-bottom: 1px solid #dce3e6;
 }
 
+.graph-table tr:last-of-type,
+.original-table tr:last-of-type {
+  border-bottom: transparent !important;
+}
+
 .graph-table th {
   font-size: 14px;
   width: 50%;
@@ -709,4 +736,149 @@ html body {
 
 .btn-group>.btn:last-of-type {
   border-radius: 0 4px 4px 0;
+}
+
+.toast-top-center {
+  margin-top: 15px !important;
+}
+
+.area-no-data {
+  text-align: center;
+  height: 60px;
+  line-height: 60px;
+  margin-top: 10px;
+  border-top: 1px solid #dce3e6;
+  margin-left: 30px;
+  margin-right: 30px;
+  color: #dce3e6;
+}
+
+.stress-info {
+  color: #fa4f33;
+}
+
+.operate-hander {
+  cursor: pointer;
+}
+
+.operate-hander:hover {
+  color: #4b89dc;
+}
+
+.dialogModal .dialogModal_footer button {
+  height: 34px;
+  line-height: 34px;
+  min-width: 84px;
+  border: 1px solid #dce3e6;
+  cursor: pointer;
+}
+
+.dialogModal .dialogModal_container .close {
+  top: 24px !important;
+}
+
+.cancel-btn {
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #4b89dc;
+  color: #4b89dc;
+}
+
+.save-btn {
+  background-color: #4b89dc;
+  color: #fff;
+  border: 1px solid #4b89dc;
+  border-radius: 4px;
+}
+
+.modal_header {
+  line-height: 40px !important;
+  font-weight: bold;
+}
+
+.configuration-container {
+  margin: 0 !important;
+  padding: 0;
+  border-left: 1px solid #dce3e6;
+  border-right: 1px solid #dce3e6;
+  border-bottom: 1px solid #dce3e6;
+  position: relative;
+}
+
+.configure-header {
+  display: flex;
+}
+
+.configure-header>li {
+  flex: 1;
+}
+
+.step-num {
+  height: 40px;
+  width: 40px;
+  display: inline-block;
+  margin-right: 10px;
+  background-color: #4b89dc;
+  border-radius: 40px;
+  color: #fff;
+}
+
+.dialogModal_content .layui-tab-title .layui-this:after {
+  height: 50px !important;
+}
+
+.dialogModal_content .layui-tab-title {
+  height: 50px !important;
+}
+
+.module-content {
+  display: flex;
+  padding: 20px 0 !important;
+}
+
+.module-content div {
+  flex: 1;
+  height: 60px;
+  line-height: 60px;
+  background-color: #4b89dc;
+  text-align: center;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.module-content div:first-of-type {
+  margin: 0 10px 0 20px;
+}
+
+.module-content div:last-of-type {
+  margin: 0 20px 0 10px;
+}
+
+.usage-header {
+  margin: 0 20px 20px 20px;
+  color: #4b89dc;
+}
+
+.usage-select {
+  margin-top: 10px;
+}
+
+.header-left {
+  position: absolute;
+  top: 0;
+  left: -1px;
+  height: 50px;
+  background-color: #fff;
+  width: 2px;
+}
+
+
+.header-right {
+  position: absolute;
+  top: 0;
+  right: -1px;
+  height: 50px;
+  background-color: #fff;
+  width: 2px;
 }
