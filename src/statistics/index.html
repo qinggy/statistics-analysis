@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../../asserts/statistics.css?t=20180918125">
   <link rel="stylesheet" href="../../dist/lib/layui-v2.4.3/css/layui.css">
   <link rel="stylesheet" href="../../dist/lib/jquery.popmodal/popModal.min.css">
+  <link rel="stylesheet" href="../../dist/lib/magic-check/magic-check.css">
   <link rel="stylesheet" href="../../dist/lib/jstree/dist/themes/default/style.min.css">
   <link href="https://cdn.bootcss.com/toastr.js/latest/toastr.min.css" rel="stylesheet">
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
@@ -53,7 +54,7 @@
             </div>
           </div>
           <div id="area-zone">
-            <div class="area-no-data"><span>当前区域未配置模块数据，点击<a class="stress-info operate-hander">&nbsp;区域模块管理&nbsp;</a>配置</span></span></div>
+            <div class="area-no-data"><span>当前区域未配置模块数据，请点击<a class="stress-info operate-hander">&nbsp;区域模块管理&nbsp;</a>进行配置</span></span></div>
           </div>
           <div id="meter-zone" class="hidden">
             <div class="meter-info-container hidden close">
@@ -77,10 +78,7 @@
                     <div class="meter-title">当前对比表</div>
                     <div class="meter-choose">+增加对比</div>
                   </div>
-                  <div class="comparsion-right">
-                    <div class="choose-meter meter-item">星巴克<i class="icon iconfont icon-delete remove-btn"></i></div>
-                    <div class="choose-meter meter-item">BOSS<i class="icon iconfont icon-delete remove-btn"></i></div>
-                  </div>
+                  <div class="comparsion-right"></div>
                 </div>
               </div>
               <div class="search-container">
@@ -104,11 +102,12 @@
                 </div>
                 <div class="operate-grp">
                   <i class="icon iconfont icon-RMB" data-value="rmb"></i>
-                  <i class="icon iconfont should-uniq icon-icon- btn-active" data-value="bar"></i>
+                  <i class="icon iconfont should-uniq icon-icon- btn-active" id="bar" data-value="bar"></i>
                   <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
-                  <i class="icon iconfont should-uniq icon-tubiao-bingtu hidden" data-value="pie"></i>
+                  <i class="icon iconfont should-uniq icon-tubiao-bingtu hidden" id="pie" data-value="pie"></i>
                   <i class="icon iconfont icon-Group-" data-value="download"></i>
-                  <i class="icon iconfont icon-tooltip-outline show-tip" data-value="tip"></i></div>
+                  <i class="icon iconfont icon-tooltip-outline show-tip" data-value="tip"></i>
+                </div>
               </div>
             </div>
             <div class="chart-container">
@@ -148,80 +147,7 @@
                     <th>采集值</th>
                     <th>&nbsp;</th>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <td>有功电能</td>
-                      <td>kWh</td>
-                      <td>900S</td>
-                      <td>1</td>
-                      <td>2018-08-23 13:55</td>
-                      <td>562,524.23</td>
-                      <td>详情</td>
-                    </tr>
-                    <tr>
-                      <td>A相电流</td>
-                      <td>A</td>
-                      <td>900S</td>
-                      <td>1</td>
-                      <td>2018-08-23 13:55</td>
-                      <td>562,524.23</td>
-                      <td>详情</td>
-                    </tr>
-                    <tr>
-                      <td>B相电流</td>
-                      <td>A</td>
-                      <td>900S</td>
-                      <td>1</td>
-                      <td>2018-08-23 13:55</td>
-                      <td>562,524.23</td>
-                      <td>详情</td>
-                    </tr>
-                    <tr>
-                      <td>C相电流</td>
-                      <td>A</td>
-                      <td>900S</td>
-                      <td>1</td>
-                      <td>2018-08-23 13:55</td>
-                      <td>562,524.23</td>
-                      <td>详情</td>
-                    </tr>
-                    <tr>
-                      <td>有功功率</td>
-                      <td>kW</td>
-                      <td>900S</td>
-                      <td>1</td>
-                      <td>2018-08-23 13:55</td>
-                      <td>562,524.23</td>
-                      <td>详情</td>
-                    </tr>
-                    <tr>
-                      <td>A相电压</td>
-                      <td>V</td>
-                      <td>900S</td>
-                      <td>1</td>
-                      <td>2018-08-23 13:55</td>
-                      <td>562,524.23</td>
-                      <td>详情</td>
-                    </tr>
-                    <tr>
-                      <td>B相电压</td>
-                      <td>V</td>
-                      <td>900S</td>
-                      <td>1</td>
-                      <td>2018-08-23 13:55</td>
-                      <td>562,524.23</td>
-                      <td>详情</td>
-                    </tr>
-                    <tr>
-                      <td>C相电压</td>
-                      <td>V</td>
-                      <td>900S</td>
-                      <td>1</td>
-                      <td>2018-08-23 13:55</td>
-                      <td>562,524.23</td>
-                      <td>详情</td>
-                    </tr>
-                  </tbody>
+                  <tbody id="original-table-body">
                 </table>
               </div>
               <div id="peak-data" class="peak-data hidden">
@@ -231,6 +157,31 @@
                   <div class="btn" data-value="m">月</div>
                 </div>
                 <div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="comparison-tab hidden">
+          <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+            <ul class="layui-tab-title">
+              <li class="layui-this" data-id="comparison-data" style="color: #000 !important">参数详情对比</li>
+            </ul>
+            <div class="layui-tab-content">
+              <div id="comparison-data" class="comparison-data">
+                <table class="comparison-table">
+                  <thead>
+                    <th>仪表名称</th>
+                    <th class="no-show-in">日总量</th>
+                    <th class="no-show-in">同期对比</th>
+                    <th>同期平均</th>
+                    <th>平均</th>
+                    <th>最大</th>
+                    <th>最小</th>
+                    <th>报警上限</th>
+                    <th>报警下限</th>
+                  </thead>
+                  <tbody id="comparison-table-body">
+                </table>
               </div>
             </div>
           </div>
@@ -246,22 +197,45 @@
         <div class="header-left"></div>
         <div class="header-right"></div>
         <ul class="layui-tab-title configure-header">
-          <li class="layui-this" data-id="configure-func"><span class="step-num">1</span>功能配置</li>
-          <li data-id="binding-data"><span class="step-num">2</span>数据绑定</li>
+          <li class="configure-func layui-this" data-id="configure-func"><span class="step-num finish">1</span>功能配置</li>
+          <li class="binding-data" data-id="binding-data"><span class="step-num">2</span>数据绑定</li>
         </ul>
         <div class="layui-tab-content module-content">
-          <div>区域数据详情</div>
-          <div>峰谷平统计</div>
-        </div>
-        <div class="usage-header">
-          <div><span>应用于</span></div>
-          <div class="layui-select-title usage-select"><input type="text" class="layui-input layui-unselect"><i class="layui-edge"></i></div>
-          <div class="layui-input-block usage-select">
-            <select name="interest" lay-filter="aihao">
-              <option value=""></option>
-              <option value="0">当前区域</option>
-              <option value="1" selected="">所有区域</option>
-            </select>
+          <div class="page-configure-func">
+            <div class="func-list">
+              <div data-id="module-data">区域数据详情
+                <div class="opt">
+                  <input id="module-data" class="magic-checkbox" type="checkbox">
+                  <label class="check-box"></label>
+                </div>
+              </div>
+              <div data-id="peak-summary">峰谷平统计
+                <div class="opt">
+                  <input id="peak-summary" class="magic-checkbox" type="checkbox">
+                  <label class="check-box"></label>
+                </div>
+              </div>
+            </div>
+            <div class="usage-header">
+              <div><span>应用于</span></div>
+              <div class="usage-select">
+                <i class="icon iconfont icon-xiaotuziCduan_ dropdown"></i>
+                <select name="interest" class="beauty-select" lay-filter="aihao">
+                  <option value="0">当前区域</option>
+                  <option value="1" selected="">所有区域</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="page-binding-data hidden">
+            <div class="binding-data-content">
+              <div class="meter-tree"></div>
+              <div class="selected-meter-list">
+                <div class="top-placeholder"></div>
+                <div class="meter-list"></div>
+                <div class="bottom-placeholder"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -269,6 +243,31 @@
     <div class="dialogModal_footer">
       <button type="button" class="save-btn" data-dialogModalBut="ok">保存</button>
       <button type="button" class="cancel-btn" data-dialogModalBut="cancel">取消</button>
+    </div>
+  </div>
+  <div id="choose-meter-for-comparison" class="comparison-body" style="display: none;">
+    <div class="dialogModal_header modal_header">选择对比仪表</div>
+    <div class="dialogModal_content meter-comparison-content">
+      <div class="choose-meter-list"></div>
+    </div>
+    <div class="dialogModal_footer">
+      <button type="button" class="save-btn" data-dialogModalBut="ok">确定</button>
+      <button type="button" class="cancel-btn" data-dialogModalBut="cancel">取消</button>
+    </div>
+  </div>
+  <div id="original-history-data" style="display: none;">
+    <div class="dialogModal_header modal_header" id="history-header">参数历史读数</div>
+    <div class="dialogModal_content history-content">
+      <div class="history-data-list">
+        <table>
+          <thead>
+            <th>数据采集时间</th>
+            <th>数据上传至平台时间</th>
+            <th id="lastUnit">读数</th>
+          </thead>
+          <tbody class="history-data-list-body"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </body>
@@ -338,6 +337,57 @@
       {{/each}}
       {{/if}}
     </tbody>
+</script>
+<script type="text/html" id="selected-meter-list-template">
+  {{if selectedMeterList.length > 0}}{{each selectedMeterList meter index}}
+  <div class='select-meter-item'>
+    <span>{{meter.text}}</span>
+    <input type='button' value='删除' data-id='{{meter.id}}'>
+  </div>
+  {{/each}}
+  {{/if}}
+</script>
+<script type="text/html" id="comparsion-right-template">
+  {{if comparisonMeterList.length > 0}}{{each comparisonMeterList meter index}}
+  <div class="choose-meter meter-item" id="com_{{meter.id}}">{{meter.text}}<i class="icon iconfont icon-delete remove-btn" data-id="{{meter.id}}"></i></div>
+  {{/each}}{{/if}}
+</script>
+<script type="text/html" id="original-table-body-template">
+  {{if parameterList.length > 0}}{{each parameterList param index}}
+  <tr>
+    <td>{{param.name}}</td>
+    <td>{{param.unit}}</td>
+    <td>{{param.interval}}S</td>
+    <td>{{param.factor}}</td>
+    <td>{{param.lastDate}}</td>
+    <td>{{param.lastVal}}</td>
+    <td data-id='{{param.mfid}}'>详情</td>
+  </tr>
+  {{/each}}{{/if}}
+</script>
+<script type="text/html" id="history-data-list-body-template">
+  {{if historyList.length > 0}}{{each historyList data index}}
+  <tr>
+    <td>{{data.Mt}}</td>
+    <td>{{data.ST}}</td>
+    <td>{{data.Mv}}</td>
+  </tr>
+  {{/each}}{{/if}}
+</script>
+<script type="text/html" id="comparison-table-body-template">
+  {{if comparisonList.length > 0}}{{each comparisonList data index}}
+  <tr>
+    <td>{{data.meter_name}}</td>
+    {{if type == 0}}<td>{{data.sum_val}}</td>
+    <td class="{{data.sum_per>0?'positive-value':'negative-value'}}">{{data.sum_per>0?'+':''}}{{data.sum_per}}%</td>{{/if}}
+    <td>{{data.all_avg_val}}</td>
+    <td>{{data.avg_val}}</td>
+    <td>{{data.max_val}}</td>
+    <td>{{data.min_val}}</td>
+    <td>{{data.upper_limit}}</td>
+    <td>{{data.lower_limit}}</td>
+  </tr>
+  {{/each}}{{/if}}
 </script>
 
 </html>
