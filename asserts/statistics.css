@@ -108,7 +108,7 @@ html body {
 
 .content {
   background-color: #fff;
-  min-height: 300px;
+  min-height: 20px;
   position: relative;
   padding-bottom: 5px;
 }
@@ -334,10 +334,16 @@ html body {
   position: absolute;
 }
 
+.area-btn-grp {
+  position: absolute;
+}
+
+.area-btn-grp>.btn:first-of-type,
 .btn-grp>.btn:first-of-type {
   border-radius: 4px 0 0 4px;
 }
 
+.area-btn-grp>.btn:nth-of-type(2),
 .btn-grp>.btn:nth-of-type(2) {
   border-left: transparent;
   border-right: transparent;
@@ -345,6 +351,7 @@ html body {
   margin-right: -4px;
 }
 
+.area-btn-grp>.btn:last-of-type,
 .btn-grp>.btn:last-of-type {
   border-radius: 0 4px 4px 0;
   margin-left: -4px;
@@ -358,6 +365,7 @@ html body {
   border: 1px solid #4b89dc;
 }
 
+.area-operate-grp,
 .operate-grp {
   position: absolute;
   right: 20px;
@@ -365,20 +373,26 @@ html body {
   display: inline-flex;
 }
 
+.area-operate-grp>i,
 .operate-grp>i {
   font-size: 25px;
   margin-right: 20px;
   cursor: pointer;
 }
 
+.area-operate-grp>i:before,
 .operate-grp>i:before {
   color: #708195;
 }
 
+.area-operate-grp>i:last-of-type,
 .operate-grp>i:last-of-type {
   margin-right: 0px;
 }
 
+.area-operate-grp>i:nth-of-type(2),
+.area-operate-grp>i:nth-of-type(3),
+.area-operate-grp>i:nth-of-type(4),
 .operate-grp>i:nth-of-type(2),
 .operate-grp>i:nth-of-type(3),
 .operate-grp>i:nth-of-type(4) {
@@ -387,15 +401,18 @@ html body {
   margin-top: 3px;
 }
 
+.area-operate-grp>i:nth-of-type(2),
 .operate-grp>i:nth-of-type(2) {
   margin-top: 4px;
 }
 
+.area-operate-grp>i:nth-of-type(4),
 .operate-grp>i:nth-of-type(4) {
   font-size: 21px;
   margin-top: 2px;
 }
 
+.area-operate-grp>i:nth-of-type(6),
 .operate-grp>i:nth-of-type(6) {
   font-size: 21px;
   margin-top: 3px;
@@ -405,6 +422,7 @@ html body {
   color: #4b89dc !important;
 }
 
+.area-date-grp,
 .date-grp {
   position: absolute;
   left: 354px;
@@ -436,18 +454,21 @@ html body {
 
 .parameter-overlay {
   position: absolute;
-  width: 300px;
-  min-height: 200px;
+  width: 120px;
+  min-height: 120px;
   box-shadow: 5px 5px 20px 0px #aaa;
   z-index: 10086;
   background-color: #fff;
-  top: 195px;
+  top: 45px;
+  right: 25px;
+  font-size: 14px;
+  font-weight: normal;
 }
 
 .triangle-overlay {
   position: absolute;
   top: -10px;
-  left: 50px;
+  left: 30px;
   width: 0;
   height: 0;
   border-bottom: 10px solid #fff;
@@ -458,7 +479,7 @@ html body {
 .triangle-overlay-border {
   position: absolute;
   top: -11px;
-  left: 49px;
+  left: 29px;
   width: 0;
   height: 0;
   border-bottom: 11px solid #dce3e6;
@@ -1096,4 +1117,237 @@ html body {
 
 .positive-value {
   color: rgb(243, 99, 73);
+}
+
+.area-detail-container .search-container {
+  border-top: transparent;
+}
+
+.area-fgp {
+  background-color: #fff;
+  margin-top: 20px;
+  padding: 20px 30px 10px 30px;
+}
+
+.area-comparison {
+  display: flex;
+  padding: 0 30px 30px 30px;
+}
+
+.comparison-sort {
+  flex: 1;
+}
+
+.comparison-sort>div:first-of-type {
+  margin-right: 20px;
+  line-height: 34px;
+  height: 34px;
+  font-size: 18px;
+  font-weight: bold;
+  border-bottom: 1px solid #dce3e6;
+  position: relative;
+}
+
+.comparison-proportion {
+  flex: 1;
+}
+
+.comparison-proportion>div:first-of-type {
+  margin-left: 20px;
+  line-height: 34px;
+  height: 34px;
+  font-size: 18px;
+  font-weight: bold;
+  border-bottom: 1px solid #dce3e6;
+  position: relative;
+}
+
+.icon-heguipaiming,
+.icon-tongji {
+  font-size: 20px;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.op-grp {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 12px;
+  color: #4b89dc;
+}
+
+.op-btn-active {
+  background-color: #4b89dc;
+  color: #fff !important;
+}
+
+.op-grp>input {
+  height: 22px;
+  line-height: 22px;
+  font-weight: 200;
+  color: #4b89dc;
+  border: 1px solid #4b89dc;
+}
+
+.op-grp>input:first-of-type {
+  margin-right: -5px;
+}
+
+.comparison-rmb {
+  font-size: 23px;
+  margin-right: 10px;
+}
+
+.proportion-grp {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.proportion-grp>i {
+  cursor: pointer;
+}
+
+.proportion-grp>i:first-of-type {
+  font-size: 23px;
+  position: absolute;
+  right: 20px;
+  top: 1px;
+}
+
+.op-btn {
+  background-color: #fff;
+  border: 1px solid #4b89dc;
+  color: #4b89dc;
+  position: absolute;
+  right: 70px;
+  font-size: 12px;
+  font-weight: 400;
+  width: 64px;
+  text-align: center;
+  height: 22px;
+  line-height: 20px;
+  padding-left: 5px;
+  top: 5px;
+  cursor: pointer;
+}
+
+.op-btn>i {
+  margin-left: 5px;
+}
+
+.manage-box {
+  border-top: 1px solid #dce3e6;
+  padding-left: 40px;
+}
+
+.manage-box:hover {
+  background-color: #4b89dc;
+  color: #fff;
+  cursor: pointer;
+}
+
+.proportion-grp ul {
+  list-style-type: none;
+}
+
+.proportion-grp ul>li {
+  padding-left: 20px;
+}
+
+.proportion-grp ul>li>i {
+  margin-right: 5px;
+}
+
+.proportion-grp ul>li:hover {
+  background-color: #4b89dc;
+  color: #fff;
+  cursor: pointer;
+}
+
+.area-sort-list {
+  margin-top: 20px;
+}
+
+.area-sort-item {
+  position: relative;
+  height: 70px;
+}
+
+.area-sort-no {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 40px;
+  line-height: 40px;
+  text-align: center;
+  display: inline-block;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  font-weight: bold;
+}
+
+.area-sort-content {
+  display: inline-block;
+  margin-left: 10px;
+  position: relative;
+  left: 50px;
+  top: 50%;
+  margin-top: -4px;
+  transform: translateY(-50%);
+  width: calc(100% - 130px);
+}
+
+.meter-name {
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 20px;
+}
+
+.meter-value {
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.meter-percent {
+  font-size: 12px;
+  position: absolute;
+  right: -52px;
+  bottom: -1px;
+}
+
+.area-progress-container {
+  width: 100%;
+  height: 6px;
+  background-color: #ddd;
+  border: transparent;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.area-progress-value {
+  height: 6px;
+  background-color: red;
+  border: transparent;
+  border-radius: 4px;
+  width: 50%;
+}
+
+.area-progress {
+  height: 8px;
+  line-height: 8px;
+}
+
+.proportion-chart-container {
+  width: 100%;
+  min-height: 360px;
+}
+
+.proportion-chart-instance {
+  height: 360px;
+  width: 100%;
+  margin-top: 30px;
 }

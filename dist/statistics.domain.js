@@ -8,6 +8,10 @@ $(function () {
   let comparsionSelectedMeters = [];
   let areaSubscribeModule = [];
   let areaConfigureMeters = [];
+  let areaConfigure = {};
+  let sortColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F',
+    '#808000', '	#FFE4C4', '#F5DEB3', '#40E0D0', '#7FFFAA', '#008B8B', '#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
+  ];
   //#endregion
   let ifShowPieChart = function () {
     let flag = false;
@@ -41,6 +45,11 @@ $(function () {
     if (chooseDom) return parseInt($(chooseDom).attr('data-value'));
     return -1;
   };
+  let getSearchAreaDateType = function () {
+    let chooseDom = _.head($('.area-btn-grp>div.date-active'));
+    if (chooseDom) return parseInt($(chooseDom).attr('data-value'));
+    return 2;
+  };
   let getSelectParameterLen = function () {
     return $('.parameter-right>.para-active').length;
   };
@@ -73,8 +82,20 @@ $(function () {
     }
     return stimeAndetime;
   };
+  let getAreaDefaultSTimeAndETime = function (type) {
+    let stimeAndetime = $('#area-datevalue').val();
+    if (stimeAndetime === '') {
+      return resetSTimeAndETime(type);
+    }
+    return stimeAndetime;
+  };
   let getChartType = function () {
     let activeItem = $('.operate-grp>.should-uniq.btn-active')
+    if (!activeItem) return 'bar';
+    return $(activeItem).attr('data-value');
+  };
+  let getAreaChartType = function () {
+    let activeItem = $('.area-operate-grp>.should-uniq.btn-active')
     if (!activeItem) return 'bar';
     return $(activeItem).attr('data-value');
   };
@@ -285,6 +306,129 @@ $(function () {
     });
     return seriesArray;
   }
+  let generateAreaSort = function (datas) {
+    let meterAndMfIdMap = [];
+    let meterAndMfIdArray = areaConfigure.meterid_mfid_map.split(';');
+    _.each(meterAndMfIdArray, mm => {
+      if (mm === '') return true;
+      let mmArray = mm.split(',');
+      meterAndMfIdMap.push({
+        mId: mmArray[0],
+        mfid: mmArray[1]
+      });
+    });
+    let data = {
+      areaMeterList: []
+    };
+    let totalValue = _.sum(_.map(datas, dd => dd.sum_val));
+    _.each(areaConfigureMeters, m => {
+      let mmp = _.find(meterAndMfIdMap, a => a.mId === m.id);
+      let item = _.find(datas, d => d.mfid === mmp.mfid);
+      data.areaMeterList.push({
+        name: m.text,
+        unit: areaConfigure.unit,
+        value: item.sum_val.toFixed(2),
+        percent: (item.sum_val * 100 / totalValue).toFixed(2)
+      });
+    });
+    data.areaMeterList = _.orderBy(data.areaMeterList, a => parseFloat(a.value), ["desc"]);
+    for (let i = 0; i < data.areaMeterList.length; i++) {
+      data.areaMeterList[i].color = sortColor[i];
+    }
+    let templateHtml = template('area-sort-list-template', data);
+    $('.area-sort-list').html(templateHtml);
+  };
+  let generateAreaCostSort = function (datas) {
+    let meterAndMfIdMap = [];
+    let meterAndMfIdArray = areaConfigure.meterid_mfid_map.split(';');
+    _.each(meterAndMfIdArray, mm => {
+      if (mm === '') return true;
+      let mmArray = mm.split(',');
+      meterAndMfIdMap.push({
+        mId: mmArray[0],
+        mfid: mmArray[1]
+      });
+    });
+    let data = {
+      areaMeterList: []
+    };
+    _.each(datas, d => {
+      d.sum_cost = _.sum(_.map(d.data_list, a => a.cost));
+    });
+    let totalCost = _.sum(_.map(datas, dd => dd.sum_cost));
+    _.each(areaConfigureMeters, m => {
+      let mmp = _.find(meterAndMfIdMap, a => a.mId === m.id);
+      let item = _.find(datas, d => d.mfid === mmp.mfid);
+      data.areaMeterList.push({
+        name: m.text,
+        unit: '元',
+        value: item.sum_cost.toFixed(2),
+        percent: totalCost === 0 ? '0.00' : (item.sum_val * 100 / totalCost).toFixed(2)
+      });
+    });
+    data.areaMeterList = _.orderBy(data.areaMeterList, a => parseFloat(a.value), ["desc"]);
+    for (let i = 0; i < data.areaMeterList.length; i++) {
+      data.areaMeterList[i].color = sortColor[i];
+    }
+    let templateHtml = template('area-sort-list-template', data);
+    $('.area-sort-list').html(templateHtml);
+  }
+  let generateAreaPie = function () {
+    let datas = [];
+    let legends = [];
+    let meterAndMfIdMap = [];
+    let meterAndMfIdArray = areaConfigure.meterid_mfid_map.split(';');
+    _.each(meterAndMfIdArray, mm => {
+      if (mm === '') return true;
+      let mmArray = mm.split(',');
+      meterAndMfIdMap.push({
+        mId: mmArray[0],
+        mfid: mmArray[1]
+      });
+    });
+    _.each(searchResult.datas, data => {
+      let mmp = _.find(meterAndMfIdMap, a => a.mfid === data.mfid);
+      let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
+      let sumVal = {
+        name: meter.text,
+        value: data.sum_val ? data.sum_val.toFixed(2) : 0
+      };
+      datas.push(sumVal);
+      legends.push(meter.text);
+    });
+    let option = generatePieForAggregateData(legends, datas, searchResult.unit);
+    let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
+    areaChart.setOption(option, true);
+    window.onresize = areaChart.resize;
+  };
+  let generateAreaCostPie = function () {
+    let datas = [];
+    let legends = [];
+    let meterAndMfIdMap = [];
+    let meterAndMfIdArray = areaConfigure.meterid_mfid_map.split(';');
+    _.each(meterAndMfIdArray, mm => {
+      if (mm === '') return true;
+      let mmArray = mm.split(',');
+      meterAndMfIdMap.push({
+        mId: mmArray[0],
+        mfid: mmArray[1]
+      });
+    });
+    _.each(searchResult.datas, data => {
+      let mmp = _.find(meterAndMfIdMap, a => a.mfid === data.mfid);
+      let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
+      let sumVal = {
+        name: meter.text,
+        value: data.sum_val ? data.sum_val.toFixed(2) : 0
+      };
+      datas.push(sumVal);
+      legends.push(meter.text);
+    });
+    let option = generatePieForAggregateData(legends, datas, searchResult.unit);
+    let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
+    areaChart.setOption(option, true);
+    window.onresize = areaChart.resize;
+  };
   let searchMeterData = function () {
     if (currentMeterParameters.length <= 0) {
       toastr.warning('请先选择查询仪表');
@@ -351,7 +495,7 @@ $(function () {
               if (ifShowPieChart()) {
                 generatePieChart();
               } else
-                assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, response.Content, meterAndParaMap, getChartType());
+                assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, response.Content, meterAndParaMap, 'chart-instance', getChartType());
             }
           });
         }
@@ -377,7 +521,7 @@ $(function () {
             datas,
             checkedParameters
           };
-          assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, datas, checkedParameters, getChartType());
+          assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, datas, checkedParameters, 'chart-instance', getChartType());
           if (currentSelectedNode.modeltype === 'meter') {
             $('#summary-container').show();
             $('.func-tab').show();
@@ -396,16 +540,89 @@ $(function () {
       });
     }
   };
-  let assembleChartComponent = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartType = 'bar') {
+  let searchAreaData = function () {
+    if (areaConfigure.mfIds.length <= 0) return;
+    let dateType = getSearchAreaDateType();
+    let defaultTimeStr = getAreaDefaultSTimeAndETime(dateType);
+    let sTime = defaultTimeStr.split('--')[0];
+    let eTime = defaultTimeStr.split('--')[1];
+    let mfids = areaConfigure.mfIds;
+    let meterAndParaMap = [];
+    let meterMfidMap = areaConfigure.meterid_mfid_map.split(';');
+    let mfidMap = [];
+    _.each(meterMfidMap, a => {
+      if (a === '') return true;
+      let pairs = a.split(',');
+      mfidMap.push({
+        mId: pairs[0],
+        mfid: pairs[1]
+      });
+    });
+    _.each(areaConfigureMeters, a => {
+      let mm = _.find(mfidMap, m => m.mId === a.id);
+      if (!mm) return true;
+      meterAndParaMap.push({
+        name: a.text,
+        mfid: mm.mfid,
+        id: mm.mfid
+      });
+    });
+    if (mfids.length === 1) {
+      let uriparam = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
+      esdpec.framework.core.getJsonResult('dataanalysis/getdata?' + uriparam, function (response) {
+        if (response.IsSuccess) {
+          console.dir(response.Content);
+          let chartLegend = [];
+          let chartXaxisData = [];
+          chartLegend = _.map(meterAndParaMap, a => a.name);
+          chartXaxisData = getXAxisData(dateType, sTime, eTime);
+          searchResult = {
+            unit: areaConfigure.unit,
+            chartLegend,
+            chartXaxisData,
+            datas: [response.Content],
+            type: 0,
+            meterAndParaMap
+          };
+          assembleChartComponent(areaConfigure.unit, chartLegend, chartXaxisData, [response.Content], meterAndParaMap, 'area-chart-instance', getAreaChartType());
+          generateAreaSort([response.Content]);
+          generateAreaPie([response.Content]);
+        }
+      });
+    } else {
+      let uriparams = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
+      esdpec.framework.core.getJsonResult('dataanalysis/getcomparedata?' + uriparams, function (response) {
+        if (response.IsSuccess) {
+          console.dir(response.Content);
+          let chartLegend = [];
+          let chartXaxisData = [];
+          chartLegend = _.map(meterAndParaMap, a => a.name);
+          chartXaxisData = getXAxisData(dateType, sTime, eTime);
+          searchResult = {
+            unit: areaConfigure.unit,
+            chartLegend,
+            chartXaxisData,
+            datas: response.Content,
+            type: 0,
+            meterAndParaMap
+          };
+          assembleChartComponent(areaConfigure.unit, chartLegend, chartXaxisData, response.Content, meterAndParaMap, 'area-chart-instance', getAreaChartType());
+          generateAreaSort(response.Content);
+          generateAreaPie(response.Content);
+        }
+      });
+    }
+  };
+  let assembleChartComponent = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartDom, chartType = 'bar') {
     let chartSeries = getChartSeries(datas, _.map(checkedParameters, a => {
       return {
         id: a.id,
         name: a.name
       };
     }), chartXaxisData, chartType);
-    generateChart(unit, chartLegend, chartXaxisData, chartSeries);
+    generateChart(unit, chartLegend, chartXaxisData, chartSeries, chartDom);
   };
-  let generateChart = function (unit, chartLegend, chartXaxisData, chartSeries) {
+  let generateChart = function (unit, chartLegend, chartXaxisData, chartSeries, chartDom) {
     let option = {
       title: {
         subtext: '单位：' + unit
@@ -435,7 +652,7 @@ $(function () {
       }],
       series: chartSeries
     };
-    analysisChart = echarts.init(document.getElementById('chart-instance'), e_macarons);
+    analysisChart = echarts.init(document.getElementById(chartDom), e_macarons);
     analysisChart.setOption(option, true);
     window.onresize = analysisChart.resize;
   }
@@ -626,6 +843,7 @@ $(function () {
     $('#onshowmeterinfo').show();
     $('.content-footer').show();
     $('.module-container').hide();
+    $('.area-fgp').hide();
     if (ifShowPieChart()) $('.comparison-tab').show();
   };
   let bindingMeterTree = function (selector) {
@@ -685,6 +903,30 @@ $(function () {
       });
     }, 100);
   }
+  let loadAreaDetailPage = function () {
+    if (areaSubscribeModule.length <= 0) {
+      $('.area-no-data').show();
+      $('.area-detail-container').hide();
+      $('.area-fgp').hide();
+      $('.content-footer').hide();
+      return;
+    }
+    $('.area-no-data').hide();
+    let moduleData = _.find(areaSubscribeModule, a => a.key === '_AreaStatistics');
+    if (moduleData) $('.area-detail-container').show();
+    else $('.area-detail-container').hide();
+    let fgp = _.find(areaSubscribeModule, a => a.key === '_AreaFgpStatistics');
+    if (fgp) {
+      $('.area-fgp').show();
+      if ($('.content-right')[0].scrollHeight > $('.content-right')[0].clientHeight)
+        $('.content-footer').show();
+      else $('.content-footer').hide();
+    } else {
+      $('.area-fgp').hide();
+      $('.content-footer').hide();
+    }
+    searchAreaData();
+  };
   let showModuleConfigureModal = function () {
     $('.configure-header>.binding-data').removeClass('layui-this');
     $('.binding-data>span').removeClass('finish');
@@ -692,7 +934,70 @@ $(function () {
     $('.page-configure-func').show();
     $('#dialog_content').dialogModal({
       onOkBut: function () {
-        console.log('save');
+        if (areaSubscribeModule.length <= 0 && areaConfigure.id) {
+          esdpec.framework.core.doDeleteOperation('dataanalysis/delareafun', {
+            id: areaConfigure.id
+          }, function (response) {
+            if (response.IsSuccess) {
+              esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + currentSelectedNode.id, function (response) {
+                if (response.IsSuccess) {
+                  areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
+                  let meterAndMfidMapStr = response.Content.meterid_mfid_map || '';
+                  let meterAndMfidMap = meterAndMfidMapStr.split(';');
+                  let meterIds = [];
+                  let mfIds = [];
+                  _.each(meterAndMfidMap, m => {
+                    if (m === '') return true;
+                    let meterMfid = m.split(',');
+                    meterIds.push(meterMfid[0]);
+                    mfIds.push(meterMfid[1]);
+                  });
+                  areaConfigureMeters = meterIds.length > 0 ? _.filter(meterDataList, a => _.includes(meterIds, a.id)) : [];
+                  areaConfigure = response.Content;
+                  areaConfigure.mfIds = mfIds;
+                  areaConfigure.meterIds = meterIds;
+                  loadAreaDetailPage();
+                }
+              });
+            }
+          });
+          return;
+        }
+        if (areaConfigureMeters.length <= 0) {
+          toastr.warning('请绑定仪表数据');
+          return false;
+        }
+        let areaInfo = {
+          id: areaConfigure.id,
+          area_id: currentSelectedNode.id,
+          is_all_area: $('.open #select-usage').val() === '1' ? true : false,
+          meter_ids: _.join(_.map(areaConfigureMeters, a => a.id), ','),
+          fun_code: JSON.stringify(areaSubscribeModule)
+        };
+        esdpec.framework.core.doPostOperation('dataanalysis/saveareafun', areaInfo, function (response) {
+          if (response.IsSuccess) {
+            esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + currentSelectedNode.id, function (response) {
+              if (response.IsSuccess) {
+                areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
+                let meterAndMfidMapStr = response.Content.meterid_mfid_map || '';
+                let meterAndMfidMap = meterAndMfidMapStr.split(';');
+                let meterIds = [];
+                let mfIds = [];
+                _.each(meterAndMfidMap, m => {
+                  if (m === '') return true;
+                  let meterMfid = m.split(',');
+                  meterIds.push(meterMfid[0]);
+                  mfIds.push(meterMfid[1]);
+                });
+                areaConfigureMeters = meterIds.length > 0 ? _.filter(meterDataList, a => _.includes(meterIds, a.id)) : [];
+                areaConfigure = response.Content;
+                areaConfigure.mfIds = mfIds;
+                areaConfigure.meterIds = meterIds;
+                loadAreaDetailPage();
+              }
+            });
+          }
+        });
       },
       onCancelBut: function () {},
       onLoad: function () {
@@ -720,18 +1025,36 @@ $(function () {
             e.stopPropagation();
             let currentDom = e.currentTarget;
             let currentModule = $(currentDom).children().first().children().first();
-            if (currentModule.attr('checked') === 'checked') {
+            let key = $(currentDom).attr('data-key');
+            let name = $(currentDom).attr('data-value');
+            if (currentModule.prop('checked') || currentModule.prop('checked') === 'checked') {
+              currentModule.prop('checked', false);
               currentModule.removeAttr('checked');
-              //_.remove(areaSubscribeModule, a=>a) 
+              _.remove(areaSubscribeModule, a => a.key === key);
             } else {
-              currentModule.attr('checked', 'checked');
-              //areaSubscribeModule.push()
+              currentModule.prop('checked', 'checked');
+              areaSubscribeModule.push({
+                key,
+                name
+              });
             }
           });
           if (areaSubscribeModule.length > 0) {
-            //TODO 初始化绑定区域模块和作用范围
-
+            let isData = _.find(areaSubscribeModule, a => a.key === '_AreaStatistics');
+            if (isData) {
+              $('.open #module-data').prop('checked', 'checked');
+            } else {
+              $('.open #module-data').removeAttr('checked');
+            }
+            let isFgp = _.find(areaSubscribeModule, a => a.key === '_AreaFgpStatistics');
+            if (isFgp) {
+              $('.open #peak-summary').prop('checked', 'checked');
+            } else {
+              $('.open #peak-summary').removeAttr('checked');
+            }
           }
+          let option = areaConfigure.is_all_area ? 1 : 0;
+          $(".open #select-usage option[value='" + option + "']").attr("selected", true);
         }, 150);
       },
       onClose: function () {},
@@ -858,6 +1181,51 @@ $(function () {
       $('#daycontainer').val(new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'));
     }
     searchMeterData();
+  });
+
+  $('.area-btn-grp .btn').on('click', function (e) {
+    e.stopPropagation();
+    const currentDom = e.currentTarget;
+    _.each($('.area-btn-grp .btn'), item => {
+      if ($(item).attr('data-value') !== $(currentDom).attr('data-value')) {
+        $(item).removeClass('date-active');
+      }
+    });
+    $(currentDom).toggleClass('date-active');
+    if ($(currentDom).hasClass('date-active')) {
+      switch ($(currentDom).attr('data-value')) {
+        case '2':
+          $('.area-date-grp').show();
+          $('#area-day').removeClass('hidden');
+          $('#area-month').addClass('hidden');
+          $('#area-year').addClass('hidden');
+          break;
+        case '3':
+          $('.area-date-grp').hide();
+          break;
+        case '4':
+          $('.area-date-grp').show();
+          $('#area-day').addClass('hidden');
+          $('#area-month').removeClass('hidden');
+          $('#area-year').addClass('hidden');
+          break;
+        case '5':
+          $('.area-date-grp').show();
+          $('#area-day').addClass('hidden');
+          $('#area-month').addClass('hidden');
+          $('#area-year').removeClass('hidden');
+          break;
+      }
+      $('#area-datevalue').val(resetSTimeAndETime(parseInt($(currentDom).attr('data-value'))));
+    } else {
+      $('.area-date-grp').show();
+      $('#area-day').removeClass('hidden');
+      $('#area-month').addClass('hidden');
+      $('#area-year').addClass('hidden');
+      $('#area-datevalue').val(resetSTimeAndETime(2));
+      $('#area-daycontainer').val(new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'));
+    }
+    searchAreaData();
   });
 
   $('.operate-grp i.icon').on('click', function (e) {
@@ -1002,7 +1370,147 @@ $(function () {
         break;
         //#endregion
     }
-    generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, chartSeries);
+    generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, chartSeries, 'chart-instance');
+  });
+
+  $('.area-operate-grp i.icon').on('click', function (e) {
+    e.stopPropagation();
+    const currentDom = e.currentTarget;
+    let flag = $(currentDom).attr('data-value');
+    if ($(currentDom).hasClass('should-uniq')) {
+      $('.area-operate-grp i.should-uniq').removeClass('btn-active');
+      $(currentDom).addClass('btn-active');
+    } else {
+      $(currentDom).toggleClass('btn-active');
+    }
+    //TODO
+    let chartSeries = [];
+    switch (flag) {
+      //#region rmb
+      case 'rmb':
+        if (comparsionSelectedMeters.length > 0) {
+          chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, getAreaChartType(),
+            $('.show-tip-area').hasClass('btn-active') ? true : false);
+        } else {
+          chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+            return {
+              id: a.id,
+              name: a.name
+            };
+          }), searchResult.chartXaxisData, getAreaChartType(), $('.show-tip-area').hasClass('btn-active') ? true : false);
+        }
+        if ($(currentDom).hasClass('btn-active')) {
+          let costSeries = [];
+          if (comparsionSelectedMeters.length > 0) {
+            costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData,
+              $('.show-tip-area').hasClass('btn-active') ? true : false);
+          } else {
+            costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+              return {
+                id: a.id,
+                name: a.name
+              };
+            }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
+          }
+          chartSeries = _.concat(chartSeries, costSeries);
+        }
+        break;
+        //#endregion
+        //#region bar
+      case 'bar':
+        if (comparsionSelectedMeters.length > 0) {
+          chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, 'bar',
+            $('.show-tip-area').hasClass('btn-active') ? true : false);
+        } else {
+          chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+            return {
+              id: a.id,
+              name: a.name
+            };
+          }), searchResult.chartXaxisData, 'bar', $('.show-tip-area').hasClass('btn-active') ? true : false);
+        }
+        if ($('.icon-RMB-area').hasClass('btn-active')) {
+          let costSeries = [];
+          if (comparsionSelectedMeters.length > 0) {
+            costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap,
+              searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
+          } else {
+            costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+              return {
+                id: a.id,
+                name: a.name
+              };
+            }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
+          }
+          chartSeries = _.concat(chartSeries, costSeries);
+        }
+        break;
+        //#endregion
+        //#region line
+      case 'line':
+        if (comparsionSelectedMeters.length > 0) {
+          chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, 'line',
+            $('.show-tip-area').hasClass('btn-active') ? true : false);
+        } else {
+          chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+            return {
+              id: a.id,
+              name: a.name
+            };
+          }), searchResult.chartXaxisData, 'line', $('.show-tip-area').hasClass('btn-active') ? true : false);
+        }
+        if ($('.icon-RMB-area').hasClass('btn-active')) {
+          let costSeries = [];
+          if (comparsionSelectedMeters.length > 0) {
+            costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap,
+              searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
+          } else {
+            costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+              return {
+                id: a.id,
+                name: a.name
+              };
+            }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
+          }
+          chartSeries = _.concat(chartSeries, costSeries);
+        }
+        break;
+        //#endregion
+      case 'download':
+
+        return;
+        //#region tip
+      case 'tip':
+        if (comparsionSelectedMeters.length > 0) {
+          chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, getAreaChartType(),
+            $(currentDom).hasClass('btn-active') ? true : false);
+        } else {
+          chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+            return {
+              id: a.id,
+              name: a.name
+            };
+          }), searchResult.chartXaxisData, getAreaChartType(), $(currentDom).hasClass('btn-active') ? true : false);
+        }
+        if ($('.icon-RMB-area').hasClass('btn-active')) {
+          let costSeries = [];
+          if (comparsionSelectedMeters.length > 0) {
+            costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData,
+              $(currentDom).hasClass('btn-active') ? true : false);
+          } else {
+            costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+              return {
+                id: a.id,
+                name: a.name
+              };
+            }), searchResult.chartXaxisData, $(currentDom).hasClass('btn-active') ? true : false);
+          }
+          chartSeries = _.concat(chartSeries, costSeries);
+        }
+        break;
+        //#endregion
+    }
+    generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, chartSeries, 'chart-instance');
   });
 
   $('.func-tab .layui-tab-title>li').on('click', function (e) {
@@ -1065,7 +1573,7 @@ $(function () {
                       $(currentDom).hasClass('btn-active') ? true : false);
                     chartSeries = _.concat(chartSeries, costSeries);
                   }
-                  generateChart(searchResult.unit, _.map(searchResult.datas, a => a.meter_name), searchResult.chartXaxisData, chartSeries);
+                  generateChart(searchResult.unit, _.map(searchResult.datas, a => a.meter_name), searchResult.chartXaxisData, chartSeries, 'chart-instance');
                 }
               }
             } else {
@@ -1112,14 +1620,42 @@ $(function () {
                 instance.select_node(instance.get_node(meter.id));
               });
             });
-            setTimeout(() => {
-
-            }, 1000);
           }
         }, 150);
       },
       onClose: function () {},
     });
+  });
+
+  $('.proportion-grp ul>li').on('click', function (e) {
+    e.stopPropagation();
+  });
+
+  $('.proportion-grp .op-btn').on('click', function (e) {
+    e.stopPropagation();
+    $('.parameter-overlay').toggleClass('hidden');
+  });
+
+  $('.op-grp>.btn').on('click', function (e) {
+    e.stopPropagation();
+    let currentDom = e.currentTarget;
+    $('.op-grp>.btn').removeClass('op-btn-active');
+    $(currentDom).addClass('op-btn-active');
+    let id = $(currentDom).attr('data-id');
+    $('.area-sort-list').empty();
+    switch (id) {
+      case 'usage':
+        generateAreaSort(searchResult.datas);
+        break;
+      case 'cost':
+        generateAreaCostSort(searchResult.datas);
+        break;
+    }
+  });
+
+  $(document).on('click', function (e) {
+    e.stopPropagation();
+    $('.parameter-overlay').addClass('hidden');
   });
 
   layui.use('laydate', function () {
@@ -1163,6 +1699,47 @@ $(function () {
     });
   });
 
+  layui.use('laydate', function () {
+    let laydate = layui.laydate;
+    laydate.render({
+      elem: '#area-daycontainer',
+      range: '--',
+      format: 'yyyy-MM-dd',
+      type: 'date',
+      value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
+      done: (value, date) => {
+        let truthValue = value.split('--');
+        $('#area-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+        searchAreaData();
+      }
+    });
+    laydate.render({
+      elem: '#area-monthcontainer',
+      range: '--',
+      format: 'yyyy-MM',
+      type: 'month',
+      value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
+      done: (value, date) => {
+        let truthValue = value.split('--');
+        let dayInMonth = new moment(truthValue[1]).daysInMonth();
+        $('#area-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
+        searchAreaData();
+      }
+    });
+    laydate.render({
+      elem: '#area-yearcontainer',
+      range: '--',
+      format: 'yyyy',
+      type: 'year',
+      value: new Date().format('yyyy') + ' -- ' + new Date().format('yyyy'),
+      done: (value, date) => {
+        let truthValue = value.split('--');
+        $('#area-datevalue').val(_.trim(truthValue[0]) + '-01-01 -- ' + truthValue[1] + '-12-31');
+        searchAreaData();
+      }
+    });
+  });
+
   esdpec.framework.core.getJsonResult('common/gettree', function (response) {
     if (response.IsSuccess) {
       meterDataList = _.map(response.Content, a => {
@@ -1202,15 +1779,26 @@ $(function () {
         if (node.original.modeltype === 'area') {
           currentMeterParameters = [];
           areaWindowInteractive();
-          // esdpec.framework.core.getJsonResult('dataanalysis/getparasbymeterid', function (response) {
-          //   if (response.IsSuccess) {
-          //     areaSubscribeModule = [];
-          //     if (areaSubscribeModule.length <= 0) {
-
-          //       return;
-          //     }
-          //   }
-          // });
+          esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + nodeId, function (response) {
+            if (response.IsSuccess) {
+              areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
+              let meterAndMfidMapStr = response.Content.meterid_mfid_map || '';
+              let meterAndMfidMap = meterAndMfidMapStr.split(';');
+              let meterIds = [];
+              let mfIds = [];
+              _.each(meterAndMfidMap, m => {
+                if (m === '') return true;
+                let meterMfid = m.split(',');
+                meterIds.push(meterMfid[0]);
+                mfIds.push(meterMfid[1]);
+              });
+              areaConfigureMeters = meterIds.length > 0 ? _.filter(meterDataList, a => _.includes(meterIds, a.id)) : [];
+              areaConfigure = response.Content;
+              areaConfigure.mfIds = mfIds;
+              areaConfigure.meterIds = meterIds;
+              loadAreaDetailPage();
+            }
+          });
         } else {
           meterWindowInteractive();
           esdpec.framework.core.getJsonResult('dataanalysis/getparasbymeterid?meterId=' + nodeId, function (response) {

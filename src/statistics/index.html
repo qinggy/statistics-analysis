@@ -54,7 +54,78 @@
             </div>
           </div>
           <div id="area-zone">
-            <div class="area-no-data"><span>当前区域未配置模块数据，请点击<a class="stress-info operate-hander">&nbsp;区域模块管理&nbsp;</a>进行配置</span></span></div>
+            <div class="area-no-data hidden"><span>当前区域未配置模块数据，请点击<a class="stress-info operate-hander">&nbsp;区域模块管理&nbsp;</a>进行配置</span></span></div>
+            <div class="area-detail-container">
+              <div class="condition">
+                <div class="search-container">
+                  <div class="area-btn-grp">
+                    <div class="btn date-active" data-value="2">日</div>
+                    <div class="btn" data-value="3">周</div>
+                    <div class="btn" data-value="4">月</div>
+                    <div class="btn" data-value="5">年</div>
+                  </div>
+                  <div class="area-date-grp">
+                    <input type="hidden" id="area-datevalue">
+                    <div class="date-component icon iconfont icon-rili" id="area-day">
+                      <input type="text" id="area-daycontainer" class="date-input">
+                    </div>
+                    <div class="date-component icon iconfont icon-rili hidden" id="area-month">
+                      <input type="text" id="area-monthcontainer" class="date-input">
+                    </div>
+                    <div class="date-component icon iconfont icon-rili hidden" id="area-year">
+                      <input type="text" id="area-yearcontainer" class="date-input">
+                    </div>
+                  </div>
+                  <div class="area-operate-grp">
+                    <i class="icon iconfont icon-RMB-area" data-value="rmb"></i>
+                    <i class="icon iconfont should-uniq icon-icon- btn-active" data-value="bar"></i>
+                    <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
+                    <i class="icon iconfont icon-Group-" data-value="download"></i>
+                    <i class="icon iconfont icon-tooltip-outline show-tip-area" data-value="tip"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="chart-container">
+                <div id="area-chart-instance" class="chart"></div>
+              </div>
+              <div class="area-comparison">
+                <div class="comparison-sort">
+                  <div>
+                    <i class="icon iconfont icon-heguipaiming"></i><span>分项排名</span>
+                    <div class="op-grp">
+                      <input type="button" class="btn op-btn-active" data-id="usage" value="用量">
+                      <input type="button" class="btn" data-id="cost" value="费用">
+                    </div>
+                  </div>
+                  <div class="area-sort-list"></div>
+                </div>
+                <div class="comparison-proportion">
+                  <div>
+                    <i class="icon iconfont icon-tongji"></i><span>分项占比</span>
+                    <div class="proportion-grp">
+                      <div>
+                        <div class="op-btn">操作<i class="icon iconfont icon-xiaotuziCduan_"></i></div>
+                        <div class="parameter-overlay hidden close">
+                          <div class="triangle-overlay-border"></div>
+                          <div class="triangle-overlay"></div>
+                          <ul>
+                            <li><i class="icon iconfont icon-Group-"></i>导出数据</li>
+                            <li style="cursor:not-allowed"><i class="icon iconfont icon-delete1"></i>删除</li>
+                            <li style="cursor:not-allowed"><i class="icon iconfont icon-jinzhi"></i>禁止</li>
+                          </ul>
+                          <div class="manage-box" style="cursor:not-allowed">管理</div>
+                        </div>
+                      </div>
+                      <i class="icon iconfont icon-RMB comparison-rmb"></i>
+                      <i class="icon iconfont icon-zuidahua"></i>
+                    </div>
+                  </div>
+                  <div class="proportion-chart-container">
+                    <div class="proportion-chart-instance" id="proportion-chart-instance"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div id="meter-zone" class="hidden">
             <div class="meter-info-container hidden close">
@@ -186,6 +257,17 @@
             </div>
           </div>
         </div>
+        <div class="area-fgp hidden">
+          <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+            <ul class="layui-tab-title">
+              <li class="layui-this" data-id="area-fgp-data">峰谷平统计</li>
+            </ul>
+            <div class="layui-tab-content">
+              <div id="area-fgp-data" class="area-fgp-data">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="content-footer hidden"></div>
     </div>
@@ -203,13 +285,13 @@
         <div class="layui-tab-content module-content">
           <div class="page-configure-func">
             <div class="func-list">
-              <div data-id="module-data">区域数据详情
+              <div data-id="module-data" data-key="_AreaStatistics" data-value="区域统计">区域数据详情
                 <div class="opt">
                   <input id="module-data" class="magic-checkbox" type="checkbox">
                   <label class="check-box"></label>
                 </div>
               </div>
-              <div data-id="peak-summary">峰谷平统计
+              <div data-id="peak-summary" data-key="_AreaFgpStatistics" data-value="峰谷平统计">峰谷平统计
                 <div class="opt">
                   <input id="peak-summary" class="magic-checkbox" type="checkbox">
                   <label class="check-box"></label>
@@ -220,9 +302,9 @@
               <div><span>应用于</span></div>
               <div class="usage-select">
                 <i class="icon iconfont icon-xiaotuziCduan_ dropdown"></i>
-                <select name="interest" class="beauty-select" lay-filter="aihao">
+                <select id="select-usage" name="interest" class="beauty-select" lay-filter="aihao">
                   <option value="0">当前区域</option>
-                  <option value="1" selected="">所有区域</option>
+                  <option value="1" selected>所有区域</option>
                 </select>
               </div>
             </div>
@@ -387,6 +469,23 @@
     <td>{{data.upper_limit}}</td>
     <td>{{data.lower_limit}}</td>
   </tr>
+  {{/each}}{{/if}}
+</script>
+<script type="text/html" id="area-sort-list-template">
+  {{if areaMeterList.length > 0}}{{each areaMeterList areaMeter index}}
+  <div class="area-sort-item">
+    <div class="area-sort-no" style="color:{{areaMeter.color}};border-color:{{areaMeter.color}}">{{index + 1}}</div>
+    <div class="area-sort-content">
+      <div class="meter-name">{{areaMeter.name}}</div>
+      <div class="meter-value">{{areaMeter.value}}{{areaMeter.unit}}</div>
+      <div class="area-progress">
+        <div class="area-progress-container">
+          <div class="area-progress-value" style="background-color:{{areaMeter.color}}; width:{{areaMeter.percent}}%"></div>
+        </div>
+        <span class="meter-percent">{{areaMeter.percent}}%</span>
+      </div>
+    </div>
+  </div>
   {{/each}}{{/if}}
 </script>
 
