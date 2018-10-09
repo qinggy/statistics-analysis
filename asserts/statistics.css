@@ -1136,6 +1136,7 @@ html body {
 
 .comparison-sort {
   flex: 1;
+  min-width: 300px;
 }
 
 .comparison-sort>div:first-of-type {
@@ -1150,6 +1151,7 @@ html body {
 
 .comparison-proportion {
   flex: 1;
+  min-width: 300px;
 }
 
 .comparison-proportion>div:first-of-type {
@@ -1350,4 +1352,88 @@ html body {
   height: 360px;
   width: 100%;
   margin-top: 30px;
+}
+
+.fgp-container {
+  margin-top: 40px;
+}
+
+.fgp-item {
+  margin-bottom: 30px;
+}
+
+.fgp-item>span {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.fgp-item>span:before {
+  margin-right: 10px;
+}
+
+.fgp-item-row {
+  display: flex;
+  position: relative;
+}
+
+.fgp-item-row>div {
+  flex: 1;
+}
+
+.fgp-item-pie {
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+
+.fgp-item-pie>div {
+  flex: 1;
+}
+
+.area-fgp-data {
+  position: relative;
+}
+
+.area-fgp-date-grp {
+  position: absolute;
+  left: 260px;
+  top: 0;
+}
+
+.fgp-usage-chart-instance {
+  height: 360px;
+  flex: 2 !important;
+  margin-top: 20px;
+}
+
+.fgp-cost-chart-instance {
+  height: 360px;
+  flex: 2 !important;
+  margin-top: 20px;
+}
+
+.fgp-item .icon-RMB:before {
+  font-size: 20px;
+}
+
+.usage-title-container,
+.cost-title-container {
+  position: absolute;
+  display: flex;
+  width: 400px;
+  top: 30px;
+  left: 150px;
+  text-align: center;
+}
+
+.usage-title-container>span,
+.cost-title-container>span{
+  flex: 1;
+}
+
+.usage-title,
+.cost-title{
+  position: absolute;
+  top: 50px;
+  left: 25%;
 }

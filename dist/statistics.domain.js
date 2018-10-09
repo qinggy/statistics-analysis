@@ -1,6 +1,7 @@
 $(function () {
   //#region fields 
   let analysisChart = null;
+  let areaChart = null;
   let meterDataList = [];
   let searchResult = {};
   let currentSelectedNode = null;
@@ -10,8 +11,10 @@ $(function () {
   let areaConfigureMeters = [];
   let areaConfigure = {};
   let sortColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F',
-    '#808000', '	#FFE4C4', '#F5DEB3', '#40E0D0', '#7FFFAA', '#008B8B', '#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
+    '#808000', '#FFE4C4', '#F5DEB3', '#40E0D0', '#7FFFAA', '#008B8B', '#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
   ];
+  let usageColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
+  let costColor = ['#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
   //#endregion
   let ifShowPieChart = function () {
     let flag = false;
@@ -62,6 +65,12 @@ $(function () {
       sunday: last_sunday
     };
   };
+  let windowResize = () => {
+    window.addEventListener("resize", () => {
+      if (analysisChart) analysisChart.resize();
+      if (areaChart) areaChart.resize();
+    });
+  };
   let resetSTimeAndETime = function (type) {
     switch (type) {
       case 2:
@@ -88,6 +97,21 @@ $(function () {
       return resetSTimeAndETime(type);
     }
     return stimeAndetime;
+  };
+  let getAreaFgpSTimeAndETime = function (type) {
+    switch (type) {
+      case 2:
+        let dayDate = $('#area-fgp-daycontainer').val();
+        let dayArray = dayDate.split(' -- ');
+        return dayArray[0] + ' 00:00:00 -- ' + dayArray[1] + ' 23:59:59';
+      case 3:
+        return getWeek().monday + ' -- ' + getWeek().sunday;
+      case 4:
+        let monthDate = $('#area-fgp-monthcontainer').val();
+        let monthArray = monthDate.split(' -- ');
+        let daysInMonth = new moment(new Date(monthArray[1])).daysInMonth();
+        return monthArray[0] + '-01 -- ' + monthArray[1] + '-' + daysInMonth;
+    }
   };
   let getChartType = function () {
     let activeItem = $('.operate-grp>.should-uniq.btn-active')
@@ -419,12 +443,13 @@ $(function () {
       let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
       let sumVal = {
         name: meter.text,
-        value: data.sum_val ? data.sum_val.toFixed(2) : 0
+        value: _.sum(_.map(data.data_list, a => a.cost))
       };
       datas.push(sumVal);
       legends.push(meter.text);
+
     });
-    let option = generatePieForAggregateData(legends, datas, searchResult.unit);
+    let option = generatePieForAggregateData(legends, datas, '元', '费用对比');
     let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
     areaChart.setOption(option, true);
     window.onresize = areaChart.resize;
@@ -531,7 +556,7 @@ $(function () {
             } else if (searchParaType !== 0) $('.summary-container').hide();
             generateGraphData(parameter.unit, searchParaType);
             generateOriginalData();
-            generatePeakData();
+            generateFgpData();
           } else {
             $('#summary-container').hide();
             $('.func-tab').hide();
@@ -571,7 +596,6 @@ $(function () {
       let uriparam = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
       esdpec.framework.core.getJsonResult('dataanalysis/getdata?' + uriparam, function (response) {
         if (response.IsSuccess) {
-          console.dir(response.Content);
           let chartLegend = [];
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
@@ -584,16 +608,17 @@ $(function () {
             type: 0,
             meterAndParaMap
           };
-          assembleChartComponent(areaConfigure.unit, chartLegend, chartXaxisData, [response.Content], meterAndParaMap, 'area-chart-instance', getAreaChartType());
+          generateAreaChart(areaConfigure.unit, chartLegend, chartXaxisData, [response.Content], meterAndParaMap, 'area-chart-instance', getAreaChartType());
           generateAreaSort([response.Content]);
           generateAreaPie([response.Content]);
+          generateAreaFgp();
+          console.log('searchResult=>', searchResult);
         }
       });
     } else {
       let uriparams = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
       esdpec.framework.core.getJsonResult('dataanalysis/getcomparedata?' + uriparams, function (response) {
         if (response.IsSuccess) {
-          console.dir(response.Content);
           let chartLegend = [];
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
@@ -606,9 +631,11 @@ $(function () {
             type: 0,
             meterAndParaMap
           };
-          assembleChartComponent(areaConfigure.unit, chartLegend, chartXaxisData, response.Content, meterAndParaMap, 'area-chart-instance', getAreaChartType());
+          generateAreaChart(areaConfigure.unit, chartLegend, chartXaxisData, response.Content, meterAndParaMap, 'area-chart-instance', getAreaChartType());
           generateAreaSort(response.Content);
           generateAreaPie(response.Content);
+          generateAreaFgp();
+          console.log('searchResult=>', searchResult);
         }
       });
     }
@@ -655,7 +682,47 @@ $(function () {
     analysisChart = echarts.init(document.getElementById(chartDom), e_macarons);
     analysisChart.setOption(option, true);
     window.onresize = analysisChart.resize;
-  }
+  };
+  let generateAreaChart = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartDom, chartType = 'bar') {
+    let chartSeries = getChartSeries(datas, _.map(checkedParameters, a => {
+      return {
+        id: a.id,
+        name: a.name
+      };
+    }), chartXaxisData, chartType);
+    let option = {
+      title: {
+        subtext: '单位：' + unit
+      },
+      tooltip: {
+        trigger: 'axis'
+      },
+      grid: {
+        left: 5,
+        right: 100,
+        bottom: 20
+      },
+      legend: {
+        data: chartLegend
+      },
+      calculable: true,
+      xAxis: [{
+        type: 'category',
+        data: chartXaxisData
+      }],
+      yAxis: [{
+        type: 'value',
+        position: 'right'
+      }],
+      dataZoom: [{
+        type: "inside"
+      }],
+      series: chartSeries
+    };
+    areaChart = echarts.init(document.getElementById(chartDom), e_macarons);
+    window.onresize = areaChart.resize;
+    areaChart.setOption(option, true);
+  };
   let generateContemporaryComparison = function (avg_per, avg_val, last_sum_val, now_sum_val, sum_per, unit) {
     let maxVal = _.max([last_sum_val, now_sum_val, avg_val]);
     let data = {
@@ -785,8 +852,268 @@ $(function () {
       }
     });
   };
-  let generatePeakData = function () {
+  let generateFgpData = function () {
+    esdpec.framework.core.getJsonResult('dataanalysis/getfgpdata', function (response) {
+      if (response.IsSuccess) {
 
+      }
+    });
+  };
+  let generateAreaFgp = function () {
+    let mfids = _.map(searchResult.meterAndParaMap, a => a.mfid);
+    let dateType = $('.area-fgp-data .btn.date-active').attr('data-value');
+    let dateStr = getAreaFgpSTimeAndETime(parseInt(dateType));
+    let dateArray = dateStr.split(' -- ');
+    let queryType = 0;
+    switch (dateType) {
+      case '2':
+        queryType = dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) ? 0 : 1;
+        break;
+      case '3':
+        queryType = 0;
+        break;
+      case '4':
+        queryType = dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) ? 0 : 1;
+        break;
+    }
+    let uriparam = `mfids=${_.join(mfids, ',')}&queryType=${queryType}&dateType=${dateType}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
+    esdpec.framework.core.getJsonResult('dataanalysis/getfgpdata?' + uriparam, function (response) {
+      if (response.IsSuccess) {
+        console.log('Fgp-Data=>', response.Content);
+        generateStackChart('fgp-usage-chart-instance', response.Content, dateArray, dateType, 0);
+        generateFgpPieChart('fgp-usage-piechart-now-instance');
+        generateFgpPieChart('fgp-usage-piechart-yes-instance');
+
+        generateStackChart('fgp-cost-chart-instance', response.Content, dateArray, dateType, 1);
+        generateFgpPieChart('fgp-cost-piechart-now-instance');
+        generateFgpPieChart('fgp-cost-piechart-yes-instance');
+      }
+    });
+  };
+  let getToolTipTitle = data => {
+    // if (data.axisValueLabel === '昨日') {
+    //   return new Date().addDays(-1).format('yyyy-MM-dd');
+    // } else if (data.axisValueLabel === '今日') {
+    //   return new Date().format('yyyy-MM-dd');
+    // }
+    return data.axisValueLabel;
+  };
+  let getStackSeriesData = (list, key, chartType, type = 's') => {
+    let data = _.find(list, a => a.name === key);
+    if (data && data.list && data.list.length > 0) {
+      if (type === 's') {
+        return _.sum(_.map(data.list, a => chartType === 0 ? a.data : a.cost));
+      } else {
+        return _.map(data.list, a => chartType === 0 ? a.data : a.cost);
+      }
+    }
+    return 0.0;
+  };
+  let getStackSeries = (branchs, datas, flag, chartType) => {
+    let usageSeries = [];
+    if (flag === 0) {
+      _.each(branchs, (b, index) => {
+        usageSeries.push({
+          name: b,
+          type: 'bar',
+          stack: '堆积',
+          barWidth: 30,
+          data: [getStackSeriesData(datas.now_data_list, b, chartType), getStackSeriesData(datas.last_data_list, b, chartType)],
+          itemStyle: {
+            normal: {
+              color: chartType === 0 ? usageColor[index] : costColor[index]
+            },
+          }
+        });
+      });
+    } else {
+      _.each(branchs, (b, index) => {
+        usageSeries.push({
+          name: b,
+          type: 'bar',
+          stack: '堆积',
+          barWidth: 30,
+          data: getStackSeriesData(datas.now_data_list, b, chartType, 'm'),
+          itemStyle: {
+            normal: {
+              color: chartType === 0 ? usageColor[index] : costColor[index]
+            },
+          }
+        });
+      });
+    }
+    return usageSeries;
+  };
+  let generateStackChart = function (chartDom, datas, dateArray, dateType, chartType) {
+    let xAxisData = [];
+    let series = [];
+    let nowbranchs = _.map(datas.now_data_list, a => a.name);
+    let lastbranchs = _.map(datas.last_data_list, a => a.name);
+    let branchs = _.merge(nowbranchs, lastbranchs);
+    switch (dateType) {
+      case '2':
+        let flag = 0;
+        if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10)) {
+          xAxisData = [new Date().format('yyyy-MM-dd'), new Date().addDays(-1).format('yyyy-MM-dd')];
+          flag = 0;
+          $('#usage-title').hide();
+          $('#cost-title').hide();
+          let nowUsageSum = 0,
+            lastUsageSum = 0,
+            nowCostSum = 0,
+            lastCostSum = 0;
+          _.each(datas.now_data_list, a => {
+            nowUsageSum = _.sum([nowUsageSum, _.sum(_.map(a.list, b => b.data))]);
+            nowCostSum = _.sum([nowCostSum, _.sum(_.map(a.list, b => b.cost))]);
+          });
+          _.each(datas.last_data_list, a => {
+            lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
+            lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
+          });
+          $('.usage-title-container').show().html("<span>本日用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>昨日用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
+          $('.cost-title-container').show().html("<span>本日费用：" + nowCostSum.toFixed(3) + "元</span><span>昨日费用：" + lastCostSum.toFixed(3) + "元</span>");
+        } else {
+          $('.cost-title-container').hide();
+          $('.usage-title-container').hide();
+          let startTime = new Date(dateArray[0]);
+          let endTime = new Date(dateArray[1]);
+          for (let i = startTime; i <= endTime; i = i.addDays(1)) {
+            xAxisData.push(i.format('yyyy-MM-dd'));
+          }
+          let usageSum = 0;
+          let costSum = 0;
+          _.each(datas.now_data_list, a => {
+            usageSum = _.sum([usageSum, _.sum(_.map(a.list, b => b.data))]);
+            costSum = _.sum([costSum, _.sum(_.map(a.list, a => a.cost))]);
+          });
+          if (chartType === 0) {
+            $('#usage-title').show().text('总用量：' + usageSum.toFixed(3) + searchResult.unit);
+          } else {
+            $('#cost-title').show().text('总费用：' + costSum.toFixed(3) + '元');
+          }
+          flag = 1;
+        }
+        series = getStackSeries(branchs, datas, flag, chartType);
+        break;
+      case '3':
+        $('#usage-title').hide();
+        $('#cost-title').hide();
+        let nowUsageSum = 0,
+          lastUsageSum = 0,
+          nowCostSum = 0,
+          lastCostSum = 0;
+        _.each(datas.now_data_list, a => {
+          nowUsageSum = _.sum([nowUsageSum, _.sum(_.map(a.list, b => b.data))]);
+          nowCostSum = _.sum([nowCostSum, _.sum(_.map(a.list, b => b.cost))]);
+        });
+        _.each(datas.last_data_list, a => {
+          lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
+          lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
+        });
+        xAxisData = [getWeek().monday.substring(0, 10) + ' 至 ' + getWeek().sunday.substring(0, 10), new Date(getWeek().monday).addDays(-7).format('yyyy-MM-dd') + ' 至 ' + new Date(getWeek().sunday).addDays(-7).format('yyyy-MM-dd')];
+        $('.usage-title-container').show().html("<span>本周用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>上周用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
+        $('.cost-title-container').show().html("<span>本周费用：" + nowCostSum.toFixed(3) + "元</span><span>上周费用：" + lastCostSum.toFixed(3) + "元</span>");
+        series = getStackSeries(branchs, datas, 0, chartType);
+        break;
+      case '4':
+        let flaga = 0;
+        if (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7)) {
+          xAxisData = [new moment().format('YYYY-MM'), new moment().subtract(1, 'months').format('YYYY-MM')];
+          $('#usage-title').hide();
+          $('#cost-title').hide();
+          let nowUsageSum = 0,
+            lastUsageSum = 0,
+            nowCostSum = 0,
+            lastCostSum = 0;
+          _.each(datas.now_data_list, a => {
+            nowUsageSum = _.sum([nowUsageSum, _.sum(_.map(a.list, b => b.data))]);
+            nowCostSum = _.sum([nowCostSum, _.sum(_.map(a.list, b => b.cost))]);
+          });
+          _.each(datas.last_data_list, a => {
+            lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
+            lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
+          });
+          $('.usage-title-container').show().html("<span>本月用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>上月用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
+          $('.cost-title-container').show().html("<span>本月费用：" + nowCostSum.toFixed(3) + "元</span><span>上月费用：" + lastCostSum.toFixed(3) + "元</span>");
+        } else {
+          $('.cost-title-container').hide();
+          $('.usage-title-container').hide();
+          let startTime = new moment(dateArray[0]);
+          let endTime = new moment(dateArray[1]);
+          for (let i = startTime; i <= endTime; i = i.add(1, 'months')) {
+            xAxisData.push(i.format('YYYY-MM'));
+          }
+          let usageSum = 0;
+          let costSum = 0;
+          _.each(datas.now_data_list, a => {
+            usageSum = _.sum([usageSum, _.sum(_.map(a.list, b => b.data))]);
+            costSum = _.sum([costSum, _.sum(_.map(a.list, a => a.cost))]);
+          });
+          if (chartType === 0) {
+            $('#usage-title').show().text('总用量：' + usageSum.toFixed(3) + searchResult.unit);
+          } else {
+            $('#cost-title').show().text('总费用：' + costSum.toFixed(3) + '元');
+          }
+          flaga = 1;
+        }
+        series = getStackSeries(branchs, datas, flaga, chartType);
+        break;
+    }
+    let option = {
+      tooltip: {
+        trigger: "axis",
+        formatter: function (datas) {
+          let tooltip = getToolTipTitle(datas[0]) + '<br/>';
+          let totalSum = _.sum(_.map(datas, a => a.value));
+          _.each(datas, (data, index) => {
+            tooltip += "<div style='width: 12px;height:12px;background-color: " + (chartType === 0 ? usageColor[index] : costColor[index]) + "; display: inline-block;margin-right: 10px'></div>" + data.seriesName + (chartType === 0 ? '用量：' : '费用：') +
+              data.value.toFixed(3) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
+          });
+          tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + totalSum.toFixed(3) + (chartType === 0 ? searchResult.unit : '元');
+          return tooltip;
+        },
+        padding: [5, 5, 5, 10]
+      },
+      legend: {
+        itemHeight: 15,
+        data: [],
+      },
+      grid: {
+        left: 0,
+        bottom: 20
+      },
+      xAxis: {
+        data: xAxisData,
+        show: true,
+        splitLine: {
+          show: false,
+        },
+      },
+      yAxis: {
+        splitLine: {
+          show: false,
+        },
+        position: 'right'
+      },
+      series: series
+    };
+    var myChart = echarts.init(document.getElementById(chartDom), e_macarons);
+    myChart.setOption(option, true);
+  };
+  let generateFgpPieChart = function (chartDom) {
+    let datas = [];
+    let legends = [];
+    _.each(searchResult.datas, data => {
+      let sumVal = {
+        name: data.meter_name,
+        value: data.sum_val ? data.sum_val : 0
+      };
+      datas.push(sumVal);
+      legends.push(data.meter_name);
+    });
+    let option = generatePieForAggregateData(legends, datas, searchResult.unit);
+    let pieChart = echarts.init(document.getElementById(chartDom), e_macarons);
+    pieChart.setOption(option, true);
   };
   let generatePieChart = function () {
     let datas = [];
@@ -800,7 +1127,7 @@ $(function () {
       legends.push(data.meter_name);
     });
     let option = generatePieForAggregateData(legends, datas, searchResult.unit);
-    analysisChart.clear();
+    if (analysisChart) analysisChart.clear();
     analysisChart = echarts.init(document.getElementById('chart-instance'), e_macarons);
     analysisChart.setOption(option, true);
     window.onresize = analysisChart.resize;
@@ -912,9 +1239,6 @@ $(function () {
       return;
     }
     $('.area-no-data').hide();
-    let moduleData = _.find(areaSubscribeModule, a => a.key === '_AreaStatistics');
-    if (moduleData) $('.area-detail-container').show();
-    else $('.area-detail-container').hide();
     let fgp = _.find(areaSubscribeModule, a => a.key === '_AreaFgpStatistics');
     if (fgp) {
       $('.area-fgp').show();
@@ -924,6 +1248,16 @@ $(function () {
     } else {
       $('.area-fgp').hide();
       $('.content-footer').hide();
+    }
+    let moduleData = _.find(areaSubscribeModule, a => a.key === '_AreaStatistics');
+    if (moduleData) {
+      $('.area-detail-container').show();
+      $('.content-footer').show();
+    } else {
+      $('.area-detail-container').hide();
+      if ($('.content-right')[0].scrollHeight > $('.content-right')[0].clientHeight)
+        $('.content-footer').show();
+      else $('.content-footer').hide();
     }
     searchAreaData();
   };
@@ -1060,7 +1394,7 @@ $(function () {
       onClose: function () {},
     });
   };
-  let generatePieForAggregateData = (xAxisData, seriesData, unit) => {
+  let generatePieForAggregateData = (xAxisData, seriesData, unit, tooltip = '能耗对比') => {
     let option = {
       title: {
         subtext: '单位：' + unit
@@ -1075,7 +1409,7 @@ $(function () {
         data: xAxisData
       },
       series: [{
-        name: '能耗对比',
+        name: tooltip,
         type: 'pie',
         center: ['50%', '60%'],
         label: {
@@ -1115,11 +1449,8 @@ $(function () {
 
   $('#onshowmoreparameter').on('click', function (e) {
     e.stopPropagation();
-    //$('.parameter-overlay').toggleClass('close');
     $('#onshowmoreparameter').toggleClass('close');
     if ($('#onshowmoreparameter').hasClass('close')) {
-      //$('.parameter-overlay').hide(300);
-      //$('#onshowmoreparameter>i').removeClass('triangle-transform');
       $('#onshowmoreparameter').html('更多参数<i class="icon iconfont icon-xiaotuziCduan_"></i>');
       let parameters = {
         parameterList: _.slice(currentMeterParameters, 0, 5)
@@ -1127,8 +1458,6 @@ $(function () {
       let templateHtml = template('parameter-list-template', parameters);
       $('.parameter-right').html(templateHtml);
     } else {
-      //$('.parameter-overlay').show(300);
-      //$('#onshowmoreparameter>i').addClass('triangle-transform');
       $('#onshowmoreparameter').html('隐藏更多<i class="icon iconfont icon-xiaotuziCduan_1"></i>');
       let parameters = {
         parameterList: currentMeterParameters
@@ -1388,90 +1717,57 @@ $(function () {
     switch (flag) {
       //#region rmb
       case 'rmb':
-        if (comparsionSelectedMeters.length > 0) {
-          chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, getAreaChartType(),
-            $('.show-tip-area').hasClass('btn-active') ? true : false);
-        } else {
-          chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+        chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
+          return {
+            id: a.id,
+            name: a.name
+          };
+        }), searchResult.chartXaxisData, getAreaChartType(), $('.show-tip-area').hasClass('btn-active') ? true : false);
+        if ($(currentDom).hasClass('btn-active')) {
+          let costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
             return {
               id: a.id,
               name: a.name
             };
-          }), searchResult.chartXaxisData, getAreaChartType(), $('.show-tip-area').hasClass('btn-active') ? true : false);
-        }
-        if ($(currentDom).hasClass('btn-active')) {
-          let costSeries = [];
-          if (comparsionSelectedMeters.length > 0) {
-            costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData,
-              $('.show-tip-area').hasClass('btn-active') ? true : false);
-          } else {
-            costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.checkedParameters, a => {
-              return {
-                id: a.id,
-                name: a.name
-              };
-            }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
-          }
+          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
           chartSeries = _.concat(chartSeries, costSeries);
         }
         break;
         //#endregion
         //#region bar
       case 'bar':
-        if (comparsionSelectedMeters.length > 0) {
-          chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, 'bar',
-            $('.show-tip-area').hasClass('btn-active') ? true : false);
-        } else {
-          chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+        chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
+          return {
+            id: a.id,
+            name: a.name
+          };
+        }), searchResult.chartXaxisData, 'bar', $('.show-tip-area').hasClass('btn-active') ? true : false);
+        if ($('.icon-RMB-area').hasClass('btn-active')) {
+          let costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
             return {
               id: a.id,
               name: a.name
             };
-          }), searchResult.chartXaxisData, 'bar', $('.show-tip-area').hasClass('btn-active') ? true : false);
-        }
-        if ($('.icon-RMB-area').hasClass('btn-active')) {
-          let costSeries = [];
-          if (comparsionSelectedMeters.length > 0) {
-            costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap,
-              searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
-          } else {
-            costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.checkedParameters, a => {
-              return {
-                id: a.id,
-                name: a.name
-              };
-            }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
-          }
+          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
           chartSeries = _.concat(chartSeries, costSeries);
         }
         break;
         //#endregion
         //#region line
       case 'line':
-        if (comparsionSelectedMeters.length > 0) {
-          chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, 'line',
-            $('.show-tip-area').hasClass('btn-active') ? true : false);
-        } else {
-          chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+        chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
+          return {
+            id: a.id,
+            name: a.name
+          };
+        }), searchResult.chartXaxisData, 'line', $('.show-tip-area').hasClass('btn-active') ? true : false);
+        if ($('.icon-RMB-area').hasClass('btn-active')) {
+          let costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
             return {
               id: a.id,
               name: a.name
             };
-          }), searchResult.chartXaxisData, 'line', $('.show-tip-area').hasClass('btn-active') ? true : false);
-        }
-        if ($('.icon-RMB-area').hasClass('btn-active')) {
-          let costSeries = [];
-          if (comparsionSelectedMeters.length > 0) {
-            costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap,
-              searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
-          } else {
-            costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.checkedParameters, a => {
-              return {
-                id: a.id,
-                name: a.name
-              };
-            }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
-          }
+          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
           chartSeries = _.concat(chartSeries, costSeries);
         }
         break;
@@ -1481,36 +1777,25 @@ $(function () {
         return;
         //#region tip
       case 'tip':
-        if (comparsionSelectedMeters.length > 0) {
-          chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, getAreaChartType(),
-            $(currentDom).hasClass('btn-active') ? true : false);
-        } else {
-          chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.checkedParameters, a => {
+        chartSeries = getChartSeries(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
+          return {
+            id: a.id,
+            name: a.name
+          };
+        }), searchResult.chartXaxisData, getAreaChartType(), $(currentDom).hasClass('btn-active') ? true : false);
+        if ($('.icon-RMB-area').hasClass('btn-active')) {
+          let costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
             return {
               id: a.id,
               name: a.name
             };
-          }), searchResult.chartXaxisData, getAreaChartType(), $(currentDom).hasClass('btn-active') ? true : false);
-        }
-        if ($('.icon-RMB-area').hasClass('btn-active')) {
-          let costSeries = [];
-          if (comparsionSelectedMeters.length > 0) {
-            costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData,
-              $(currentDom).hasClass('btn-active') ? true : false);
-          } else {
-            costSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.checkedParameters, a => {
-              return {
-                id: a.id,
-                name: a.name
-              };
-            }), searchResult.chartXaxisData, $(currentDom).hasClass('btn-active') ? true : false);
-          }
+          }), searchResult.chartXaxisData, $(currentDom).hasClass('btn-active') ? true : false);
           chartSeries = _.concat(chartSeries, costSeries);
         }
         break;
         //#endregion
     }
-    generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, chartSeries, 'chart-instance');
+    generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, chartSeries, 'area-chart-instance');
   });
 
   $('.func-tab .layui-tab-title>li').on('click', function (e) {
@@ -1653,6 +1938,57 @@ $(function () {
     }
   });
 
+  $('.comparison-proportion .comparison-rmb').on('click', function (e) {
+    e.stopPropagation();
+    let currentDom = e.currentTarget;
+    $(currentDom).toggleClass('btn-active');
+    if ($(currentDom).hasClass('btn-active')) generateAreaCostPie();
+    else generateAreaPie();
+  });
+
+  $('.area-fgp-data>.btn-group>div.btn').on('click', function (e) {
+    e.stopPropagation();
+    let currentDom = e.currentTarget;
+    $('.area-fgp-data>.btn-group>div.btn').removeClass('date-active');
+    $(currentDom).addClass('date-active');
+    switch ($(currentDom).attr('data-value')) {
+      case '2':
+        $('.area-fgp-date-grp').show();
+        $('#area-fgp-day').removeClass('hidden');
+        $('#area-fgp-month').addClass('hidden');
+        break;
+      case '3':
+        $('.area-fgp-date-grp').hide();
+        break;
+      case '4':
+        $('.area-fgp-date-grp').show();
+        $('#area-fgp-day').addClass('hidden');
+        $('#area-fgp-month').removeClass('hidden');
+        break;
+    }
+    generateAreaFgp();
+  });
+
+  $('.proportion-grp .area-pie').on('click', function (e) {
+    e.stopPropagation();
+    let canvas = document.getElementById('proportion-chart-instance').children[0].children[0];
+    let dataUrl = canvas.toDataURL();
+    let aTag = document.createElement('a');
+    aTag.href = dataUrl;
+    aTag.download = '分项占比.png';
+    document.body.appendChild(aTag);
+    aTag.click();
+    document.body.removeChild(aTag);
+  });
+
+  $('.peak-data>.btn-group>div.btn').on('click', function (e) {
+    e.stopPropagation();
+    let currentDom = e.currentTarget;
+    $('.peak-data>.btn-group>div.btn').removeClass('date-active');
+    $(currentDom).addClass('date-active');
+    generateFgpData();
+  });
+
   $(document).on('click', function (e) {
     e.stopPropagation();
     $('.parameter-overlay').addClass('hidden');
@@ -1736,6 +2072,35 @@ $(function () {
         let truthValue = value.split('--');
         $('#area-datevalue').val(_.trim(truthValue[0]) + '-01-01 -- ' + truthValue[1] + '-12-31');
         searchAreaData();
+      }
+    });
+  });
+
+  layui.use('laydate', function () {
+    let laydate = layui.laydate;
+    laydate.render({
+      elem: '#area-fgp-daycontainer',
+      range: '--',
+      format: 'yyyy-MM-dd',
+      type: 'date',
+      value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
+      done: (value, date) => {
+        let truthValue = value.split('--');
+        $('#area-fgp-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+        setTimeout(() => generateAreaFgp(), 300);
+      }
+    });
+    laydate.render({
+      elem: '#area-fgp-monthcontainer',
+      range: '--',
+      format: 'yyyy-MM',
+      type: 'month',
+      value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
+      done: (value, date) => {
+        let truthValue = value.split('--');
+        let dayInMonth = new moment(truthValue[1]).daysInMonth();
+        $('#area-fgp-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
+        setTimeout(() => generateAreaFgp(), 300);
       }
     });
   });
@@ -1894,4 +2259,5 @@ $(function () {
     closeMethod: 'fadeOut',
     closeEasing: 'swing'
   });
+
 });

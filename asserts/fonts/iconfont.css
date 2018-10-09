@@ -49,6 +49,8 @@
 
 .icon-RMB:before { content: "\e626"; }
 
+.icon-RMB-area:before {content: "\e626";}
+
 .icon-line-chart_icon:before { content: "\e65b"; }
 
 .icon-warning1:before { content: "\e7e2"; }

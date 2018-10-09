@@ -109,7 +109,7 @@
                           <div class="triangle-overlay-border"></div>
                           <div class="triangle-overlay"></div>
                           <ul>
-                            <li><i class="icon iconfont icon-Group-"></i>导出数据</li>
+                            <li style="cursor:not-allowed"><i class="icon iconfont icon-Group-"></i>导出数据</li>
                             <li style="cursor:not-allowed"><i class="icon iconfont icon-delete1"></i>删除</li>
                             <li style="cursor:not-allowed"><i class="icon iconfont icon-jinzhi"></i>禁止</li>
                           </ul>
@@ -117,7 +117,7 @@
                         </div>
                       </div>
                       <i class="icon iconfont icon-RMB comparison-rmb"></i>
-                      <i class="icon iconfont icon-zuidahua"></i>
+                      <i class="icon iconfont icon-zuidahua area-pie"></i>
                     </div>
                   </div>
                   <div class="proportion-chart-container">
@@ -264,6 +264,46 @@
             </ul>
             <div class="layui-tab-content">
               <div id="area-fgp-data" class="area-fgp-data">
+                <div class="btn-group">
+                  <div class="btn date-active" data-value="2">日</div>
+                  <div class="btn" data-value="3">周</div>
+                  <div class="btn" data-value="4">月</div>
+                </div>
+                <div class="area-fgp-date-grp">
+                  <input type="hidden" id="area-fgp-datevalue">
+                  <div class="date-component icon iconfont icon-rili" id="area-fgp-day">
+                    <input type="text" id="area-fgp-daycontainer" class="date-input">
+                  </div>
+                  <div class="date-component icon iconfont icon-rili hidden" id="area-fgp-month">
+                    <input type="text" id="area-fgp-monthcontainer" class="date-input">
+                  </div>
+                </div>
+                <div class="fgp-container">
+                  <div class="fgp-item">
+                    <span class="icon iconfont icon-renwutongjibaobiao">总用量统计图</span>
+                    <div class="fgp-item-row">
+                      <span class="usage-title hidden" id="usage-title">总用量</span>
+                      <div class="usage-title-container hidden"></div>
+                      <div class="fgp-usage-chart-instance" id="fgp-usage-chart-instance"></div>
+                      <div class="fgp-item-pie">
+                        <div class="fgp-usage-piechart-now-instance" id="fgp-usage-piechart-now-instance"></div>
+                        <div class="fgp-usage-piechart-yes-instance" id="fgp-usage-piechart-yes-instance"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="fgp-item">
+                    <span class="icon iconfont icon-RMB">总费用统计图</span>
+                    <div class="fgp-item-row">
+                      <span class="cost-title hidden" id="cost-title">总费用</span>
+                      <div class="cost-title-container hidden"></div>
+                      <div class="fgp-cost-chart-instance" id="fgp-cost-chart-instance"></div>
+                      <div class="fgp-item-pie">
+                        <div class="fgp-cost-piechart-now-instance" id="fgp-cost-piechart-now-instance"></div>
+                        <div class="fgp-cost-piechart-yes-instance" id="fgp-cost-piechart-yes-instance"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
