@@ -196,19 +196,32 @@
             </ul>
             <div class="layui-tab-content">
               <div id="graph-data" class="graph-data">
-                <div class="exception-manager"><span>异常数据管理<i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
-                <div class="exception-box">
-                  <div>
-
-                  </div>
-                  <div>
+                <div class="exception-manager" data-toggle='close'><span>异常数据管理<i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
+                <div class="exception-box" style="display: none">
+                  <div class="exception-condition">
                     <div>
-                      <input>
-                      <input>
+                      <span>过滤时间</span>
+                      <input type="hidden" id="exception-datevalue" value>
+                      <div class="date-component icon iconfont icon-rili exception-date" id="exception-day">
+                        <input type="text" id="exception-daycontainer" class="date-input">
+                      </div>
+                      <span>小于数值</span>
+                      <input type="text" class="exception-input" id="min-val-input">
+                      <span>大于数值</span>
+                      <input type="text" class="exception-input" id="max-val-input">
+                    </div>
+                    <div class="exception-rule"><span>过滤规则：</span>
+                      <div class="exception-rule-value"><span id="minval">--</span>&nbsp;&lt;&nbsp;<span>正常数据</span>&nbsp;&lt;&nbsp;<span id="maxval">--</span></div>
+                    </div>
+                  </div>
+                  <div class="exception-operate">
+                    <div>
+                      <input type="button" class="btn exception-btn" value="过滤数据">
+                      <input type="button" class="btn exception-btn" value="撤销过滤">
                     </div>
                     <div>
-                      <input>
-                      <input>
+                      <input type="button" class="btn exception-btn" value="设为过滤规则">
+                      <input type="button" class="btn exception-btn" value="异常数据统计">
                     </div>
                   </div>
                 </div>
@@ -469,7 +482,7 @@
 <script type="text/html" id="parameter-list-template">
   {{if parameterList.length > 0 }}{{each parameterList parameter index}}
     <div class="para-item choose-para {{if parameter.isChecked}}para-active{{/if}}" data-id="{{parameter.id}}" 
-      data-type="parameter.type" data-unit="{{parameter.unit}}">{{parameter.displayName}}</div>
+      data-type="{{parameter.type}}" data-unit="{{parameter.unit}}">{{parameter.displayName}}</div>
   {{/each}}{{/if}}
 </script>
 <script type="text/html" id="contemporary-Comparison-template">

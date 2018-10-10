@@ -71,9 +71,6 @@ $(function () {
       if (areaChart) areaChart.resize();
     });
   };
-  let getActiveTab = () => {
-
-  };
   let resetSTimeAndETime = function (type) {
     switch (type) {
       case 2:
@@ -915,9 +912,9 @@ $(function () {
           generateMeterFgpPieChart('meter-fgp-usage-piechart-yes', fgpDatas.last_data_list, dateArray, dateType, 0, pielastTitle + '用量分布');
           generateMeterFgpPieChart('meter-fgp-cost-piechart-yes', fgpDatas.last_data_list, dateArray, dateType, 1, pielastTitle + '费用分布');
         }
-        setTimeout(()=> {
+        setTimeout(() => {
           let id = $($('.func-tab .layui-tab-title>li.layui-this')[0]).attr('data-id');
-          if(id !== 'peak-data'){
+          if (id !== 'peak-data') {
             $('#peak-data').hide();
           }
         }, 300);
@@ -1816,6 +1813,13 @@ $(function () {
       }
     });
     $(currentDom).toggleClass('date-active');
+    let parameter = _.find(currentMeterParameters, a => a.type === 0 && a.isChecked);
+    if (parameter && getSearchDateType() === -1) {
+      $('.exception-manager').attr('data-toggle', 'close').hide();
+      $('.exception-box').hide();
+    } else {
+      $('.exception-manager').show();
+    }
     if ($(currentDom).hasClass('date-active')) {
       switch ($(currentDom).attr('data-value')) {
         case '2':
@@ -2344,6 +2348,40 @@ $(function () {
     generateFgpData();
   });
 
+  $('.graph-data .exception-manager').on('click', function (e) {
+    e.stopPropagation();
+    let currentDom = e.currentTarget;
+    if ($(currentDom).attr('data-toggle') === 'close') {
+      $('.exception-box').show();
+      $(currentDom).attr('data-toggle', 'open');
+      $(currentDom).children(0).children(0).removeClass('icon-xiaotuziCduan_').addClass('icon-xiaotuziCduan_1');
+    } else {
+      $('.exception-box').hide();
+      $(currentDom).attr('data-toggle', 'close');
+      $(currentDom).children(0).children(0).removeClass('icon-xiaotuziCduan_1').addClass('icon-xiaotuziCduan_');
+    }
+  });
+
+  $('#min-val-input').on('input', function (e) {
+    e.stopPropagation();
+    let minVal = e.target.value.replace(/[^\d]/g, '');
+    $('#min-val-input').val(minVal);
+    if (minVal === '') {
+      minVal = '--';
+    }
+    $('#minval').text(minVal);
+  });
+
+  $('#max-val-input').on('input', function (e) {
+    e.stopPropagation();
+    let maxVal = e.target.value.replace(/[^\d]/g, '');
+    $('#max-val-input').val(maxVal);
+    if (maxVal === '') {
+      maxVal = '--';
+    }
+    $('#maxval').text(maxVal);
+  });
+
   $(document).on('click', function (e) {
     e.stopPropagation();
     $('.parameter-overlay').addClass('hidden');
@@ -2489,6 +2527,22 @@ $(function () {
     });
   });
 
+  layui.use('laydate', function () {
+    let laydate = layui.laydate;
+    laydate.render({
+      elem: '#exception-daycontainer',
+      range: '--',
+      format: 'yyyy-MM-dd',
+      type: 'date',
+      value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
+      done: (value, date) => {
+        let truthValue = value.split('--');
+        $('#exception-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+        // setTimeout(() => generateFgpData(), 300);
+      }
+    });
+  });
+
   esdpec.framework.core.getJsonResult('common/gettree', function (response) {
     if (response.IsSuccess) {
       meterDataList = _.map(response.Content, a => {
@@ -2575,7 +2629,13 @@ $(function () {
                   e.stopPropagation();
                   let currentDom = e.currentTarget;
                   let unit = $(currentDom).attr('data-unit');
-                  let type = $(currentDom).attr('data-type');
+                  let type = parseInt($(currentDom).attr('data-type'));
+                  if (type === 0 && getSearchDateType() === -1) {
+                    $('.exception-manager').attr('data-toggle', 'close').hide();
+                    $('.exception-box').hide();
+                  } else {
+                    $('.exception-manager').show();
+                  }
                   let id = $(currentDom).attr('data-id');
                   if (comparsionSelectedMeters.length > 0) {
                     $('.parameter-right>.para-active').removeClass('para-active');
