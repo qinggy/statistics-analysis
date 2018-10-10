@@ -71,6 +71,9 @@ $(function () {
       if (areaChart) areaChart.resize();
     });
   };
+  let getActiveTab = () => {
+
+  };
   let resetSTimeAndETime = function (type) {
     switch (type) {
       case 2:
@@ -108,6 +111,21 @@ $(function () {
         return getWeek().monday + ' -- ' + getWeek().sunday;
       case 4:
         let monthDate = $('#area-fgp-monthcontainer').val();
+        let monthArray = monthDate.split(' -- ');
+        let daysInMonth = new moment(new Date(monthArray[1])).daysInMonth();
+        return monthArray[0] + '-01 -- ' + monthArray[1] + '-' + daysInMonth;
+    }
+  };
+  let getMeterFgpSTimeAndETime = function (type) {
+    switch (type) {
+      case 2:
+        let dayDate = $('#meter-fgp-daycontainer').val();
+        let dayArray = dayDate.split(' -- ');
+        return dayArray[0] + ' 00:00:00 -- ' + dayArray[1] + ' 23:59:59';
+      case 3:
+        return getWeek().monday + ' -- ' + getWeek().sunday;
+      case 4:
+        let monthDate = $('#meter-fgp-monthcontainer').val();
         let monthArray = monthDate.split(' -- ');
         let daysInMonth = new moment(new Date(monthArray[1])).daysInMonth();
         return monthArray[0] + '-01 -- ' + monthArray[1] + '-' + daysInMonth;
@@ -612,7 +630,6 @@ $(function () {
           generateAreaSort([response.Content]);
           generateAreaPie([response.Content]);
           generateAreaFgp();
-          console.log('searchResult=>', searchResult);
         }
       });
     } else {
@@ -635,7 +652,6 @@ $(function () {
           generateAreaSort(response.Content);
           generateAreaPie(response.Content);
           generateAreaFgp();
-          console.log('searchResult=>', searchResult);
         }
       });
     }
@@ -853,9 +869,58 @@ $(function () {
     });
   };
   let generateFgpData = function () {
-    esdpec.framework.core.getJsonResult('dataanalysis/getfgpdata', function (response) {
+    let parameters = _.filter(currentMeterParameters, a => a.type === 0);
+    if (!parameters || parameters.length <= 0) return;
+    let mfids = _.head(parameters).id;
+    let dateType = $('.peak-data .btn-group .btn.date-active').attr('data-value');
+    let dateStr = getMeterFgpSTimeAndETime(parseInt(dateType));
+    let dateArray = dateStr.split(' -- ');
+    let queryType = 0;
+    let piefirstTitle = '';
+    let pielastTitle = '';
+    switch (dateType) {
+      case '2':
+        queryType = dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) ? 0 : 1;
+        piefirstTitle = '今天';
+        pielastTitle = '昨天';
+        break;
+      case '3':
+        queryType = 0;
+        piefirstTitle = '本周';
+        pielastTitle = '上周';
+        break;
+      case '4':
+        queryType = dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) ? 0 : 1;
+        piefirstTitle = '本月';
+        pielastTitle = '上月';
+        break;
+    }
+    let uriparam = `mfids=${mfids}&queryType=${queryType}&dateType=${dateType}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
+    esdpec.framework.core.getJsonResult('dataanalysis/getfgpdata?' + uriparam, function (response) {
       if (response.IsSuccess) {
+        let fgpDatas = response.Content;
+        generateMeterStackChart('meter-fgp-usage-chart', fgpDatas, dateArray, dateType, 0);
+        generateMeterStackChart('meter-fgp-cost-chart', fgpDatas, dateArray, dateType, 1);
 
+        if (!fgpDatas.last_data_list || fgpDatas.last_data_list.length <= 0) {
+          $('#meter-fgp-cost-piechart-yes').hide();
+          $('#meter-fgp-usage-piechart-yes').hide();
+          generateMeterFgpPieChart('meter-fgp-usage-piechart-now', fgpDatas.now_data_list, dateArray, dateType, 0, '总用量分布');
+          generateMeterFgpPieChart('meter-fgp-cost-piechart-now', fgpDatas.now_data_list, dateArray, dateType, 1, '总费用分布');
+        } else {
+          $('#meter-fgp-cost-piechart-yes').show();
+          $('#meter-fgp-usage-piechart-yes').show();
+          generateMeterFgpPieChart('meter-fgp-usage-piechart-now', fgpDatas.now_data_list, dateArray, dateType, 0, piefirstTitle + '用量分布');
+          generateMeterFgpPieChart('meter-fgp-cost-piechart-now', fgpDatas.now_data_list, dateArray, dateType, 1, piefirstTitle + '费用分布');
+          generateMeterFgpPieChart('meter-fgp-usage-piechart-yes', fgpDatas.last_data_list, dateArray, dateType, 0, pielastTitle + '用量分布');
+          generateMeterFgpPieChart('meter-fgp-cost-piechart-yes', fgpDatas.last_data_list, dateArray, dateType, 1, pielastTitle + '费用分布');
+        }
+        setTimeout(()=> {
+          let id = $($('.func-tab .layui-tab-title>li.layui-this')[0]).attr('data-id');
+          if(id !== 'peak-data'){
+            $('#peak-data').hide();
+          }
+        }, 300);
       }
     });
   };
@@ -865,37 +930,49 @@ $(function () {
     let dateStr = getAreaFgpSTimeAndETime(parseInt(dateType));
     let dateArray = dateStr.split(' -- ');
     let queryType = 0;
+    let piefirstTitle = '';
+    let pielastTitle = '';
     switch (dateType) {
       case '2':
         queryType = dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) ? 0 : 1;
+        piefirstTitle = '今天';
+        pielastTitle = '昨天';
         break;
       case '3':
         queryType = 0;
+        piefirstTitle = '本周';
+        pielastTitle = '上周';
         break;
       case '4':
         queryType = dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) ? 0 : 1;
+        piefirstTitle = '本月';
+        pielastTitle = '上月';
         break;
     }
     let uriparam = `mfids=${_.join(mfids, ',')}&queryType=${queryType}&dateType=${dateType}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
     esdpec.framework.core.getJsonResult('dataanalysis/getfgpdata?' + uriparam, function (response) {
       if (response.IsSuccess) {
-        console.log('Fgp-Data=>', response.Content);
-        generateStackChart('fgp-usage-chart-instance', response.Content, dateArray, dateType, 0);
-        generateFgpPieChart('fgp-usage-piechart-now-instance');
-        generateFgpPieChart('fgp-usage-piechart-yes-instance');
+        let fgpDatas = response.Content;
+        generateStackChart('fgp-usage-chart-instance', fgpDatas, dateArray, dateType, 0);
+        generateStackChart('fgp-cost-chart-instance', fgpDatas, dateArray, dateType, 1);
 
-        generateStackChart('fgp-cost-chart-instance', response.Content, dateArray, dateType, 1);
-        generateFgpPieChart('fgp-cost-piechart-now-instance');
-        generateFgpPieChart('fgp-cost-piechart-yes-instance');
+        if (!fgpDatas.last_data_list || fgpDatas.last_data_list.length <= 0) {
+          $('#fgp-cost-piechart-yes-instance').hide();
+          $('#fgp-usage-piechart-yes-instance').hide();
+          generateFgpPieChart('fgp-usage-piechart-now-instance', fgpDatas.now_data_list, dateArray, dateType, 0, '总用量分布');
+          generateFgpPieChart('fgp-cost-piechart-now-instance', fgpDatas.now_data_list, dateArray, dateType, 1, '总费用分布');
+        } else {
+          $('#fgp-cost-piechart-yes-instance').show();
+          $('#fgp-usage-piechart-yes-instance').show();
+          generateFgpPieChart('fgp-usage-piechart-now-instance', fgpDatas.now_data_list, dateArray, dateType, 0, piefirstTitle + '用量分布');
+          generateFgpPieChart('fgp-cost-piechart-now-instance', fgpDatas.now_data_list, dateArray, dateType, 1, piefirstTitle + '费用分布');
+          generateFgpPieChart('fgp-usage-piechart-yes-instance', fgpDatas.last_data_list, dateArray, dateType, 0, pielastTitle + '用量分布');
+          generateFgpPieChart('fgp-cost-piechart-yes-instance', fgpDatas.last_data_list, dateArray, dateType, 1, pielastTitle + '费用分布');
+        }
       }
     });
   };
   let getToolTipTitle = data => {
-    // if (data.axisValueLabel === '昨日') {
-    //   return new Date().addDays(-1).format('yyyy-MM-dd');
-    // } else if (data.axisValueLabel === '今日') {
-    //   return new Date().format('yyyy-MM-dd');
-    // }
     return data.axisValueLabel;
   };
   let getStackSeriesData = (list, key, chartType, type = 's') => {
@@ -1097,23 +1174,286 @@ $(function () {
       },
       series: series
     };
-    var myChart = echarts.init(document.getElementById(chartDom), e_macarons);
-    myChart.setOption(option, true);
+    let areaFgpChart = echarts.init(document.getElementById(chartDom), e_macarons);
+    areaFgpChart.setOption(option, true);
   };
-  let generateFgpPieChart = function (chartDom) {
+  let generateFgpPieChart = function (chartDom, fgpDatas, dateArray, dateType, chartType, title) {
     let datas = [];
-    let legends = [];
-    _.each(searchResult.datas, data => {
-      let sumVal = {
-        name: data.meter_name,
-        value: data.sum_val ? data.sum_val : 0
-      };
-      datas.push(sumVal);
-      legends.push(data.meter_name);
+    let seriesColor = [];
+    let branchs = _.map(fgpDatas, a => a.name);
+    let legend = [];
+    let totalSum = 0;
+    _.each(fgpDatas, fgp => totalSum = _.sum([totalSum, _.sum(_.map(fgp.list, a => chartType === 0 ? a.data : a.cost))]));
+    _.each(branchs, (key, index) => {
+      let fgp = _.find(fgpDatas, a => a.name === key);
+      if (fgp && fgp.list) {
+        let itemValue = (_.sum(_.map(fgp.list, a => chartType === 0 ? a.data : a.cost))).toFixed(3);
+        data = {
+          name: `${key}：${((parseFloat(itemValue) / totalSum) * 100).toFixed(2)}%`,
+          value: itemValue
+        };
+        datas.push(data);
+        legend.push(data.name);
+        seriesColor.push(chartType === 0 ? usageColor[index] : costColor[index]);
+      }
     });
-    let option = generatePieForAggregateData(legends, datas, searchResult.unit);
+    let option = {
+      title: {
+        subtext: title,
+        x: 'left',
+        left: 20
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: "{a} <br/>{b}({c}" + (chartType === 0 ? searchResult.unit : '元') + ")",
+        padding: [5, 5, 5, 10]
+      },
+      legend: {
+        orient: 'vertical',
+        right: 20,
+        data: legend
+      },
+      calculable: true,
+      series: [{
+        name: title,
+        type: 'pie',
+        radius: '55%',
+        center: ['50%', '60%'],
+        label: {
+          normal: {
+            position: 'inner'
+          }
+        },
+        itemStyle: {
+          normal: {
+            label: {
+              show: false
+            }
+          }
+        },
+        data: datas,
+        color: seriesColor
+      }]
+    };
     let pieChart = echarts.init(document.getElementById(chartDom), e_macarons);
     pieChart.setOption(option, true);
+  };
+  let generateMeterStackChart = function (chartDom, datas, dateArray, dateType, chartType) {
+    let xAxisData = [];
+    let series = [];
+    let nowbranchs = _.map(datas.now_data_list, a => a.name);
+    let lastbranchs = _.map(datas.last_data_list, a => a.name);
+    let branchs = _.merge(nowbranchs, lastbranchs);
+    switch (dateType) {
+      case '2':
+        let flag = 0;
+        if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10)) {
+          xAxisData = [new Date().format('yyyy-MM-dd'), new Date().addDays(-1).format('yyyy-MM-dd')];
+          flag = 0;
+          $('#meter-usage-title').hide();
+          $('#meter-cost-title').hide();
+          let nowUsageSum = 0,
+            lastUsageSum = 0,
+            nowCostSum = 0,
+            lastCostSum = 0;
+          _.each(datas.now_data_list, a => {
+            nowUsageSum = _.sum([nowUsageSum, _.sum(_.map(a.list, b => b.data))]);
+            nowCostSum = _.sum([nowCostSum, _.sum(_.map(a.list, b => b.cost))]);
+          });
+          _.each(datas.last_data_list, a => {
+            lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
+            lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
+          });
+          $('.meter-usage-title-container').show().html("<span>本日用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>昨日用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
+          $('.meter-cost-title-container').show().html("<span>本日费用：" + nowCostSum.toFixed(3) + "元</span><span>昨日费用：" + lastCostSum.toFixed(3) + "元</span>");
+        } else {
+          $('.meter-cost-title-container').hide();
+          $('.meter-usage-title-container').hide();
+          let startTime = new Date(dateArray[0]);
+          let endTime = new Date(dateArray[1]);
+          for (let i = startTime; i <= endTime; i = i.addDays(1)) {
+            xAxisData.push(i.format('yyyy-MM-dd'));
+          }
+          let usageSum = 0;
+          let costSum = 0;
+          _.each(datas.now_data_list, a => {
+            usageSum = _.sum([usageSum, _.sum(_.map(a.list, b => b.data))]);
+            costSum = _.sum([costSum, _.sum(_.map(a.list, a => a.cost))]);
+          });
+          if (chartType === 0) {
+            $('#meter-usage-title').show().text('总用量：' + usageSum.toFixed(3) + searchResult.unit);
+          } else {
+            $('#meter-cost-title').show().text('总费用：' + costSum.toFixed(3) + '元');
+          }
+          flag = 1;
+        }
+        series = getStackSeries(branchs, datas, flag, chartType);
+        break;
+      case '3':
+        $('#meter-usage-title').hide();
+        $('#meter-cost-title').hide();
+        let nowUsageSum = 0,
+          lastUsageSum = 0,
+          nowCostSum = 0,
+          lastCostSum = 0;
+        _.each(datas.now_data_list, a => {
+          nowUsageSum = _.sum([nowUsageSum, _.sum(_.map(a.list, b => b.data))]);
+          nowCostSum = _.sum([nowCostSum, _.sum(_.map(a.list, b => b.cost))]);
+        });
+        _.each(datas.last_data_list, a => {
+          lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
+          lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
+        });
+        xAxisData = [getWeek().monday.substring(0, 10) + ' 至 ' + getWeek().sunday.substring(0, 10), new Date(getWeek().monday).addDays(-7).format('yyyy-MM-dd') + ' 至 ' + new Date(getWeek().sunday).addDays(-7).format('yyyy-MM-dd')];
+        $('.meter-usage-title-container').show().html("<span>本周用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>上周用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
+        $('.meter-cost-title-container').show().html("<span>本周费用：" + nowCostSum.toFixed(3) + "元</span><span>上周费用：" + lastCostSum.toFixed(3) + "元</span>");
+        series = getStackSeries(branchs, datas, 0, chartType);
+        break;
+      case '4':
+        let flaga = 0;
+        if (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7)) {
+          xAxisData = [new moment().format('YYYY-MM'), new moment().subtract(1, 'months').format('YYYY-MM')];
+          $('#meter-usage-title').hide();
+          $('#meter-cost-title').hide();
+          let nowUsageSum = 0,
+            lastUsageSum = 0,
+            nowCostSum = 0,
+            lastCostSum = 0;
+          _.each(datas.now_data_list, a => {
+            nowUsageSum = _.sum([nowUsageSum, _.sum(_.map(a.list, b => b.data))]);
+            nowCostSum = _.sum([nowCostSum, _.sum(_.map(a.list, b => b.cost))]);
+          });
+          _.each(datas.last_data_list, a => {
+            lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
+            lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
+          });
+          $('.meter-usage-title-container').show().html("<span>本月用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>上月用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
+          $('.meter-cost-title-container').show().html("<span>本月费用：" + nowCostSum.toFixed(3) + "元</span><span>上月费用：" + lastCostSum.toFixed(3) + "元</span>");
+        } else {
+          $('.meter-cost-title-container').hide();
+          $('.meter-usage-title-container').hide();
+          let startTime = new moment(dateArray[0]);
+          let endTime = new moment(dateArray[1]);
+          for (let i = startTime; i <= endTime; i = i.add(1, 'months')) {
+            xAxisData.push(i.format('YYYY-MM'));
+          }
+          let usageSum = 0;
+          let costSum = 0;
+          _.each(datas.now_data_list, a => {
+            usageSum = _.sum([usageSum, _.sum(_.map(a.list, b => b.data))]);
+            costSum = _.sum([costSum, _.sum(_.map(a.list, a => a.cost))]);
+          });
+          if (chartType === 0) {
+            $('#meter-usage-title').show().text('总用量：' + usageSum.toFixed(3) + searchResult.unit);
+          } else {
+            $('#meter-cost-title').show().text('总费用：' + costSum.toFixed(3) + '元');
+          }
+          flaga = 1;
+        }
+        series = getStackSeries(branchs, datas, flaga, chartType);
+        break;
+    }
+    let option = {
+      tooltip: {
+        trigger: "axis",
+        formatter: function (datas) {
+          let tooltip = getToolTipTitle(datas[0]) + '<br/>';
+          let totalSum = _.sum(_.map(datas, a => a.value));
+          _.each(datas, (data, index) => {
+            tooltip += "<div style='width: 12px;height:12px;background-color: " + (chartType === 0 ? usageColor[index] : costColor[index]) + "; display: inline-block;margin-right: 10px'></div>" + data.seriesName + (chartType === 0 ? '用量：' : '费用：') +
+              data.value.toFixed(3) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
+          });
+          tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + totalSum.toFixed(3) + (chartType === 0 ? searchResult.unit : '元');
+          return tooltip;
+        },
+        padding: [5, 5, 5, 10]
+      },
+      legend: {
+        itemHeight: 15,
+        data: [],
+      },
+      grid: {
+        left: 0,
+        bottom: 20
+      },
+      xAxis: {
+        data: xAxisData,
+        show: true,
+        splitLine: {
+          show: false,
+        },
+      },
+      yAxis: {
+        splitLine: {
+          show: false,
+        },
+        position: 'right'
+      },
+      series: series
+    };
+    let meterFgpChart = echarts.init(document.getElementById(chartDom), e_macarons);
+    meterFgpChart.setOption(option, true);
+  };
+  let generateMeterFgpPieChart = function (chartDom, fgpDatas, dateArray, dateType, chartType, title) {
+    let datas = [];
+    let seriesColor = [];
+    let branchs = _.map(fgpDatas, a => a.name);
+    let legend = [];
+    let totalSum = 0;
+    _.each(fgpDatas, fgp => totalSum = _.sum([totalSum, _.sum(_.map(fgp.list, a => chartType === 0 ? a.data : a.cost))]));
+    _.each(branchs, (key, index) => {
+      let fgp = _.find(fgpDatas, a => a.name === key);
+      if (fgp && fgp.list) {
+        let itemValue = (_.sum(_.map(fgp.list, a => chartType === 0 ? a.data : a.cost))).toFixed(3);
+        data = {
+          name: `${key}：${((parseFloat(itemValue) / totalSum) * 100).toFixed(2)}%`,
+          value: itemValue
+        };
+        datas.push(data);
+        legend.push(data.name);
+        seriesColor.push(chartType === 0 ? usageColor[index] : costColor[index]);
+      }
+    });
+    let option = {
+      title: {
+        subtext: title,
+        x: 'left',
+        left: 20
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: "{a} <br/>{b}({c}" + (chartType === 0 ? searchResult.unit : '元') + ")",
+        padding: [5, 5, 5, 10]
+      },
+      legend: {
+        orient: 'vertical',
+        right: 20,
+        data: legend
+      },
+      calculable: true,
+      series: [{
+        name: title,
+        type: 'pie',
+        radius: '55%',
+        center: ['50%', '60%'],
+        label: {
+          normal: {
+            position: 'inner'
+          }
+        },
+        itemStyle: {
+          normal: {
+            label: {
+              show: false
+            }
+          }
+        },
+        data: datas,
+        color: seriesColor
+      }]
+    };
+    let meterPieChart = echarts.init(document.getElementById(chartDom), e_macarons);
+    meterPieChart.setOption(option, true);
   };
   let generatePieChart = function () {
     let datas = [];
@@ -1986,6 +2326,21 @@ $(function () {
     let currentDom = e.currentTarget;
     $('.peak-data>.btn-group>div.btn').removeClass('date-active');
     $(currentDom).addClass('date-active');
+    switch ($(currentDom).attr('data-value')) {
+      case '2':
+        $('.meter-fgp-date-grp').show();
+        $('#meter-fgp-day').removeClass('hidden');
+        $('#meter-fgp-month').addClass('hidden');
+        break;
+      case '3':
+        $('.meter-fgp-date-grp').hide();
+        break;
+      case '4':
+        $('.meter-fgp-date-grp').show();
+        $('#meter-fgp-day').addClass('hidden');
+        $('#meter-fgp-month').removeClass('hidden');
+        break;
+    }
     generateFgpData();
   });
 
@@ -2101,6 +2456,35 @@ $(function () {
         let dayInMonth = new moment(truthValue[1]).daysInMonth();
         $('#area-fgp-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
         setTimeout(() => generateAreaFgp(), 300);
+      }
+    });
+  });
+
+  layui.use('laydate', function () {
+    let laydate = layui.laydate;
+    laydate.render({
+      elem: '#meter-fgp-daycontainer',
+      range: '--',
+      format: 'yyyy-MM-dd',
+      type: 'date',
+      value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
+      done: (value, date) => {
+        let truthValue = value.split('--');
+        $('#meter-fgp-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+        setTimeout(() => generateFgpData(), 300);
+      }
+    });
+    laydate.render({
+      elem: '#meter-fgp-monthcontainer',
+      range: '--',
+      format: 'yyyy-MM',
+      type: 'month',
+      value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
+      done: (value, date) => {
+        let truthValue = value.split('--');
+        let dayInMonth = new moment(truthValue[1]).daysInMonth();
+        $('#meter-fgp-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
+        setTimeout(() => generateFgpData(), 300);
       }
     });
   });

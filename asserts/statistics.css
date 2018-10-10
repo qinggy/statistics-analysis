@@ -1394,6 +1394,7 @@ html body {
   position: relative;
 }
 
+.meter-fgp-date-grp,
 .area-fgp-date-grp {
   position: absolute;
   left: 260px;
@@ -1404,36 +1405,79 @@ html body {
   height: 360px;
   flex: 2 !important;
   margin-top: 20px;
+  position: relative;
 }
 
 .fgp-cost-chart-instance {
   height: 360px;
   flex: 2 !important;
   margin-top: 20px;
+  position: relative;
 }
 
 .fgp-item .icon-RMB:before {
   font-size: 20px;
 }
 
+.meter-usage-title-container,
+.meter-cost-title-container {
+  position: absolute;
+  display: flex;
+  width: 100%;
+  top: 5px;
+  left: 0;
+}
+
 .usage-title-container,
 .cost-title-container {
   position: absolute;
   display: flex;
-  width: 400px;
+  width: 100%;
   top: 30px;
-  left: 150px;
-  text-align: center;
+  left: 0;
 }
 
+.meter-usage-title-container>span,
+.meter-cost-title-container>span,
 .usage-title-container>span,
-.cost-title-container>span{
+.cost-title-container>span {
   flex: 1;
+  width: 50%;
+  margin-left: 5%;
+}
+
+.meter-usage-title-container>span:first-of-type,
+.meter-cost-title-container>span:first-of-type,
+.usage-title-container>span:first-of-type,
+.cost-title-container>span:first-of-type {
+  margin-left: 15%;
+}
+
+.meter-usage-title,
+.meter-cost-title {
+  position: absolute;
+  top: 10px;
+  left: 30%;
 }
 
 .usage-title,
-.cost-title{
+.cost-title {
   position: absolute;
   top: 50px;
   left: 25%;
+}
+
+.chart-instance {
+  height: 360px;
+}
+
+.peak-data {
+  position: relative;
+}
+
+.exception-box {
+  clear: both;
+  width: 100%;
+  height: 120px;
+  display: flex;
 }
