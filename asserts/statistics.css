@@ -1516,17 +1516,17 @@ html body {
   margin-right: 15px;
 }
 
-.exception-date{
+.exception-date {
   display: inline-block;
   margin: 0 30px;
   position: relative;
 }
 
-.exception-rule{
+.exception-rule {
   margin-top: 25px;
 }
 
-.exception-input{
+.exception-input {
   margin: 0 30px;
   border-radius: 4px;
   outline: transparent;
@@ -1535,7 +1535,153 @@ html body {
   padding: 0 10px;
 }
 
-.exception-rule-value{
+.exception-rule-value {
   display: inline-block;
   margin-left: 15px;
+}
+
+/**start angus switch**/
+
+.mui-switch {
+  width: 4em;
+  height: 2em;
+  position: relative;
+  border: 1px solid #dfdfdf;
+  background-color: #fdfdfd;
+  box-shadow: #dfdfdf 0 0 0 0 inset;
+  border-radius: 2em;
+  background-clip: content-box;
+  display: inline-block;
+  -webkit-appearance: none;
+  user-select: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.mui-switch:before {
+  content: '';
+  width: 1.8em;
+  height: 1.8em;
+  position: absolute;
+  top: 0px;
+  left: 0;
+  border-radius: 1.8em;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.mui-switch:checked:before {
+  left: 2em;
+}
+
+.mui-switch.mui-switch-anim {
+  transition: border cubic-bezier(0, 0, 0, 1) 0.4s, box-shadow cubic-bezier(0, 0, 0, 1) 0.4s;
+}
+
+.mui-switch.mui-switch-anim:before {
+  transition: left 0.3s;
+}
+
+.mui-switch.mui-switch-anim:checked {
+  box-shadow: rgb(53, 189, 156) 0 0 0 16px inset;
+  background-color: rgb(53, 189, 156);
+  transition: border ease 0.4s, box-shadow ease 0.4s, background-color ease 1.2s;
+}
+
+.mui-switch.mui-switch-anim:checked:before {
+  transition: left 0.3s;
+}
+
+.switch-box {
+  width: 140px;
+}
+
+/**end angus switch**/
+
+.exception-data-list {
+  border: 1px solid #dce3e6;
+  padding: 0 20px;
+  height: calc(100% - 30px);
+}
+
+.exception-data-list>table {
+  width: 570px;
+  border-collapse: collapse;
+}
+
+.exception-data-list>table tr {
+  border-bottom: 1px solid #dce3e6;
+  width: 570px;
+  display: block;
+}
+
+.exception-data-list>table tbody {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 510px;
+  display: block;
+  width: 570px;
+}
+
+.exception-data-list>table tr th {
+  padding-left: 20px;
+  width: 275px;
+}
+
+.exception-data-list>table th {
+  text-align: left;
+  width: 50%;
+  height: 60px;
+}
+
+.exception-data-list>table td {
+  height: 50px;
+}
+
+.exception-data-list>table tr td {
+  padding-left: 20px;
+  width: 275px;
+}
+
+.exception-content {
+  height: 600px;
+}
+
+.page-item{
+  position: relative;
+}
+
+.page-container{
+  position: absolute;
+  right: 0;
+  top: 10px;
+  color: #ddd;
+}
+
+.page-btn{
+  height: 28px;
+  line-height: 26px;
+  border-radius: 4px;
+  border: 1px solid #dce3e6;
+  font-size: 12px;
+}
+
+.page-btn:not(.disable-btn):hover{
+  color: #fff;
+  background-color: #4b89dc;
+  border: 1px solid #4b89dc;
+}
+
+.disable-btn{
+  cursor: not-allowed;
+  color: #dce3e6;
+}
+
+.currentPage{
+  margin-left: 5px;
+  color: #708195;
+}
+
+.totalPage{
+  margin-right: 5px;
 }

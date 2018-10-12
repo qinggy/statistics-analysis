@@ -1,5 +1,6 @@
 $(function () {
   //#region fields 
+  let lastclicktime = null;
   let analysisChart = null;
   let areaChart = null;
   let meterDataList = [];
@@ -71,6 +72,20 @@ $(function () {
       if (areaChart) areaChart.resize();
     });
   };
+  let operateBefore = function () {
+    if (lastclicktime === null)
+      lastclicktime = new Date();
+    else {
+      let currentTime = new Date();
+      if (parseInt(currentTime - lastclicktime) <= 300) {
+        // console.log('Frequent operation, no response!');
+        return false;
+      } else {
+        lastclicktime = currentTime;
+      }
+    }
+    return true;
+  }
   let resetSTimeAndETime = function (type) {
     switch (type) {
       case 2:
@@ -359,15 +374,15 @@ $(function () {
     let data = {
       areaMeterList: []
     };
-    let totalValue = _.sum(_.map(datas, dd => dd.sum_val));
+    let totalValue = _.sum(_.map(datas, dd => dd.sum_val || dd.now_sum_val));
     _.each(areaConfigureMeters, m => {
       let mmp = _.find(meterAndMfIdMap, a => a.mId === m.id);
       let item = _.find(datas, d => d.mfid === mmp.mfid);
       data.areaMeterList.push({
         name: m.text,
         unit: areaConfigure.unit,
-        value: item.sum_val.toFixed(2),
-        percent: (item.sum_val * 100 / totalValue).toFixed(2)
+        value: (item.sum_val || item.now_sum_val).toFixed(2),
+        percent: ((item.sum_val || item.now_sum_val) * 100 / totalValue).toFixed(2)
       });
     });
     data.areaMeterList = _.orderBy(data.areaMeterList, a => parseFloat(a.value), ["desc"]);
@@ -430,7 +445,7 @@ $(function () {
       let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
       let sumVal = {
         name: meter.text,
-        value: data.sum_val ? data.sum_val.toFixed(2) : 0
+        value: (data.sum_val || data.now_sum_val).toFixed(2)
       };
       datas.push(sumVal);
       legends.push(meter.text);
@@ -458,11 +473,10 @@ $(function () {
       let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
       let sumVal = {
         name: meter.text,
-        value: _.sum(_.map(data.data_list, a => a.cost))
+        value: (_.sum(_.map((data.data_list || data.now_data_list), a => a.cost))).toFixed(2)
       };
       datas.push(sumVal);
       legends.push(meter.text);
-
     });
     let option = generatePieForAggregateData(legends, datas, '元', '费用对比');
     let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
@@ -481,8 +495,9 @@ $(function () {
     let searchDateType = dateType === -1 ? 2 : dateType;
     let searchParaType = dateType === -1 ? 1 : parameter.type;
     let defaultTimeStr = getDefaultSTimeAndETime(searchDateType);
-    let sTime = defaultTimeStr.split('--')[0];
-    let eTime = defaultTimeStr.split('--')[1];
+    let timeArray = defaultTimeStr.split(' -- ');
+    let sTime = timeArray[0];
+    let eTime = timeArray[1];
     if (comparsionSelectedMeters.length > 0) {
       $('.comparison-tab').show();
       $('.func-tab').hide();
@@ -565,7 +580,7 @@ $(function () {
           if (currentSelectedNode.modeltype === 'meter') {
             $('#summary-container').show();
             $('.func-tab').show();
-            if (searchParaType === 0 && dateType === 2) {
+            if (searchParaType === 0 && dateType === 2 && sTime.substring(0, 10) === eTime.substring(0, 10)) {
               $('.summary-container').show();
               generateContemporaryComparison(response.Content.avg_per, response.Content.avg_val, response.Content.last_sum_val, response.Content.now_sum_val, response.Content.sum_per, parameter.unit);
             } else if (searchParaType !== 0) $('.summary-container').hide();
@@ -804,25 +819,91 @@ $(function () {
         let originalList = _.find(searchResult.datas, item => item.mfid === mfid);
         let originalDatas = {
           data: {
+            mfid,
             unit,
             type,
             graphDataList: originalList ? originalList.now_data_list || [] : []
           }
         }
+        _.each(originalDatas.data.graphDataList, a => a.isChecked = true);
         let originalDataHtml = template('graph-table-template', originalDatas);
         $('#graph-table').html(originalDataHtml);
+        setTimeout(() => {
+          $('.switch-box input.exception-switch').on('click', function (e) {
+            e.stopPropagation();
+            let currentDom = e.currentTarget;
+            let id = $(currentDom).attr('data-id');
+            let date = $(currentDom).attr('data-date');
+            let exceptionItem = {
+              mfid: id,
+              time: date,
+              val: 0
+            }
+            if ($(currentDom).is(':checked') == true) {
+              $(currentDom).parent().parent().parent().parent().removeClass('shouldremove');
+              esdpec.framework.core.doPostOperation('abnormaldata/cancelsingledata', exceptionItem, function (response) {
+                if (response.IsSuccess) {
+                  reloadMeterChartData();
+                }
+              });
+            } else {
+              $(currentDom).parent().parent().parent().parent().addClass('shouldremove');
+              esdpec.framework.core.doPostOperation('abnormaldata/savesingledata', exceptionItem, function (response) {
+                if (response.IsSuccess) {
+                  reloadMeterChartData();
+                }
+              });
+            }
+          });
+          let exception = $('.graph-data .exception-manager');
+          if (exception.attr('data-toggle') === 'open') $('.inException').show();
+          else $('.inException').hide();
+        }, 300);
       });
     }, 100);
     let originalList = _.find(searchResult.datas, item => item.mfid === head.id);
     let originalDatas = {
       data: {
+        mfid: originalList.mfid,
         unit,
         type,
-        graphDataList: originalList ? originalList.now_data_list || [] : []
+        graphDataList: originalList ? originalList.now_data_list || [] : [],
       }
-    }
+    };
+    _.each(originalDatas.data.graphDataList, a => a.isChecked = true);
     let originalDataHtml = template('graph-table-template', originalDatas);
     $('#graph-table').html(originalDataHtml);
+    setTimeout(() => {
+      $('.switch-box input.exception-switch').on('click', function (e) {
+        e.stopPropagation();
+        let currentDom = e.currentTarget;
+        let id = $(currentDom).attr('data-id');
+        let date = $(currentDom).attr('data-date');
+        let exceptionItem = {
+          mfid: id,
+          time: date,
+          val: 0
+        }
+        if ($(currentDom).is(':checked') == true) {
+          $(currentDom).parent().parent().parent().parent().removeClass('shouldremove');
+          esdpec.framework.core.doPostOperation('abnormaldata/cancelsingledata', exceptionItem, function (response) {
+            if (response.IsSuccess) {
+              reloadMeterChartData();
+            }
+          });
+        } else {
+          $(currentDom).parent().parent().parent().parent().addClass('shouldremove');
+          esdpec.framework.core.doPostOperation('abnormaldata/savesingledata', exceptionItem, function (response) {
+            if (response.IsSuccess) {
+              reloadMeterChartData();
+            }
+          });
+        }
+      });
+      let exception = $('.graph-data .exception-manager');
+      if (exception.attr('data-toggle') === 'open') $('.inException').show();
+      else $('.inException').hide();
+    }, 300);
   };
   let generateOriginalData = function () {
     let nodeId = currentSelectedNode.id;
@@ -1772,6 +1853,160 @@ $(function () {
     };
     return option;
   };
+  let reloadMeterChartData = function () {
+    let currentSelectedParameters = _.filter(currentMeterParameters, a => a.isChecked);
+    let parameter = _.head(currentSelectedParameters);
+    let dateType = getSearchDateType();
+    let searchDateType = dateType === -1 ? 2 : dateType;
+    let searchParaType = dateType === -1 ? 1 : parameter.type;
+    let defaultTimeStr = getDefaultSTimeAndETime(searchDateType);
+    let timeArray = defaultTimeStr.split(' -- ');
+    let sTime = timeArray[0];
+    let eTime = timeArray[1];
+    let mfids = _.map(currentSelectedParameters, a => a.id);
+    let uriparam = `mfids=${_.join(mfids, ',')}&paraType=${searchParaType}&dateType=${searchDateType}&sTime=${sTime}&eTime=${eTime}`;
+    esdpec.framework.core.getJsonResult('dataanalysis/getdata?' + uriparam, function (response) {
+      if (response.IsSuccess) {
+        let chartLegend = [];
+        let chartXaxisData = [];
+        let checkedParameters = _.filter(currentMeterParameters, p => _.includes(mfids, p.id));
+        chartLegend = _.map(checkedParameters, a => a.name);
+        chartXaxisData = searchParaType === 0 ? getXAxisData(dateType, sTime, eTime) : getOriginalXAxisData(response.Content.data_list);
+        let datas = searchParaType === 0 ? [response.Content] : response.Content.data_list;
+        searchResult = {
+          unit: parameter.unit,
+          chartLegend,
+          chartXaxisData,
+          datas,
+          checkedParameters
+        };
+        assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, datas, checkedParameters, 'chart-instance', getChartType());
+      }
+    });
+  };
+  let reloadExceptionGraphData = function(){
+    let date = $('#datevalue').val();
+    let dateArray = date.split(' -- ');
+    let parameters = _.filter(currentMeterParameters, a => a.isChecked);
+    let mfids = _.head(parameters);
+    let uriparam = `mfid=${mfids.id}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
+    esdpec.framework.core.getJsonResult('abnormaldata/getdata?' + uriparam, function (response) {
+      if (response.IsSuccess) {
+        if (response.Content.length > 0) {
+          let exceptionDatas = [];
+          _.each(response.Content, a => {
+            exceptionDatas.push({
+              val: a.val,
+              cost: 0,
+              date: a.time,
+              isChecked: false
+            });
+          });
+          loadExceptionDataIntoGraphData(exceptionDatas);
+        }
+      }
+    });
+  };
+  let loadExceptionDataIntoGraphData = function (datas) {
+    let currentSelectedParameters = _.filter(currentMeterParameters, a => a.isChecked);
+    if (currentSelectedParameters.length <= 0) return;
+    let data = {
+      selectedParameterList: currentSelectedParameters
+    };
+    let head = _.head(data.selectedParameterList);
+    let originalList = _.find(searchResult.datas, item => item.mfid === head.id);
+    let graphData = originalList ? originalList.now_data_list || [] : [];
+    _.each(graphData, a => a.isChecked = true);
+    let graphList = _.merge(graphData, datas);
+    let originalDatas = {
+      data: {
+        mfid: head.id,
+        unit: head.unit,
+        type: head.type,
+        graphDataList: _.orderBy(graphList, a => a.date, 'asc')
+      }
+    }
+    let originalDataHtml = template('graph-table-template', originalDatas);
+    $('#graph-table').html(originalDataHtml);
+    setTimeout(() => {
+      $('.switch-box input.exception-switch').on('click', function (e) {
+        e.stopPropagation();
+        let currentDom = e.currentTarget;
+        let id = $(currentDom).attr('data-id');
+        let date = $(currentDom).attr('data-date');
+        let exceptionItem = {
+          mfid: id,
+          time: date,
+          val: 0
+        }
+        if ($(currentDom).is(':checked') == true) {
+          $(currentDom).parent().parent().parent().parent().removeClass('shouldremove');
+          esdpec.framework.core.doPostOperation('abnormaldata/cancelsingledata', exceptionItem, function (response) {
+            if (response.IsSuccess) {
+              reloadMeterChartData();
+            }
+          });
+        } else {
+          $(currentDom).parent().parent().parent().parent().addClass('shouldremove');
+          esdpec.framework.core.doPostOperation('abnormaldata/savesingledata', exceptionItem, function (response) {
+            if (response.IsSuccess) {
+              reloadMeterChartData();
+            }
+          });
+        }
+      });
+      let exception = $('.graph-data .exception-manager');
+      if (exception.attr('data-toggle') === 'open') $('.inException').show();
+      else $('.inException').hide();
+    }, 300);
+  };
+  let generateExceptionHistory = function (historyList, mfid) {
+    let totalSize = historyList.total_size || 0;
+    let historyDatas = historyList.list;
+    let data = {
+      historyDatas
+    };
+    let templateHtml = template('exception-data-list-body-template', data);
+    $('.open .exception-data-list-body').html(templateHtml);
+    setTimeout(() => {
+      let totalPage = Math.ceil(totalSize / 15);
+      let currentPage = parseInt($('.open .currentPage').text());
+      if (currentPage === 1) {
+        $('.open #pre-btn').addClass('disable-btn');
+      } else {
+        $('.open #pre-btn').removeClass('disable-btn');
+      }
+      if (currentPage === totalPage) {
+        $('.open #next-btn').addClass('disable-btn');
+      } else {
+        $('.open #next-btn').removeClass('disable-btn');
+      }
+      $('.open #totalSize').text(totalSize);
+      $('.open .totalPage').text(totalPage);
+      $('.open #pre-btn').on('click', function (e) {
+        e.stopPropagation();
+        if (!operateBefore() || currentPage === 1) return;
+        currentPage -= 1;
+        $('.open .currentPage').text(currentPage);
+        esdpec.framework.core.getJsonResult('abnormaldata/getdatabypage?mfid=' + mfid + '&pagenum=' + currentPage, function (response) {
+          if (response.IsSuccess) {
+            generateExceptionHistory(response.Content, mfid);
+          }
+        });
+      });
+      $('.open #next-btn').on('click', function (e) {
+        e.stopPropagation();
+        if (!operateBefore() || currentPage === totalPage) return;
+        currentPage += 1;
+        $('.open .currentPage').text(currentPage);
+        esdpec.framework.core.getJsonResult('abnormaldata/getdatabypage?mfid=' + mfid + '&pagenum=' + currentPage, function (response) {
+          if (response.IsSuccess) {
+            generateExceptionHistory(response.Content, mfid);
+          }
+        });
+      });
+    }, 300);
+  }
   $('#onshowmeterinfo').on('click', function (e) {
     e.stopPropagation();
     $('.meter-info-container').toggleClass('close');
@@ -1814,7 +2049,7 @@ $(function () {
     });
     $(currentDom).toggleClass('date-active');
     let parameter = _.find(currentMeterParameters, a => a.type === 0 && a.isChecked);
-    if (parameter && getSearchDateType() === -1) {
+    if (parameter && getSearchDateType() !== -1) {
       $('.exception-manager').attr('data-toggle', 'close').hide();
       $('.exception-box').hide();
     } else {
@@ -2355,10 +2590,109 @@ $(function () {
       $('.exception-box').show();
       $(currentDom).attr('data-toggle', 'open');
       $(currentDom).children(0).children(0).removeClass('icon-xiaotuziCduan_').addClass('icon-xiaotuziCduan_1');
+      $('.inException').show();
+      let date = $('#datevalue').val();
+      let dateArray = date.split(' -- ');
+      let parameters = _.filter(currentMeterParameters, a => a.isChecked);
+      let mfids = _.head(parameters);
+      let uriparam = `mfid=${mfids.id}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
+      esdpec.framework.core.getJsonResult('abnormaldata/getdata?' + uriparam, function (response) {
+        if (response.IsSuccess) {
+          if (response.Content.length > 0) {
+            let exceptionDatas = [];
+            _.each(response.Content, a => {
+              exceptionDatas.push({
+                val: a.val,
+                cost: 0,
+                date: a.time,
+                isChecked: false
+              });
+            });
+            loadExceptionDataIntoGraphData(exceptionDatas);
+          }
+        }
+      });
+      $('#exception-open-history').on('click', function (e) {
+        e.stopPropagation();
+        $('#exception-history-data').dialogModal({
+          onOkBut: function () {},
+          onCancelBut: function () {},
+          onLoad: function () {
+            esdpec.framework.core.getJsonResult('abnormaldata/getdatabypage?mfid=' + mfids.id + '&pagenum=1', function (response) {
+              if (response.IsSuccess) {
+                generateExceptionHistory(response.Content, mfids.id);
+              }
+            });
+          },
+          onClose: function () {},
+        });
+      });
+      $('#exception-filter-rule').on('click', function (e) {
+        e.stopPropagation();
+
+      });
+      $('#exception-filter').on('click', function (e) {
+        e.stopPropagation();
+        let exceptionItem = {
+          mfid: mfids.id
+        };
+        let time = $('#exception-daycontainer').val();
+        let timeArray = time.split(' -- ');
+        exceptionItem.stime = timeArray[0] + ' 00:00:01';
+        exceptionItem.etime = timeArray[1] + ' 23:59:59';
+        let minVal = $('#min-val-input').val();
+        let maxVal = $('#max-val-input').val();
+        if(minVal !== ''){
+          exceptionItem.lt_val = parseFloat(minVal);
+        }
+        if(maxVal !== ''){
+          exceptionItem.gt_val = parseFloat(maxVal);
+        }   
+        if(exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val){
+          toastr.warning('数值范围异常，最大值必须大于最小值');
+          return;
+        }
+        esdpec.framework.core.doPostOperation('abnormaldata/savelistdata', exceptionItem, function (response) {
+          if (response.IsSuccess) {
+            reloadMeterChartData();
+            reloadExceptionGraphData();
+          }
+        });
+      });
+      $('#exception-unfilter').on('click', function (e) {
+        e.stopPropagation();
+        let exceptionItem = {
+          mfid: mfids.id
+        };
+        let time = $('#exception-daycontainer').val();
+        let timeArray = time.split(' -- ');
+        exceptionItem.stime = timeArray[0] + ' 00:00:01';
+        exceptionItem.etime = timeArray[1] + ' 23:59:59';
+        let minVal = $('#min-val-input').val();
+        let maxVal = $('#max-val-input').val();
+        if(minVal !== ''){
+          exceptionItem.lt_val = parseFloat(minVal);
+        }
+        if(maxVal !== ''){
+          exceptionItem.gt_val = parseFloat(maxVal);
+        }
+        if(exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val){
+          toastr.warning('数值范围异常，最大值必须大于最小值');
+          return;
+        }
+        esdpec.framework.core.doPostOperation('abnormaldata/cancellistdata', exceptionItem, function (response) {
+          if (response.IsSuccess) {
+            reloadMeterChartData();
+            reloadExceptionGraphData();
+          }
+        });
+      });
     } else {
       $('.exception-box').hide();
       $(currentDom).attr('data-toggle', 'close');
       $(currentDom).children(0).children(0).removeClass('icon-xiaotuziCduan_1').addClass('icon-xiaotuziCduan_');
+      $('.inException').hide();
+      $('.graph-data-list tr.shouldremove').remove();
     }
   });
 
@@ -2630,7 +2964,7 @@ $(function () {
                   let currentDom = e.currentTarget;
                   let unit = $(currentDom).attr('data-unit');
                   let type = parseInt($(currentDom).attr('data-type'));
-                  if (type === 0 && getSearchDateType() === -1) {
+                  if (type === 0 && getSearchDateType() !== -1) {
                     $('.exception-manager').attr('data-toggle', 'close').hide();
                     $('.exception-box').hide();
                   } else {
@@ -2703,5 +3037,4 @@ $(function () {
     closeMethod: 'fadeOut',
     closeEasing: 'swing'
   });
-
 });
