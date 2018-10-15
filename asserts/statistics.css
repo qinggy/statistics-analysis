@@ -1647,18 +1647,18 @@ html body {
   height: 600px;
 }
 
-.page-item{
+.page-item {
   position: relative;
 }
 
-.page-container{
+.page-container {
   position: absolute;
   right: 0;
   top: 10px;
   color: #ddd;
 }
 
-.page-btn{
+.page-btn {
   height: 28px;
   line-height: 26px;
   border-radius: 4px;
@@ -1666,22 +1666,75 @@ html body {
   font-size: 12px;
 }
 
-.page-btn:not(.disable-btn):hover{
+.page-btn:not(.disable-btn):hover {
   color: #fff;
   background-color: #4b89dc;
   border: 1px solid #4b89dc;
 }
 
-.disable-btn{
+.disable-btn {
   cursor: not-allowed;
   color: #dce3e6;
 }
 
-.currentPage{
+.currentPage {
   margin-left: 5px;
   color: #708195;
 }
 
-.totalPage{
+.totalPage {
   margin-right: 5px;
 }
+
+
+/** alarm page css**/
+.alarm-content {
+  flex: 1;
+  height: 100%;
+  width: calc(100% - 340px);
+  border-top: 20px solid #fff;
+  margin-left: 20px;
+  margin-right: 20px;
+  padding-bottom: 20px;
+}
+
+.alarm-header {
+  min-height: 200px;
+  background-color: #Ffff;
+}
+
+.navigate-back {
+  color: #4b89dc;
+  font-size: 18px;
+  padding-top: 8px;
+  margin-left: 20px;
+  position: relative;
+  cursor: pointer;
+}
+
+.navigate-back>span {
+  position: absolute;
+  left: 25px;
+  top: 9px;
+}
+
+.navigate-back:before {
+  font-size: 25px;
+  font-weight: bold;
+}
+
+.nav-history{
+  color: #708195;
+}
+
+.alarm-titile{
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #000;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+/** end page**/

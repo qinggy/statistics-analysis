@@ -39,6 +39,12 @@ Date.prototype.addDays = function (days) {
   return this;
 }
 
+String.prototype.format = function() {
+  let parts = this.toString().split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return parts.join(".");
+}
+
 esdpec.framework.core.Config = {
   APIBaseUrl: 'http://172.17.0.10:88/api/',
   BaseWebSiteUrl: 'http://172.17.0.48/',

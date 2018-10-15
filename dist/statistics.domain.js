@@ -2396,6 +2396,24 @@ $(function () {
     showModuleConfigureModal();
   });
 
+  $('.content__header--btngrp .alarm-container').on('click', function (e) {
+    e.stopPropagation();
+    $('.main-content').hide();
+    $('.alarm-content').show();
+    $('.meterName').addClass('nav-history');
+    $('.detail').addClass('nav-history');
+    $('#nav-alarm').show();
+  });
+
+  $('.alarm-content>.alarm-header>.navigate-back').on('click', function(e){
+    e.stopPropagation();
+    $('.main-content').show();
+    $('.alarm-content').hide();
+    $('.meterName').removeClass('nav-history');
+    $('.detail').removeClass('nav-history');
+    $('#nav-alarm').hide();
+  });
+
   $('.comparsion-left>.meter-choose').on('click', function (e) {
     e.stopPropagation();
     if (getSelectParameterLen() > 1) {
@@ -2629,7 +2647,31 @@ $(function () {
       });
       $('#exception-filter-rule').on('click', function (e) {
         e.stopPropagation();
-
+        let exceptionItem = {
+          mfid: mfids.id
+        };
+        let time = $('#exception-daycontainer').val();
+        let timeArray = time.split(' -- ');
+        exceptionItem.stime = timeArray[0] + ' 00:00:01';
+        exceptionItem.etime = timeArray[1] + ' 23:59:59';
+        let minVal = $('#min-val-input').val();
+        let maxVal = $('#max-val-input').val();
+        if(minVal !== ''){
+          exceptionItem.lt_val = parseFloat(minVal);
+        }
+        if(maxVal !== ''){
+          exceptionItem.gt_val = parseFloat(maxVal);
+        }   
+        if(exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val){
+          toastr.warning('数值范围异常，最大值必须大于最小值');
+          return;
+        }
+        esdpec.framework.core.doPostOperation('abnormalrule/saverule', exceptionItem, function(response) {
+          if(response.IsSuccess && response.Content){
+            toastr.info("规则保存成功");
+            return;
+          }
+        });
       });
       $('#exception-filter').on('click', function (e) {
         e.stopPropagation();
