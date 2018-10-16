@@ -1705,7 +1705,7 @@ html body {
 
 .navigate-back {
   color: #4b89dc;
-  font-size: 18px;
+  font-size: 14px;
   padding-top: 8px;
   margin-left: 20px;
   position: relative;
@@ -1714,12 +1714,12 @@ html body {
 
 .navigate-back>span {
   position: absolute;
-  left: 25px;
+  left: 20px;
   top: 9px;
 }
 
 .navigate-back:before {
-  font-size: 25px;
+  font-size: 19px;
   font-weight: bold;
 }
 
@@ -1738,3 +1738,9 @@ html body {
 }
 
 /** end page**/
+
+.param-position{
+  position: fixed;
+  top: 200px;
+  width: 300px;
+}

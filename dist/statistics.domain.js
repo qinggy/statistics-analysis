@@ -17,6 +17,11 @@ $(function () {
   let usageColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
   let costColor = ['#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
   //#endregion
+  let numberFormat = function(num){
+    let parts = _.toString(num).split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+  };
   let ifShowPieChart = function () {
     let flag = false;
     $('.operate-grp>i.should-uniq.btn-active').each(function (index, dom) {
@@ -66,11 +71,13 @@ $(function () {
       sunday: last_sunday
     };
   };
-  let windowResize = () => {
-    window.addEventListener("resize", () => {
-      if (analysisChart) analysisChart.resize();
-      if (areaChart) areaChart.resize();
-    });
+  let getSortType = () => {
+    let dom = $('.comparison-sort .op-grp>input.op-btn-active');
+    return dom.attr('data-id');
+  };
+  let getCostPieType = () => {
+    let pieRmb = $('.comparison-proportion .proportion-grp .comparison-rmb.btn-active');
+    return pieRmb.length > 0;
   };
   let operateBefore = function () {
     if (lastclicktime === null)
@@ -205,6 +212,7 @@ $(function () {
           }
         }
       };
+      xAxisData = _.uniq(_.orderBy(xAxisData, a => a, "asc"));
       series.data = _.map(xAxisData, a => {
         var valueItem = _.find(data.now_data_list || data.data_list, b => b.date === a);
         if (!!valueItem) return valueItem.val;
@@ -381,11 +389,11 @@ $(function () {
       data.areaMeterList.push({
         name: m.text,
         unit: areaConfigure.unit,
-        value: (item.sum_val || item.now_sum_val).toFixed(2),
-        percent: ((item.sum_val || item.now_sum_val) * 100 / totalValue).toFixed(2)
+        value: numberFormat((item.sum_val || item.now_sum_val || 0).toFixed(2)),
+        percent: (((item.sum_val || item.now_sum_val) || 0) * 100 / totalValue).toFixed(2)
       });
     });
-    data.areaMeterList = _.orderBy(data.areaMeterList, a => parseFloat(a.value), ["desc"]);
+    data.areaMeterList = _.orderBy(data.areaMeterList, a => parseFloat(_.replace(a.value, ',', '')), ["desc"]);
     for (let i = 0; i < data.areaMeterList.length; i++) {
       data.areaMeterList[i].color = sortColor[i];
     }
@@ -407,7 +415,7 @@ $(function () {
       areaMeterList: []
     };
     _.each(datas, d => {
-      d.sum_cost = _.sum(_.map(d.data_list, a => a.cost));
+      d.sum_cost = _.sum(_.map(d.data_list || d.now_data_list, a => a.cost));
     });
     let totalCost = _.sum(_.map(datas, dd => dd.sum_cost));
     _.each(areaConfigureMeters, m => {
@@ -416,11 +424,11 @@ $(function () {
       data.areaMeterList.push({
         name: m.text,
         unit: '元',
-        value: item.sum_cost.toFixed(2),
-        percent: totalCost === 0 ? '0.00' : (item.sum_val * 100 / totalCost).toFixed(2)
+        value: numberFormat((item.sum_cost || 0).toFixed(2)),
+        percent: totalCost === 0 ? '0.00' : ((item.sum_cost || 0) * 100 / totalCost).toFixed(2)
       });
     });
-    data.areaMeterList = _.orderBy(data.areaMeterList, a => parseFloat(a.value), ["desc"]);
+    data.areaMeterList = _.orderBy(data.areaMeterList, a => parseFloat(_.replace(a.value, ',', '')), ["desc"]);
     for (let i = 0; i < data.areaMeterList.length; i++) {
       data.areaMeterList[i].color = sortColor[i];
     }
@@ -445,7 +453,7 @@ $(function () {
       let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
       let sumVal = {
         name: meter.text,
-        value: (data.sum_val || data.now_sum_val).toFixed(2)
+        value: numberFormat((data.sum_val || data.now_sum_val || 0).toFixed(2))
       };
       datas.push(sumVal);
       legends.push(meter.text);
@@ -473,7 +481,7 @@ $(function () {
       let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
       let sumVal = {
         name: meter.text,
-        value: (_.sum(_.map((data.data_list || data.now_data_list), a => a.cost))).toFixed(2)
+        value: numberFormat((_.sum(_.map((data.data_list || data.now_data_list), a => a.cost))).toFixed(2))
       };
       datas.push(sumVal);
       legends.push(meter.text);
@@ -537,6 +545,7 @@ $(function () {
               let chartXaxisData = [];
               chartLegend = _.map(meterAndParaMap, a => a.name);
               chartXaxisData = searchParaType === 0 ? getXAxisData(dateType, sTime, eTime) : getOriginalXAxisData(response.Content);
+              chartXaxisData = _.uniq(_.orderBy(chartXaxisData, a => a, "asc"));
               searchResult = {
                 unit: parameter.unit,
                 chartLegend,
@@ -568,6 +577,7 @@ $(function () {
           let checkedParameters = _.filter(currentMeterParameters, p => _.includes(mfids, p.id));
           chartLegend = _.map(checkedParameters, a => a.name);
           chartXaxisData = searchParaType === 0 ? getXAxisData(dateType, sTime, eTime) : getOriginalXAxisData(response.Content.data_list);
+          chartXaxisData = _.uniq(_.orderBy(chartXaxisData, a => a, "asc"));
           let datas = searchParaType === 0 ? [response.Content] : response.Content.data_list;
           searchResult = {
             unit: parameter.unit,
@@ -630,6 +640,7 @@ $(function () {
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
           chartXaxisData = getXAxisData(dateType, sTime, eTime);
+          chartXaxisData = _.uniq(_.orderBy(chartXaxisData, a => a, "asc"));
           searchResult = {
             unit: areaConfigure.unit,
             chartLegend,
@@ -639,8 +650,10 @@ $(function () {
             meterAndParaMap
           };
           generateAreaChart(areaConfigure.unit, chartLegend, chartXaxisData, [response.Content], meterAndParaMap, 'area-chart-instance', getAreaChartType());
-          generateAreaSort([response.Content]);
-          generateAreaPie([response.Content]);
+          if (getSortType() === 'usage') generateAreaSort([response.Content]);
+          else generateAreaCostSort([response.Content]);
+          if (getCostPieType()) generateAreaCostPie([response.Content]);
+          else generateAreaPie([response.Content]);
           generateAreaFgp();
         }
       });
@@ -652,6 +665,7 @@ $(function () {
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
           chartXaxisData = getXAxisData(dateType, sTime, eTime);
+          chartXaxisData = _.uniq(_.orderBy(chartXaxisData, a => a, "asc"));
           searchResult = {
             unit: areaConfigure.unit,
             chartLegend,
@@ -661,8 +675,10 @@ $(function () {
             meterAndParaMap
           };
           generateAreaChart(areaConfigure.unit, chartLegend, chartXaxisData, response.Content, meterAndParaMap, 'area-chart-instance', getAreaChartType());
-          generateAreaSort(response.Content);
-          generateAreaPie(response.Content);
+          if (getSortType() === 'usage') generateAreaSort(response.Content);
+          else generateAreaCostSort(response.Content);
+          if (getCostPieType()) generateAreaCostPie(response.Content);
+          else generateAreaPie(response.Content);
           generateAreaFgp();
         }
       });
@@ -686,7 +702,7 @@ $(function () {
         trigger: 'axis'
       },
       grid: {
-        left: 5,
+        left: 15,
         right: 100,
         bottom: 20
       },
@@ -726,7 +742,7 @@ $(function () {
         trigger: 'axis'
       },
       grid: {
-        left: 5,
+        left: 15,
         right: 100,
         bottom: 20
       },
@@ -756,11 +772,11 @@ $(function () {
     let data = {
       data: {
         unit,
-        avg_per: avg_per.toFixed(2),
-        sum_per: sum_per.toFixed(2),
-        avg_val: avg_val.toFixed(2),
-        last_sum_val: last_sum_val.toFixed(2),
-        now_sum_val: now_sum_val.toFixed(2),
+        avg_per: numberFormat(avg_per.toFixed(2)),
+        sum_per: numberFormat(sum_per.toFixed(2)),
+        avg_val: numberFormat(avg_val.toFixed(2)),
+        last_sum_val: numberFormat(last_sum_val.toFixed(2)),
+        now_sum_val: numberFormat(now_sum_val.toFixed(2)),
         last_sum_width: maxVal === last_sum_val ? '98%' : ((last_sum_val / maxVal) * 100) + '%',
         now_sum_width: maxVal === now_sum_val ? '98%' : ((now_sum_val / maxVal) * 100) + '%',
         avg_val_width: maxVal === avg_val ? '98%' : ((avg_val / maxVal) * 100) + '%'
@@ -808,7 +824,7 @@ $(function () {
     let head = _.head(data.selectedParameterList);
     head.isDefault = true;
     let templateHtml = template('list-body-template', data);
-    $('#list-body').html(templateHtml);
+    $('.list-body').html(templateHtml);
     setTimeout(() => {
       $('.list-body>div.choose-param-item').on('click', function (e) {
         e.stopPropagation();
@@ -816,6 +832,13 @@ $(function () {
         $('.list-body>div.choose-param-item').removeClass('param-item-active');
         $(currentDom).addClass('param-item-active');
         let mfid = $(currentDom).attr('data-id');
+        if($(currentDom).parent().parent().hasClass('param-position')){
+          $('.choose-param-list>.list-body>div.choose-param-item').removeClass('param-item-active');
+          $('.choose-param-list>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');
+        }else{
+          $('.param-position>.list-body>div.choose-param-item').removeClass('param-item-active');
+          $('.param-position>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');          
+        }
         let originalList = _.find(searchResult.datas, item => item.mfid === mfid);
         let originalDatas = {
           data: {
@@ -864,7 +887,7 @@ $(function () {
     let originalList = _.find(searchResult.datas, item => item.mfid === head.id);
     let originalDatas = {
       data: {
-        mfid: originalList.mfid,
+        mfid: head.id,
         unit,
         type,
         graphDataList: originalList ? originalList.now_data_list || [] : [],
@@ -915,7 +938,7 @@ $(function () {
         _.each(data.parameterList, a => {
           let last = _.head(a.last_datas);
           a.lastDate = last ? _.replace(last.Mt, 'T', ' ').substring(0, 19) : '--';
-          a.lastVal = last ? last.Mv : '--';
+          a.lastVal = last ? numberFormat(last.Mv) : '--';
         });
         let templateHtml = template('original-table-body-template', data);
         $('#original-table-body').html(templateHtml);
@@ -931,6 +954,7 @@ $(function () {
           _.each(historyData.historyList, a => {
             a.Mt = _.replace(a.Mt, 'T', ' ').substring(0, 19);
             a.ST = _.replace(a.ST, 'T', ' ').substring(0, 19);
+            a.Mv = numberFormat(a.Mv);
           });
           let templateHtml = template('history-data-list-body-template', historyData);
           $('.history-data-list-body').html(templateHtml);
@@ -958,7 +982,7 @@ $(function () {
     let pielastTitle = '';
     switch (dateType) {
       case '2':
-        queryType = dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) ? 0 : 1;
+        queryType = (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) && dateArray[1].substring(0, 10) === new Date().format('yyyy-MM-dd')) ? 0 : 1;
         piefirstTitle = '今天';
         pielastTitle = '昨天';
         break;
@@ -968,7 +992,7 @@ $(function () {
         pielastTitle = '上周';
         break;
       case '4':
-        queryType = dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) ? 0 : 1;
+        queryType = (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) && dateArray[1].substring(0, 7) === new Date().format('yyyy-MM')) ? 0 : 1;
         piefirstTitle = '本月';
         pielastTitle = '上月';
         break;
@@ -1012,7 +1036,7 @@ $(function () {
     let pielastTitle = '';
     switch (dateType) {
       case '2':
-        queryType = dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) ? 0 : 1;
+        queryType = (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) && dateArray[1].substring(0, 10) === new Date().format('yyyy-MM-dd')) ? 0 : 1;
         piefirstTitle = '今天';
         pielastTitle = '昨天';
         break;
@@ -1022,7 +1046,7 @@ $(function () {
         pielastTitle = '上周';
         break;
       case '4':
-        queryType = dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) ? 0 : 1;
+        queryType = (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) && dateArray[1].substring(0, 7) === new Date().format('yyyy-MM')) ? 0 : 1;
         piefirstTitle = '本月';
         pielastTitle = '上月';
         break;
@@ -1108,8 +1132,8 @@ $(function () {
     switch (dateType) {
       case '2':
         let flag = 0;
-        if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10)) {
-          xAxisData = [new Date().format('yyyy-MM-dd'), new Date().addDays(-1).format('yyyy-MM-dd')];
+        if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) && dateArray[1].substring(0, 10) === new Date().format('yyyy-MM-dd')) {
+          xAxisData = [new Date(dateArray[0]).format('yyyy-MM-dd'), new Date(dateArray[1]).addDays(-1).format('yyyy-MM-dd')];
           flag = 0;
           $('#usage-title').hide();
           $('#cost-title').hide();
@@ -1125,8 +1149,8 @@ $(function () {
             lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
             lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
           });
-          $('.usage-title-container').show().html("<span>本日用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>昨日用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
-          $('.cost-title-container').show().html("<span>本日费用：" + nowCostSum.toFixed(3) + "元</span><span>昨日费用：" + lastCostSum.toFixed(3) + "元</span>");
+          $('.usage-title-container').show().html("<span>本日用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>昨日用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+          $('.cost-title-container').show().html("<span>本日费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>昨日费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
         } else {
           $('.cost-title-container').hide();
           $('.usage-title-container').hide();
@@ -1142,9 +1166,9 @@ $(function () {
             costSum = _.sum([costSum, _.sum(_.map(a.list, a => a.cost))]);
           });
           if (chartType === 0) {
-            $('#usage-title').show().text('总用量：' + usageSum.toFixed(3) + searchResult.unit);
+            $('#usage-title').show().text('总用量：' + numberFormat(usageSum.toFixed(3)) + searchResult.unit);
           } else {
-            $('#cost-title').show().text('总费用：' + costSum.toFixed(3) + '元');
+            $('#cost-title').show().text('总费用：' + numberFormat(costSum.toFixed(3)) + '元');
           }
           flag = 1;
         }
@@ -1166,14 +1190,14 @@ $(function () {
           lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
         });
         xAxisData = [getWeek().monday.substring(0, 10) + ' 至 ' + getWeek().sunday.substring(0, 10), new Date(getWeek().monday).addDays(-7).format('yyyy-MM-dd') + ' 至 ' + new Date(getWeek().sunday).addDays(-7).format('yyyy-MM-dd')];
-        $('.usage-title-container').show().html("<span>本周用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>上周用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
-        $('.cost-title-container').show().html("<span>本周费用：" + nowCostSum.toFixed(3) + "元</span><span>上周费用：" + lastCostSum.toFixed(3) + "元</span>");
+        $('.usage-title-container').show().html("<span>本周用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>上周用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+        $('.cost-title-container').show().html("<span>本周费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>上周费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
         series = getStackSeries(branchs, datas, 0, chartType);
         break;
       case '4':
         let flaga = 0;
-        if (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7)) {
-          xAxisData = [new moment().format('YYYY-MM'), new moment().subtract(1, 'months').format('YYYY-MM')];
+        if (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) && dateArray[1].substring(0, 7) === new Date().format('yyyy-MM')) {
+          xAxisData = [new moment(dateArray[0]).format('YYYY-MM'), new moment(dateArray[1]).subtract(1, 'months').format('YYYY-MM')];
           $('#usage-title').hide();
           $('#cost-title').hide();
           let nowUsageSum = 0,
@@ -1188,8 +1212,8 @@ $(function () {
             lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
             lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
           });
-          $('.usage-title-container').show().html("<span>本月用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>上月用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
-          $('.cost-title-container').show().html("<span>本月费用：" + nowCostSum.toFixed(3) + "元</span><span>上月费用：" + lastCostSum.toFixed(3) + "元</span>");
+          $('.usage-title-container').show().html("<span>本月用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>上月用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+          $('.cost-title-container').show().html("<span>本月费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>上月费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
         } else {
           $('.cost-title-container').hide();
           $('.usage-title-container').hide();
@@ -1205,9 +1229,9 @@ $(function () {
             costSum = _.sum([costSum, _.sum(_.map(a.list, a => a.cost))]);
           });
           if (chartType === 0) {
-            $('#usage-title').show().text('总用量：' + usageSum.toFixed(3) + searchResult.unit);
+            $('#usage-title').show().text('总用量：' + numberFormat(usageSum.toFixed(3)) + searchResult.unit);
           } else {
-            $('#cost-title').show().text('总费用：' + costSum.toFixed(3) + '元');
+            $('#cost-title').show().text('总费用：' + numberFormat(costSum.toFixed(3)) + '元');
           }
           flaga = 1;
         }
@@ -1222,9 +1246,9 @@ $(function () {
           let totalSum = _.sum(_.map(datas, a => a.value));
           _.each(datas, (data, index) => {
             tooltip += "<div style='width: 12px;height:12px;background-color: " + (chartType === 0 ? usageColor[index] : costColor[index]) + "; display: inline-block;margin-right: 10px'></div>" + data.seriesName + (chartType === 0 ? '用量：' : '费用：') +
-              data.value.toFixed(3) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
+            numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
           });
-          tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + totalSum.toFixed(3) + (chartType === 0 ? searchResult.unit : '元');
+          tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + numberFormat(totalSum.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元');
           return tooltip;
         },
         padding: [5, 5, 5, 10]
@@ -1283,7 +1307,9 @@ $(function () {
       },
       tooltip: {
         trigger: 'item',
-        formatter: "{a} <br/>{b}({c}" + (chartType === 0 ? searchResult.unit : '元') + ")",
+        formatter: function(data){
+          return `${data.seriesName} <br/>${data.name} (${numberFormat(data.value)}` + (chartType === 0 ? searchResult.unit : '元') + ")";
+        },
         padding: [5, 5, 5, 10]
       },
       legend: {
@@ -1296,7 +1322,7 @@ $(function () {
         name: title,
         type: 'pie',
         radius: '55%',
-        center: ['50%', '60%'],
+        center: ['50%', '50%'],
         label: {
           normal: {
             position: 'inner'
@@ -1325,8 +1351,8 @@ $(function () {
     switch (dateType) {
       case '2':
         let flag = 0;
-        if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10)) {
-          xAxisData = [new Date().format('yyyy-MM-dd'), new Date().addDays(-1).format('yyyy-MM-dd')];
+        if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) && dateArray[1].substring(0, 10) === new Date().format('yyyy-MM-dd')) {
+          xAxisData = [new Date(dateArray[0]).format('yyyy-MM-dd'), new Date(dateArray[1]).addDays(-1).format('yyyy-MM-dd')];
           flag = 0;
           $('#meter-usage-title').hide();
           $('#meter-cost-title').hide();
@@ -1342,8 +1368,8 @@ $(function () {
             lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
             lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
           });
-          $('.meter-usage-title-container').show().html("<span>本日用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>昨日用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
-          $('.meter-cost-title-container').show().html("<span>本日费用：" + nowCostSum.toFixed(3) + "元</span><span>昨日费用：" + lastCostSum.toFixed(3) + "元</span>");
+          $('.meter-usage-title-container').show().html("<span>本日用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>昨日用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+          $('.meter-cost-title-container').show().html("<span>本日费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>昨日费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
         } else {
           $('.meter-cost-title-container').hide();
           $('.meter-usage-title-container').hide();
@@ -1359,9 +1385,9 @@ $(function () {
             costSum = _.sum([costSum, _.sum(_.map(a.list, a => a.cost))]);
           });
           if (chartType === 0) {
-            $('#meter-usage-title').show().text('总用量：' + usageSum.toFixed(3) + searchResult.unit);
+            $('#meter-usage-title').show().text('总用量：' + numberFormat(usageSum.toFixed(3)) + searchResult.unit);
           } else {
-            $('#meter-cost-title').show().text('总费用：' + costSum.toFixed(3) + '元');
+            $('#meter-cost-title').show().text('总费用：' + numberFormat(costSum.toFixed(3)) + '元');
           }
           flag = 1;
         }
@@ -1383,14 +1409,14 @@ $(function () {
           lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
         });
         xAxisData = [getWeek().monday.substring(0, 10) + ' 至 ' + getWeek().sunday.substring(0, 10), new Date(getWeek().monday).addDays(-7).format('yyyy-MM-dd') + ' 至 ' + new Date(getWeek().sunday).addDays(-7).format('yyyy-MM-dd')];
-        $('.meter-usage-title-container').show().html("<span>本周用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>上周用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
-        $('.meter-cost-title-container').show().html("<span>本周费用：" + nowCostSum.toFixed(3) + "元</span><span>上周费用：" + lastCostSum.toFixed(3) + "元</span>");
+        $('.meter-usage-title-container').show().html("<span>本周用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>上周用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+        $('.meter-cost-title-container').show().html("<span>本周费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>上周费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
         series = getStackSeries(branchs, datas, 0, chartType);
         break;
       case '4':
         let flaga = 0;
-        if (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7)) {
-          xAxisData = [new moment().format('YYYY-MM'), new moment().subtract(1, 'months').format('YYYY-MM')];
+        if (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) && dateArray[1].substring(0, 7) === new Date().format('yyyy-MM')) {
+          xAxisData = [new moment(dateArray[0]).format('YYYY-MM'), new moment(dateArray[1]).subtract(1, 'months').format('YYYY-MM')];
           $('#meter-usage-title').hide();
           $('#meter-cost-title').hide();
           let nowUsageSum = 0,
@@ -1405,8 +1431,8 @@ $(function () {
             lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
             lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
           });
-          $('.meter-usage-title-container').show().html("<span>本月用量：" + nowUsageSum.toFixed(3) + searchResult.unit + "</span><span>上月用量：" + lastUsageSum.toFixed(3) + searchResult.unit + "</span>");
-          $('.meter-cost-title-container').show().html("<span>本月费用：" + nowCostSum.toFixed(3) + "元</span><span>上月费用：" + lastCostSum.toFixed(3) + "元</span>");
+          $('.meter-usage-title-container').show().html("<span>本月用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>上月用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+          $('.meter-cost-title-container').show().html("<span>本月费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>上月费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
         } else {
           $('.meter-cost-title-container').hide();
           $('.meter-usage-title-container').hide();
@@ -1422,9 +1448,9 @@ $(function () {
             costSum = _.sum([costSum, _.sum(_.map(a.list, a => a.cost))]);
           });
           if (chartType === 0) {
-            $('#meter-usage-title').show().text('总用量：' + usageSum.toFixed(3) + searchResult.unit);
+            $('#meter-usage-title').show().text('总用量：' + numberFormat(usageSum.toFixed(3)) + searchResult.unit);
           } else {
-            $('#meter-cost-title').show().text('总费用：' + costSum.toFixed(3) + '元');
+            $('#meter-cost-title').show().text('总费用：' + numberFormat(costSum.toFixed(3)) + '元');
           }
           flaga = 1;
         }
@@ -1439,9 +1465,9 @@ $(function () {
           let totalSum = _.sum(_.map(datas, a => a.value));
           _.each(datas, (data, index) => {
             tooltip += "<div style='width: 12px;height:12px;background-color: " + (chartType === 0 ? usageColor[index] : costColor[index]) + "; display: inline-block;margin-right: 10px'></div>" + data.seriesName + (chartType === 0 ? '用量：' : '费用：') +
-              data.value.toFixed(3) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
+            numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
           });
-          tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + totalSum.toFixed(3) + (chartType === 0 ? searchResult.unit : '元');
+          tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + numberFormat(totalSum.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元');
           return tooltip;
         },
         padding: [5, 5, 5, 10]
@@ -1500,7 +1526,9 @@ $(function () {
       },
       tooltip: {
         trigger: 'item',
-        formatter: "{a} <br/>{b}({c}" + (chartType === 0 ? searchResult.unit : '元') + ")",
+        formatter: function (data){
+          return `${data.seriesName} <br/>${data.name} (${numberFormat(data.value)}` + (chartType === 0 ? searchResult.unit : '元') + ")";
+        },
         padding: [5, 5, 5, 10]
       },
       legend: {
@@ -1558,14 +1586,14 @@ $(function () {
     _.each(data.comparisonList, a => {
       let map = _.find(meterAndParaMap, m => m.mfid === a.mfid);
       a.meter_name = map ? map.name : '--';
-      a.sum_val = _.isString(a.sum_val) ? a.sum_val : (_.isNumber(a.sum_val) && _.toLower(a.sum_val) !== 'infinity') ? a.sum_val.toFixed(2) : '--';
-      a.sum_per = _.isString(a.sum_per) ? a.sum_per : (_.isNumber(a.sum_per) && _.toLower(a.sum_per) !== 'infinity') ? a.sum_per.toFixed(2) : '--';
-      a.all_avg_val = _.isString(a.all_avg_val) ? a.all_avg_val : (_.isNumber(a.all_avg_val) && _.toLower(a.all_avg_val) !== 'infinity') ? a.all_avg_val.toFixed(2) : '--';
-      a.avg_val = _.isString(a.avg_val) ? a.avg_val : (_.isNumber(a.avg_val) && _.toLower(a.avg_val) !== 'infinity') ? a.avg_val.toFixed(2) : '--';
-      a.max_val = _.isString(a.max_val) ? a.max_val : (_.isNumber(a.max_val) && _.toLower(a.max_val) !== 'infinity') ? a.max_val.toFixed(2) : '--';
-      a.min_val = _.isString(a.min_val) ? a.min_val : (_.isNumber(a.min_val) && _.toLower(a.min_val) !== 'infinity') ? a.min_val.toFixed(2) : '--';
-      a.upper_limit = a.rule ? (a.rule.UpperLimit ? ((_.isNumber(a.rule.UpperLimit) && _.toLower(a.rule.UpperLimit) !== 'infinity') ? a.rule.UpperLimit.toFixed(2) : '--') : '--') : '--';
-      a.lower_limit = a.rule ? (a.rule.LowerLimit ? ((_.isNumber(a.rule.LowerLimit) && _.toLower(a.rule.LowerLimit) !== 'infinity') ? a.rule.LowerLimit.toFixed(2) : '--') : '--') : '--';
+      a.sum_val = _.isString(a.sum_val) ? a.sum_val : (_.isNumber(a.sum_val) && _.toLower(a.sum_val) !== 'infinity') ? numberFormat(a.sum_val.toFixed(2)) : '--';
+      a.sum_per = _.isString(a.sum_per) ? a.sum_per : (_.isNumber(a.sum_per) && _.toLower(a.sum_per) !== 'infinity') ? numberFormat(a.sum_per.toFixed(2)) : '--';
+      a.all_avg_val = _.isString(a.all_avg_val) ? a.all_avg_val : (_.isNumber(a.all_avg_val) && _.toLower(a.all_avg_val) !== 'infinity') ? numberFormat(a.all_avg_val.toFixed(2)) : '--';
+      a.avg_val = _.isString(a.avg_val) ? a.avg_val : (_.isNumber(a.avg_val) && _.toLower(a.avg_val) !== 'infinity') ? numberFormat(a.avg_val.toFixed(2)) : '--';
+      a.max_val = _.isString(a.max_val) ? a.max_val : (_.isNumber(a.max_val) && _.toLower(a.max_val) !== 'infinity') ? numberFormat(a.max_val.toFixed(2)) : '--';
+      a.min_val = _.isString(a.min_val) ? a.min_val : (_.isNumber(a.min_val) && _.toLower(a.min_val) !== 'infinity') ? numberFormat(a.min_val.toFixed(2)) : '--';
+      a.upper_limit = a.rule ? (a.rule.UpperLimit ? ((_.isNumber(a.rule.UpperLimit) && _.toLower(a.rule.UpperLimit) !== 'infinity') ? numberFormat(a.rule.UpperLimit.toFixed(2)) : '--') : '--') : '--';
+      a.lower_limit = a.rule ? (a.rule.LowerLimit ? ((_.isNumber(a.rule.LowerLimit) && _.toLower(a.rule.LowerLimit) !== 'infinity') ? numberFormat(a.rule.LowerLimit.toFixed(2)) : '--') : '--') : '--';
     });
     if (type === 0) $('.no-show-in').show();
     else $('.no-show-in').hide();
@@ -1609,7 +1637,7 @@ $(function () {
           "icon": "fa fa-file icon-state-warning icon-lg"
         }
       },
-      "plugins": ["types", "search", "crrm"]
+      "plugins": ["types", "search", "crrm", "state"]
     }).on('loaded.jstree', function (e, data) {
       let instance = data.instance;
       let target = instance.get_node(e.target.firstChild.firstChild.lastChild);
@@ -1624,6 +1652,11 @@ $(function () {
           let energyType = head.EnergyCode;
           if (energyType !== node.EnergyCode) {
             toastr.warning('只能配置同一种能源类型的仪表，请重新选择');
+            return;
+          }
+          let exist = _.find(areaConfigureMeters, a=>a.id === node.id);
+          if(exist){
+            toastr.warning('同一个仪表只能选择一次');
             return;
           }
           areaConfigureMeters.push(node);
@@ -1819,7 +1852,9 @@ $(function () {
       },
       tooltip: {
         trigger: 'item',
-        formatter: "{a} <br/>{b} : {c} ({d}%)"
+        formatter: function (data){
+          return  `${data.seriesName} <br/>${data.name} : ${numberFormat(data.value)} (${data.percent}%)`;
+        }
       },
       legend: {
         orient: 'horizontal',
@@ -1835,12 +1870,14 @@ $(function () {
             position: 'inner'
           }
         },
-        data: seriesData,
+        data: _.each(seriesData, a => a.value = _.replace(a.value, ',', '')),
         itemStyle: {
           normal: {
             label: {
               show: true,
-              formatter: "{c} ({d}%)"
+              formatter: function (data) {
+                return `${numberFormat(data.value)} (${data.percent}%)`;
+              }
             }
           },
           emphasis: {
@@ -1884,7 +1921,7 @@ $(function () {
       }
     });
   };
-  let reloadExceptionGraphData = function(){
+  let reloadExceptionGraphData = function () {
     let date = $('#datevalue').val();
     let dateArray = date.split(' -- ');
     let parameters = _.filter(currentMeterParameters, a => a.isChecked);
@@ -2006,7 +2043,27 @@ $(function () {
         });
       });
     }, 300);
-  }
+  };
+  let isParentNode = (parentId, nodeId) => {
+    let node = _.find(meterDataList, a => a.id === nodeId);
+    let parent = node.parent;
+    if(parentId === parent) return true;
+    if(parent === '#') return false;
+    isParentNode(parentId, parent);
+  };
+  let checkElementInVisiable = () => {
+    if($(window).scrollTop() > ($('#list-body').offset().top + $('#list-body').outerHeight() - 100)) {
+      $('.param-position>.list-body').show();
+    } else { 
+      $('.param-position>.list-body').hide();
+    }
+  };
+
+  $('.main-content .content-right').on('scroll', function(e) {
+    e.stopPropagation();
+    if(currentSelectedNode.modeltype !== 'area') checkElementInVisiable();
+  });
+
   $('#onshowmeterinfo').on('click', function (e) {
     e.stopPropagation();
     $('.meter-info-container').toggleClass('close');
@@ -2403,9 +2460,10 @@ $(function () {
     $('.meterName').addClass('nav-history');
     $('.detail').addClass('nav-history');
     $('#nav-alarm').show();
+    $('#item-name').text(currentSelectedNode.text);
   });
 
-  $('.alarm-content>.alarm-header>.navigate-back').on('click', function(e){
+  $('.alarm-content>.alarm-header>.navigate-back').on('click', function (e) {
     e.stopPropagation();
     $('.main-content').show();
     $('.alarm-content').hide();
@@ -2423,7 +2481,8 @@ $(function () {
     $('#choose-meter-for-comparison').dialogModal({
       onOkBut: function () {
         let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
-        let nodes = _.filter(meterDataList, a => _.includes(nodeIds, a.id));
+        nodeIds = _.filter(nodeIds, a=> a !== currentSelectedNode.id);
+        let nodes = _.filter(meterDataList, a => _.includes(nodeIds, a.id) && a.modeltype !== 'area');
         comparsionSelectedMeters = [];
         comparsionSelectedMeters = _.concat([], nodes);
         let data = {
@@ -2501,6 +2560,27 @@ $(function () {
               _.each(comparsionSelectedMeters, meter => {
                 instance.select_node(instance.get_node(meter.id));
               });
+              let disableNode = instance.get_node(currentSelectedNode.id);
+              instance.select_node(disableNode);
+              instance.disable_node(disableNode);
+            }).on('select_node.jstree', function(e, data){
+              let instance = data.instance;
+              let node = data.node.original;
+              let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
+              if(nodeIds.length > 6){
+                toastr.warning('对比仪表个数不能超过6个');
+                instance.deselect_node(instance.get_node(node.id));
+                return;
+              }
+            }).on('deselect_node.jstree', function (e, data) {
+              let instance = data.instance;
+              let node = data.node.original;
+              if(node.modeltype === 'area' && isParentNode(node.id, currentSelectedNode.id)){
+                setTimeout(()=>{
+                  instance.select_node(instance.get_node(currentSelectedNode.id));
+                  return;
+                }, 100);
+              }
             });
           }
         }, 150);
@@ -2553,6 +2633,8 @@ $(function () {
         $('.area-fgp-date-grp').show();
         $('#area-fgp-day').removeClass('hidden');
         $('#area-fgp-month').addClass('hidden');
+        let date = new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd');
+        $('#area-fgp-daycontainer').val(date);
         break;
       case '3':
         $('.area-fgp-date-grp').hide();
@@ -2561,6 +2643,8 @@ $(function () {
         $('.area-fgp-date-grp').show();
         $('#area-fgp-day').addClass('hidden');
         $('#area-fgp-month').removeClass('hidden');
+        let month = new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM');
+        $('#area-fgp-monthcontainer').val(month);
         break;
     }
     generateAreaFgp();
@@ -2588,6 +2672,8 @@ $(function () {
         $('.meter-fgp-date-grp').show();
         $('#meter-fgp-day').removeClass('hidden');
         $('#meter-fgp-month').addClass('hidden');
+        let date = new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd');
+        $('#meter-fgp-daycontainer').val(date);
         break;
       case '3':
         $('.meter-fgp-date-grp').hide();
@@ -2596,6 +2682,8 @@ $(function () {
         $('.meter-fgp-date-grp').show();
         $('#meter-fgp-day').addClass('hidden');
         $('#meter-fgp-month').removeClass('hidden');
+        let month = new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM');
+        $('#meter-fgp-monthcontainer').val(month);
         break;
     }
     generateFgpData();
@@ -2656,18 +2744,18 @@ $(function () {
         exceptionItem.etime = timeArray[1] + ' 23:59:59';
         let minVal = $('#min-val-input').val();
         let maxVal = $('#max-val-input').val();
-        if(minVal !== ''){
+        if (minVal !== '') {
           exceptionItem.lt_val = parseFloat(minVal);
         }
-        if(maxVal !== ''){
+        if (maxVal !== '') {
           exceptionItem.gt_val = parseFloat(maxVal);
-        }   
-        if(exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val){
+        }
+        if (exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val) {
           toastr.warning('数值范围异常，最大值必须大于最小值');
           return;
         }
-        esdpec.framework.core.doPostOperation('abnormalrule/saverule', exceptionItem, function(response) {
-          if(response.IsSuccess && response.Content){
+        esdpec.framework.core.doPostOperation('abnormalrule/saverule', exceptionItem, function (response) {
+          if (response.IsSuccess && response.Content) {
             toastr.info("规则保存成功");
             return;
           }
@@ -2684,13 +2772,13 @@ $(function () {
         exceptionItem.etime = timeArray[1] + ' 23:59:59';
         let minVal = $('#min-val-input').val();
         let maxVal = $('#max-val-input').val();
-        if(minVal !== ''){
+        if (minVal !== '') {
           exceptionItem.lt_val = parseFloat(minVal);
         }
-        if(maxVal !== ''){
+        if (maxVal !== '') {
           exceptionItem.gt_val = parseFloat(maxVal);
-        }   
-        if(exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val){
+        }
+        if (exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val) {
           toastr.warning('数值范围异常，最大值必须大于最小值');
           return;
         }
@@ -2712,13 +2800,13 @@ $(function () {
         exceptionItem.etime = timeArray[1] + ' 23:59:59';
         let minVal = $('#min-val-input').val();
         let maxVal = $('#max-val-input').val();
-        if(minVal !== ''){
+        if (minVal !== '') {
           exceptionItem.lt_val = parseFloat(minVal);
         }
-        if(maxVal !== ''){
+        if (maxVal !== '') {
           exceptionItem.gt_val = parseFloat(maxVal);
         }
-        if(exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val){
+        if (exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val) {
           toastr.warning('数值范围异常，最大值必须大于最小值');
           return;
         }
@@ -2761,12 +2849,15 @@ $(function () {
   $(document).on('click', function (e) {
     e.stopPropagation();
     $('.parameter-overlay').addClass('hidden');
+    let current = e.target;
+    if($(current).hasClass('dialogModal open')) $('.dialogModal.open').remove();
   });
 
   layui.use('laydate', function () {
     let laydate = layui.laydate;
     laydate.render({
       elem: '#daycontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM-dd',
       type: 'date',
@@ -2779,6 +2870,7 @@ $(function () {
     });
     laydate.render({
       elem: '#monthcontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM',
       type: 'month',
@@ -2792,6 +2884,7 @@ $(function () {
     });
     laydate.render({
       elem: '#yearcontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy',
       type: 'year',
@@ -2808,6 +2901,7 @@ $(function () {
     let laydate = layui.laydate;
     laydate.render({
       elem: '#area-daycontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM-dd',
       type: 'date',
@@ -2820,6 +2914,7 @@ $(function () {
     });
     laydate.render({
       elem: '#area-monthcontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM',
       type: 'month',
@@ -2833,6 +2928,7 @@ $(function () {
     });
     laydate.render({
       elem: '#area-yearcontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy',
       type: 'year',
@@ -2849,6 +2945,7 @@ $(function () {
     let laydate = layui.laydate;
     laydate.render({
       elem: '#area-fgp-daycontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM-dd',
       type: 'date',
@@ -2861,6 +2958,7 @@ $(function () {
     });
     laydate.render({
       elem: '#area-fgp-monthcontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM',
       type: 'month',
@@ -2878,6 +2976,7 @@ $(function () {
     let laydate = layui.laydate;
     laydate.render({
       elem: '#meter-fgp-daycontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM-dd',
       type: 'date',
@@ -2890,6 +2989,7 @@ $(function () {
     });
     laydate.render({
       elem: '#meter-fgp-monthcontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM',
       type: 'month',
@@ -2907,6 +3007,7 @@ $(function () {
     let laydate = layui.laydate;
     laydate.render({
       elem: '#exception-daycontainer',
+      btns: ['confirm'],
       range: '--',
       format: 'yyyy-MM-dd',
       type: 'date',
@@ -2914,7 +3015,6 @@ $(function () {
       done: (value, date) => {
         let truthValue = value.split('--');
         $('#exception-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
-        // setTimeout(() => generateFgpData(), 300);
       }
     });
   });
@@ -3016,9 +3116,10 @@ $(function () {
                   if (comparsionSelectedMeters.length > 0) {
                     $('.parameter-right>.para-active').removeClass('para-active');
                     $(currentDom).addClass('para-active');
-                    _.each(currentMeterParameters, a => a.isChecked = false);
-                    let currentMeter = _.find(currentMeterParameters, a => a.id === id);
-                    currentMeter.isChecked = true;
+                    _.each(currentMeterParameters, a=>{
+                      if(a.id === id) a.isChecked = true;
+                      else a.isChecked = false;
+                    });
                     if (type !== 0) {
                       $('.operate-grp>i.should-uniq').removeClass('btn-active');
                       $('.operate-grp>i.should-uniq').first().addClass('btn-active');
