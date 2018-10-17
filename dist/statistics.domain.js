@@ -1,5 +1,6 @@
 $(function () {
   //#region fields 
+  let currentPage = 'analysis';
   let lastclicktime = null;
   let analysisChart = null;
   let areaChart = null;
@@ -8,8 +9,8 @@ $(function () {
   let currentSelectedNode = null;
   let currentMeterParameters = [];
   let comparsionSelectedMeters = [];
-  let areaSubscribeModule = [];
-  let areaConfigureMeters = [];
+  let areaSubscribeModule = [], areaSubscribeModuleClone = [];
+  let areaConfigureMeters = [], areaConfigureMetersClone = [];
   let areaConfigure = {};
   let sortColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F',
     '#808000', '#FFE4C4', '#F5DEB3', '#40E0D0', '#7FFFAA', '#008B8B', '#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
@@ -1637,7 +1638,7 @@ $(function () {
           "icon": "fa fa-file icon-state-warning icon-lg"
         }
       },
-      "plugins": ["types", "search", "crrm", "state"]
+      "plugins": ["types", "crrm"]
     }).on('loaded.jstree', function (e, data) {
       let instance = data.instance;
       let target = instance.get_node(e.target.firstChild.firstChild.lastChild);
@@ -1661,6 +1662,7 @@ $(function () {
           }
           areaConfigureMeters.push(node);
         }
+        console.log(areaConfigureMetersClone);
         bindSelectedMeterList();
       }
     });
@@ -1670,7 +1672,7 @@ $(function () {
       selectedMeterList: areaConfigureMeters
     };
     let templateHtml = template('selected-meter-list-template', data);
-    $('.meter-list').html(templateHtml);
+    $('.open .meter-list').html(templateHtml);
     setTimeout(() => {
       $('.open .meter-list .select-meter-item>input').on('click', function (e) {
         e.stopPropagation();
@@ -1693,7 +1695,7 @@ $(function () {
     let fgp = _.find(areaSubscribeModule, a => a.key === '_AreaFgpStatistics');
     if (fgp) {
       $('.area-fgp').show();
-      if ($('.content-right')[0].scrollHeight > $('.content-right')[0].clientHeight)
+      if ($('.content-right').prop('scrollHeight') > $('.content-right').prop('clientHeight'))
         $('.content-footer').show();
       else $('.content-footer').hide();
     } else {
@@ -1706,7 +1708,7 @@ $(function () {
       $('.content-footer').show();
     } else {
       $('.area-detail-container').hide();
-      if ($('.content-right')[0].scrollHeight > $('.content-right')[0].clientHeight)
+      if ($('.content-right').prop('scrollHeight') > $('.content-right').prop('clientHeight'))
         $('.content-footer').show();
       else $('.content-footer').hide();
     }
@@ -1724,9 +1726,13 @@ $(function () {
             id: areaConfigure.id
           }, function (response) {
             if (response.IsSuccess) {
+              areaSubscribeModuleClone = [];
+              areaConfigureMeters = [];
+              areaConfigureMetersClone = [];
               esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + currentSelectedNode.id, function (response) {
                 if (response.IsSuccess) {
                   areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
+                  areaSubscribeModuleClone = _.cloneDeep(areaSubscribeModule);
                   let meterAndMfidMapStr = response.Content.meterid_mfid_map || '';
                   let meterAndMfidMap = meterAndMfidMapStr.split(';');
                   let meterIds = [];
@@ -1738,6 +1744,7 @@ $(function () {
                     mfIds.push(meterMfid[1]);
                   });
                   areaConfigureMeters = meterIds.length > 0 ? _.filter(meterDataList, a => _.includes(meterIds, a.id)) : [];
+                  areaConfigureMetersClone = _.cloneDeep(areaConfigureMeters);
                   areaConfigure = response.Content;
                   areaConfigure.mfIds = mfIds;
                   areaConfigure.meterIds = meterIds;
@@ -1764,6 +1771,7 @@ $(function () {
             esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + currentSelectedNode.id, function (response) {
               if (response.IsSuccess) {
                 areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
+                areaSubscribeModuleClone = _.cloneDeep(areaSubscribeModule);
                 let meterAndMfidMapStr = response.Content.meterid_mfid_map || '';
                 let meterAndMfidMap = meterAndMfidMapStr.split(';');
                 let meterIds = [];
@@ -1775,6 +1783,7 @@ $(function () {
                   mfIds.push(meterMfid[1]);
                 });
                 areaConfigureMeters = meterIds.length > 0 ? _.filter(meterDataList, a => _.includes(meterIds, a.id)) : [];
+                areaConfigureMetersClone = _.cloneDeep(areaConfigureMeters);
                 areaConfigure = response.Content;
                 areaConfigure.mfIds = mfIds;
                 areaConfigure.meterIds = meterIds;
@@ -1784,7 +1793,10 @@ $(function () {
           }
         });
       },
-      onCancelBut: function () {},
+      onCancelBut: function () {
+        areaSubscribeModule = _.cloneDeep(areaSubscribeModuleClone);
+        areaConfigureMeters = _.cloneDeep(areaConfigureMetersClone);
+      },
       onLoad: function () {
         setTimeout(() => {
           $('.open .dialogModal_content ul.layui-tab-title>li').on('click', function (e) {
@@ -1842,7 +1854,10 @@ $(function () {
           $(".open #select-usage option[value='" + option + "']").attr("selected", true);
         }, 150);
       },
-      onClose: function () {},
+      onClose: function () {
+        areaSubscribeModule = _.cloneDeep(areaSubscribeModuleClone);
+        areaConfigureMeters = _.cloneDeep(areaConfigureMetersClone);
+      },
     });
   };
   let generatePieForAggregateData = (xAxisData, seriesData, unit, tooltip = '能耗对比') => {
@@ -2453,23 +2468,53 @@ $(function () {
     showModuleConfigureModal();
   });
 
+  $(window).resize(function(e) {
+    if(currentPage === 'alarm'){
+      if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')){
+        $('.alarm-content>.alarm-footer').show();
+      }else{
+        $('.alarm-content>.alarm-footer').hide();
+      }
+    }
+  });
+
   $('.content__header--btngrp .alarm-container').on('click', function (e) {
     e.stopPropagation();
+    currentPage = 'alarm';
     $('.main-content').hide();
     $('.alarm-content').show();
     $('.meterName').addClass('nav-history');
     $('.detail').addClass('nav-history');
     $('#nav-alarm').show();
     $('#item-name').text(currentSelectedNode.text);
+    layui.use('laypage', function() {
+      let laypage = layui.laypage;
+      laypage.render({
+        elem: 'paging-device',
+        count: 100,
+        layout: ['count', 'prev', 'page', 'next', 'skip'],
+        jump: function(obj){
+          console.log(obj)
+        }
+      });
+    });
+    if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')){
+      $('.alarm-content>.alarm-footer').show();
+    }else{
+      $('.alarm-content>.alarm-footer').hide();
+    }
   });
 
-  $('.alarm-content>.alarm-header>.navigate-back').on('click', function (e) {
+  $('.alarm-content-right>.alarm-header>.navigate-back>span').on('click', function (e) {
     e.stopPropagation();
+    currentPage = 'analysis';
     $('.main-content').show();
     $('.alarm-content').hide();
     $('.meterName').removeClass('nav-history');
     $('.detail').removeClass('nav-history');
     $('#nav-alarm').hide();
+    if(currentSelectedNode.modeltype === 'area') searchAreaData();
+    else searchMeterData();
   });
 
   $('.comparsion-left>.meter-choose').on('click', function (e) {
@@ -2850,7 +2895,11 @@ $(function () {
     e.stopPropagation();
     $('.parameter-overlay').addClass('hidden');
     let current = e.target;
-    if($(current).hasClass('dialogModal open')) $('.dialogModal.open').remove();
+    if($(current).hasClass('dialogModal open')) {
+      $('.dialogModal.open').remove();
+      areaSubscribeModule = _.cloneDeep(areaSubscribeModuleClone);
+        areaConfigureMeters = _.cloneDeep(areaConfigureMetersClone);
+    }
   });
 
   layui.use('laydate', function () {
@@ -2861,6 +2910,7 @@ $(function () {
       range: '--',
       format: 'yyyy-MM-dd',
       type: 'date',
+      trigger: 'click',
       value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
       done: (value, date) => {
         let truthValue = value.split('--');
@@ -3061,6 +3111,7 @@ $(function () {
           esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + nodeId, function (response) {
             if (response.IsSuccess) {
               areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
+              areaSubscribeModuleClone = _.cloneDeep(areaSubscribeModule);
               let meterAndMfidMapStr = response.Content.meterid_mfid_map || '';
               let meterAndMfidMap = meterAndMfidMapStr.split(';');
               let meterIds = [];
@@ -3072,6 +3123,7 @@ $(function () {
                 mfIds.push(meterMfid[1]);
               });
               areaConfigureMeters = meterIds.length > 0 ? _.filter(meterDataList, a => _.includes(meterIds, a.id)) : [];
+              areaConfigureMetersClone = _.cloneDeep(areaConfigureMeters);
               areaConfigure = response.Content;
               areaConfigure.mfIds = mfIds;
               areaConfigure.meterIds = meterIds;
@@ -3159,6 +3211,9 @@ $(function () {
             }
           });
         }
+        if(currentPage === 'alarm'){
+
+        }
       });
       let searchTimeout = false;
       $('#searchbox').keyup(function () {
@@ -3171,7 +3226,7 @@ $(function () {
         }, 100);
       });
     }
-  });
+  });  
 
   toastr.options = _.merge(toastr.options, {
     positionClass: "toast-top-center",

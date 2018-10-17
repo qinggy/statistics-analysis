@@ -6,6 +6,10 @@ html body {
   display: none;
 }
 
+.clear {
+  clear: both;
+}
+
 .statistics {
   height: 100%;
   font: 14px "Microsoft YaHei" !important;
@@ -1686,6 +1690,11 @@ html body {
   margin-right: 5px;
 }
 
+.param-position {
+  position: fixed;
+  top: 200px;
+  width: 300px;
+}
 
 /** alarm page css**/
 .alarm-content {
@@ -1698,8 +1707,20 @@ html body {
   padding-bottom: 20px;
 }
 
+.alarm-content-right{
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: calc(100% - 40px);
+}
+
+.alarm-footer{
+  height: 20px;
+  background-color: #fff;
+  width: 100%;
+}
+
 .alarm-header {
-  min-height: 200px;
+  min-height: 36px;
   background-color: #Ffff;
 }
 
@@ -1709,11 +1730,11 @@ html body {
   padding-top: 8px;
   margin-left: 20px;
   position: relative;
-  cursor: pointer;
 }
 
 .navigate-back>span {
   position: absolute;
+  cursor: pointer;
   left: 20px;
   top: 9px;
 }
@@ -1723,11 +1744,11 @@ html body {
   font-weight: bold;
 }
 
-.nav-history{
+.nav-history {
   color: #708195;
 }
 
-.alarm-titile{
+.alarm-titile {
   position: absolute;
   top: 9px;
   left: 50%;
@@ -1737,10 +1758,165 @@ html body {
   font-weight: bold;
 }
 
-/** end page**/
-
-.param-position{
-  position: fixed;
-  top: 200px;
-  width: 300px;
+.alarm-info {
+  background-color: #fff;
+  padding: 30px;
 }
+
+.area-alarm-info {
+  border: 1px solid #dce3e6;
+  padding: 20px 25px;
+}
+
+.area-alarm-info>table {
+  width: 100%;
+}
+
+.area-alarm-info>table tr {
+  height: 30px;
+}
+
+.exception-title {
+  color: rgb(250, 79, 51);
+}
+
+.exception-operate-box {
+  float: right;
+  margin-top: 20px;
+}
+
+.exception-operate-box .btn:first-of-type {
+  margin-right: 20px;
+}
+
+.exception-operate-btn {
+  width: 90px;
+  border-radius: 4px;
+  background-color: #4b89dc;
+  border: 1px solid #4b89dc;
+  color: #fff;
+}
+
+.alarm-list {
+  margin: 20px 0 0 0;
+  min-height: 200px;
+  background-color: #fff;
+}
+
+.meter-alarm-event {}
+
+.area-alarm-device-list {}
+
+.event-header,
+.device-header {
+  height: 50px;
+  background-color: rgb(242, 246, 248);
+  position: relative;
+  border-top: 1px solid #dce3e6;
+  border-left: 1px solid #dce3e6;
+  border-right: 1px solid #dce3e6;
+}
+
+.event-header>div,
+.device-header>div {
+  height: 50px;
+  line-height: 50px;
+  margin-left: 25px;
+}
+
+.alarm-device-count{
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.alarm-device-filter{
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.alarm-checkbox{
+  margin-right: 40px;
+}
+
+.warn-checkbox{
+  margin-right: 110px;
+}
+
+.offline-checkbox{  
+  margin-right: 180px;
+}
+
+.all-checkbox{
+  margin-right: 250px;
+}
+
+.alarm-checkbox:before,
+.warn-checkbox:before,
+.offline-checkbox:before,
+.all-checkbox:before {
+  top: -4px !important;
+}
+
+.alarm-checkbox:after,
+.warn-checkbox:after,
+.offline-checkbox:after,
+.all-checkbox:after {
+  top: -3px !important;
+}
+
+.chk{
+  display: inline-block;
+}
+
+.all-span,
+.offline-span,
+.warn-span{
+  margin-right: 38px;
+}
+
+.alarm-span{
+  margin-right: 52px;
+}
+
+.device-list{
+
+}
+
+.device-list>table{
+  width: 100%;
+}
+
+.device-list>table tr th,
+.device-list>table tr td{
+  height: 50px;
+  border: 1px solid #dce3e6;
+  text-align: center;
+}
+
+.device-list>table tbody tr:hover{
+  background-color: rgb(242, 246, 248);
+}
+
+.device-chk{
+  position: relative;
+}
+
+.device-chk>label{
+  top: -9px;
+  left: 17px;
+}
+
+.link{
+  color: #4b89dc;
+  cursor: pointer;
+}
+
+.paging-device{
+  float: right;
+  margin-right: 40px;
+  margin-top: 20px;
+  margin-bottom: 15px;
+}
+
+/** end page**/

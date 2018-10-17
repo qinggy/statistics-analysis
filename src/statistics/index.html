@@ -29,7 +29,8 @@
 
 <body class="statistics">
   <div class="statistics__nav">
-    <div class="statistics__nav--content"><span>统计分析&gt;</span><span class="meterName"></span><span class="detail">-仪表数据详情</span><span class="hidden" id="nav-alarm"><span style="color:#708195;">&gt;</span>报警中心</span></div>
+    <div class="statistics__nav--content"><span>统计分析&gt;</span><span class="meterName"></span><span class="detail">-仪表数据详情</span><span
+        class="hidden" id="nav-alarm"><span style="color:#708195;">&gt;</span>报警中心</span></div>
   </div>
   <div class="main">
     <div class="structtree">
@@ -211,7 +212,8 @@
                       <input type="text" class="exception-input" id="max-val-input">
                     </div>
                     <div class="exception-rule"><span>过滤规则：</span>
-                      <div class="exception-rule-value"><span id="minval">--</span>&nbsp;&lt;&nbsp;<span>正常数据</span>&nbsp;&lt;&nbsp;<span id="maxval">--</span></div>
+                      <div class="exception-rule-value"><span id="minval">--</span>&nbsp;&lt;&nbsp;<span>正常数据</span>&nbsp;&lt;&nbsp;<span
+                          id="maxval">--</span></div>
                     </div>
                   </div>
                   <div class="exception-operate">
@@ -385,12 +387,137 @@
       <div class="content-footer hidden"></div>
     </div>
     <div class="alarm-content hidden">
-      <div class="alarm-header">
-        <div class="icon iconfont icon-back navigate-back">
-          <span>返回</span>
-          <div class="alarm-titile"><span id="item-name"></span><span>-仪表报警中心</span></div>
+      <div class="alarm-content-right">
+        <div class="alarm-header">
+          <div class="icon iconfont icon-back navigate-back">
+            <span>返回</span>
+            <div class="alarm-titile"><span id="item-name"></span><span>-仪表报警中心</span></div>
+          </div>
+        </div>
+        <div class="alarm-info">
+          <div class="meter-alarm-info hidden"></div>
+          <div class="area-alarm-info">
+            <table>
+              <tbody>
+                <tr>
+                  <td>总表数：45502 个</td>
+                  <td>离线仪表：<span class="exception-title">550</span>&nbsp;个</td>
+                  <td>超限仪表：<span class="exception-title">440</span>&nbsp;个</td>
+                </tr>
+                <tr>
+                  <td>正常仪表：550 个</td>
+                  <td>已屏蔽仪表：0 个</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="exception-operate-box">
+            <input type="button" class="btn exception-operate-btn" value="解除报警">
+            <input type="button" class="btn exception-operate-btn" value="屏蔽设备">
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="alarm-setter">
+
+        </div>
+        <div class="alarm-list">
+          <div class="meter-alarm-event hidden">
+            <div class="event-header"></div>
+            <div class="event-list"></div>
+          </div>
+          <div class="area-alarm-device-list">
+            <div class="device-header">
+              <div>当前报警设备<span class="exception-title alarm-device-count">15</span></div>
+              <div class="alarm-device-filter">
+                <div class="opt chk">
+                  <input class="magic-checkbox" type="checkbox" checked>
+                  <label class="check-box all-checkbox"></label>
+                  <span class="all-span">全选</span>                
+                </div>
+                <div class="opt chk">
+                  <input class="magic-checkbox" type="checkbox">
+                  <label class="check-box offline-checkbox"></label>
+                  <span class="offline-span">离线</span>
+                </div>
+                <div class="opt chk">
+                  <input class="magic-checkbox" type="checkbox">
+                  <label class="check-box warn-checkbox"></label>
+                  <span class="warn-span">预警</span>
+                </div>
+                <div class="opt chk">
+                  <input class="magic-checkbox" type="checkbox">
+                  <label class="check-box alarm-checkbox"></label>
+                  <span class="alarm-span">报警</span>
+                </div>        
+              </div>
+            </div>
+            <div class="device-list">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 50px">选择</th>
+                    <th>设备名称</th>
+                    <th>报警数</th>
+                    <th>最后报警发生时间</th>
+                    <th>最后报警名称</th>
+                    <th>参数类型</th>
+                    <th>采集值</th>
+                    <th>超限量</th>
+                    <th>报警类型</th>
+                    <th>预警值</th>
+                    <th>报警值</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="opt device-chk">
+                        <input class="magic-checkbox" type="checkbox" checked>
+                        <label class="check-box"></label> 
+                      </div>
+                    </td>
+                    <td>ADO-Device-COM</td>
+                    <td>98</td>
+                    <td>08-16 12:20</td>
+                    <td>离线报警</td>
+                    <td>A相电流</td>
+                    <td>150</td>
+                    <td>46%</td>
+                    <td>上限</td>
+                    <td>90</td>
+                    <td>100</td>
+                    <td><span class="link">查看详情</span></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="opt device-chk">
+                        <input class="magic-checkbox" type="checkbox">
+                        <label class="check-box"></label> 
+                      </div>
+                    </td>
+                    <td>ADO-Device-COM01</td>
+                    <td>198</td>
+                    <td>08-16 12:20</td>
+                    <td>离线报警</td>
+                    <td>B相电流</td>
+                    <td>350</td>
+                    <td>66%</td>
+                    <td>上限</td>
+                    <td>190</td>
+                    <td>780</td>
+                    <td><span class="link">查看详情</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="paging-device" id="paging-device"></div>
+            <div class="clear"></div>
+          </div>
         </div>
       </div>
+      <div class="alarm-footer hidden"></div>
     </div>
   </div>
   <div id="dialog_content" style="display:none">
@@ -474,7 +601,8 @@
     </div>
   </div>
   <div id="exception-history-data" style="display: none;">
-    <div class="dialogModal_header modal_header" id="exception-header">异常数据统计<span style="margin-left: 30px; color: rgb(250, 78, 47)" id="totalSize">0</span></div>
+    <div class="dialogModal_header modal_header" id="exception-header">异常数据统计<span style="margin-left: 30px; color: rgb(250, 78, 47)"
+        id="totalSize">0</span></div>
     <div class="dialogModal_content exception-content">
       <div class="exception-data-list">
         <table>
