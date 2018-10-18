@@ -18,7 +18,7 @@ $(function () {
   let usageColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
   let costColor = ['#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
   //#endregion
-  let numberFormat = function(num){
+  let numberFormat = function(num) {
     let parts = _.toString(num).split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return parts.join(".");
@@ -2564,9 +2564,10 @@ $(function () {
               }
             } else {
               if (ifShowPieChart()) {
-                $('#pie').removeClass('btn-active').hide();
+                $('#pie').removeClass('btn-active');
                 $('#bar').addClass('btn-active');
               }
+              $('#pie').hide();
               searchMeterData();
             }
           });
