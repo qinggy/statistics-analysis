@@ -3179,10 +3179,10 @@ $(function () {
                       if(a.id === id) a.isChecked = true;
                       else a.isChecked = false;
                     });
-                    if (type !== 0) {
-                      $('.operate-grp>i.should-uniq').removeClass('btn-active');
-                      $('.operate-grp>i.should-uniq').first().addClass('btn-active');
-                    }
+                    // if (type !== 0) {
+                    //   $('.operate-grp>i.should-uniq').removeClass('btn-active');
+                    //   $('.operate-grp>i.should-uniq').first().addClass('btn-active');
+                    // }
                   } else {
                     let hasChooseParameter = _.find(currentMeterParameters, a => a.isChecked && a.id !== id);
                     if (hasChooseParameter && hasChooseParameter.unit !== unit) {
@@ -3199,6 +3199,13 @@ $(function () {
                     }
                     chooseNode.isChecked = !chooseNode.isChecked;
                     $(currentDom).toggleClass('para-active');
+                  }
+                  if(type === 1){
+                    $('.operate-grp>i.should-uniq').removeClass('btn-active');
+                    $('#meter-zone .icon-line-chart_icon').addClass('btn-active');
+                  }else{
+                    $('.operate-grp>i.should-uniq').removeClass('btn-active');
+                    $('.operate-grp>i.should-uniq').first().addClass('btn-active');
                   }
                   searchMeterData();
                 });
