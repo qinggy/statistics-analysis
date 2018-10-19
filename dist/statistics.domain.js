@@ -697,7 +697,8 @@ $(function () {
   let generateChart = function (unit, chartLegend, chartXaxisData, chartSeries, chartDom) {
     let option = {
       title: {
-        subtext: '单位：' + unit
+        subtext: '单位：' + unit,
+        padding: [-6,0,0,0]
       },
       tooltip: {
         trigger: 'axis'
@@ -708,7 +709,8 @@ $(function () {
         bottom: 20
       },
       legend: {
-        data: chartLegend
+        data: chartLegend,
+        padding: [0, 50, 50, 80]
       },
       calculable: true,
       xAxis: [{
@@ -737,7 +739,8 @@ $(function () {
     }), chartXaxisData, chartType);
     let option = {
       title: {
-        subtext: '单位：' + unit
+        subtext: '单位：' + unit,
+        padding: [-6,0,0,0]
       },
       tooltip: {
         trigger: 'axis'
@@ -748,7 +751,8 @@ $(function () {
         bottom: 20
       },
       legend: {
-        data: chartLegend
+        data: chartLegend,
+        padding: [0, 50, 50, 80]
       },
       calculable: true,
       xAxis: [{
@@ -1863,7 +1867,8 @@ $(function () {
   let generatePieForAggregateData = (xAxisData, seriesData, unit, tooltip = '能耗对比') => {
     let option = {
       title: {
-        subtext: '单位：' + unit
+        subtext: '单位：' + unit,        
+        padding: [-6,0,0,0]
       },
       tooltip: {
         trigger: 'item',
@@ -1874,7 +1879,8 @@ $(function () {
       legend: {
         orient: 'horizontal',
         left: 'center',
-        data: xAxisData
+        data: xAxisData,        
+        padding: [0, 50, 50, 100]
       },
       series: [{
         name: tooltip,
