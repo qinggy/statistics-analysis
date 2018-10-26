@@ -593,6 +593,7 @@ html body {
 
 .collapse-height {
   height: 80px;
+  overflow: hidden;
 }
 
 .usage-value-progress {
@@ -1274,6 +1275,8 @@ html body {
 
 .area-sort-list {
   margin-top: 20px;
+  overflow-y: auto;
+  max-height: 420px;
 }
 
 .area-sort-item {
@@ -1707,13 +1710,13 @@ html body {
   padding-bottom: 20px;
 }
 
-.alarm-content-right{
+.alarm-content-right {
   overflow-x: hidden;
   overflow-y: auto;
   height: calc(100% - 40px);
 }
 
-.alarm-footer{
+.alarm-footer {
   height: 20px;
   background-color: #fff;
   width: 100%;
@@ -1763,16 +1766,19 @@ html body {
   padding: 30px;
 }
 
-.area-alarm-info {
+.area-alarm-info,
+.meter-alarm-info {
   border: 1px solid #dce3e6;
   padding: 20px 25px;
 }
 
-.area-alarm-info>table {
+.area-alarm-info>table,
+.meter-alarm-info>table {
   width: 100%;
 }
 
-.area-alarm-info>table tr {
+.area-alarm-info>table tr,
+.meter-alarm-info>table tr {
   height: 30px;
 }
 
@@ -1780,9 +1786,18 @@ html body {
   color: rgb(250, 79, 51);
 }
 
-.exception-operate-box {
+.exception-operate-box,
+.meter-operate-box {
   float: right;
   margin-top: 20px;
+}
+
+.meter-operate-box .exception-operate-btn {
+  margin-right: 20px;
+}
+
+.meter-operate-box .exception-operate-btn:last-of-type {
+  margin-right: 0 !important;
 }
 
 .exception-operate-box .btn:first-of-type {
@@ -1799,19 +1814,28 @@ html body {
 
 .alarm-list {
   margin: 20px 0 0 0;
-  min-height: 200px;
   background-color: #fff;
+}
+
+.event-list {
+  border-left: 1px solid #dce3e6;
+  border-right: 1px solid #dce3e6;
 }
 
 .meter-alarm-event {}
 
-.area-alarm-device-list {}
+.area-alarm-device-list {
+  border: 1px solid #dce3e6;
+}
 
 .event-header,
 .device-header {
   height: 50px;
   background-color: rgb(242, 246, 248);
   position: relative;
+}
+
+.event-header {
   border-top: 1px solid #dce3e6;
   border-left: 1px solid #dce3e6;
   border-right: 1px solid #dce3e6;
@@ -1824,30 +1848,40 @@ html body {
   margin-left: 25px;
 }
 
-.alarm-device-count{
+.alarm-device-count,
+.alarm-meter-count {
   font-weight: bold;
   margin-left: 10px;
 }
 
-.alarm-device-filter{
+.alarm-device-filter,
+.meter-alarm-filter {
   position: absolute;
   right: 0;
   top: 0;
 }
 
-.alarm-checkbox{
+.meter-alarm-filter{
+  right: 100px;
+}
+
+.tpl-list label{
+  padding-left: 25px !important;
+}
+
+.alarm-checkbox {
   margin-right: 40px;
 }
 
-.warn-checkbox{
+.warn-checkbox {
   margin-right: 110px;
 }
 
-.offline-checkbox{  
+.offline-checkbox {
   margin-right: 180px;
 }
 
-.all-checkbox{
+.all-checkbox {
   margin-right: 250px;
 }
 
@@ -1865,58 +1899,321 @@ html body {
   top: -3px !important;
 }
 
-.chk{
+.chk {
   display: inline-block;
 }
 
 .all-span,
 .offline-span,
-.warn-span{
+.warn-span {
   margin-right: 38px;
 }
 
-.alarm-span{
+.alarm-span {
   margin-right: 52px;
 }
 
-.device-list{
-
+.setter-content {
+  position: relative;
+  border-bottom: 1px solid #dce3e6;
+  border-left: 1px solid #dce3e6;
+  border-right: 1px solid #dce3e6;
+  transition: height .4s;
 }
 
-.device-list>table{
+.left-blank {
+  position: absolute;
+  width: 25px;
+  border-bottom: 1px solid #dce3e6;
+  left: 0;
+  top: 50px;
+}
+
+.right-blank {
+  position: absolute;
+  width: 25px;
+  border-bottom: 1px solid #dce3e6;
+  right: 0;
+  top: 50px;
+}
+
+.device-list>table,
+.event-list>table {
   width: 100%;
 }
 
 .device-list>table tr th,
-.device-list>table tr td{
+.device-list>table tr td,
+.event-list>table tr th,
+.event-list>table tr td {
   height: 50px;
   border: 1px solid #dce3e6;
   text-align: center;
 }
 
-.device-list>table tbody tr:hover{
+.device-list>table tr th:last-of-type,
+.device-list>table tr td:last-of-type,
+.event-list>table tr th:last-of-type,
+.event-list>table tr td:last-of-type {
+  border-right: transparent !important;
+}
+
+.device-list>table tr th:first-of-type,
+.device-list>table tr td:first-of-type,
+.event-list>table tr th:first-of-type,
+.event-list>table tr td:first-of-type {
+  border-left: transparent !important;
+}
+
+.device-list>table tbody tr:hover,
+.event-list>table tbody tr:hover {
   background-color: rgb(242, 246, 248);
 }
 
-.device-chk{
+.device-chk {
   position: relative;
 }
 
-.device-chk>label{
+.device-chk>label {
   top: -9px;
   left: 17px;
 }
 
-.link{
+.link {
   color: #4b89dc;
   cursor: pointer;
 }
 
-.paging-device{
+.paging-device,
+.paging-meter {
   float: right;
   margin-right: 40px;
   margin-top: 20px;
   margin-bottom: 15px;
 }
 
+.norecord-cell {
+  text-align: center;
+  color: #dce3e6;
+}
+
+.area-alarm-modal-textarea {
+  margin: 0px;
+  width: calc(100% - 12px);
+  height: 100px;
+  resize: none;
+  padding: 5px;
+  margin-top: 5px;
+  border-radius: 4px;
+  border: 1px solid #dce3e6;
+  outline: transparent;
+}
+
+.radio-grp {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.radio-grp .opt {
+  flex: 1;
+}
+
+.magic-radio+label {
+  padding-left: 25px !important;
+}
+
+.magic-radio+label:after {
+  top: 6px !important;
+  left: 5px !important;
+}
+
+.len-limit {
+  position: absolute;
+  right: 8px;
+  bottom: 10px;
+  color: #ccc;
+}
+
+.other-reason {
+  margin-bottom: 5px;
+}
+
+.select-all:before {
+  top: -8px !important;
+  left: 17px !important;
+}
+
+.select-all:after {
+  top: -7px !important;
+  left: 22px !important;
+}
+
+.sheild-time-container {
+  position: absolute;
+  left: 120px;
+  bottom: -10px;
+  width: 360px;
+}
+
+.layui-layer-title {
+  height: 60px !important;
+  line-height: 60px !important;
+  font-weight: bold;
+}
+
+.layui-layer-content {
+  background-color: #fff;
+}
+
+.layui-layer-setwin {
+  top: 23px !important;
+}
+
+.layui-layer-btn {
+  background-color: #F8F8F8;
+}
+
+.layui-layer-btn0 {
+  height: 34px !important;
+  line-height: 34px !important;
+  min-width: 84px !important;
+  background-color: #4b89dc !important;
+  text-align: center;
+  padding: 0 !important;
+  border: 1px solid #dce3e6 !important;
+  border-radius: 4px !important;
+}
+
+.layui-layer-btn1 {
+  height: 34px !important;
+  line-height: 34px !important;
+  min-width: 84px !important;
+  text-align: center;
+  padding: 0 !important;
+  border: 1px solid #dce3e6 !important;
+  border-radius: 4px !important;
+}
+
+.toast-close-button {
+  top: -.1em !important;
+}
+
+.alarm-setter {
+  display: block;
+  margin: 20px 20px 20px 0;
+  width: 100%;
+  background-color: #fff;
+}
+
+.setter-header {
+  height: 50px;
+  line-height: 50px;
+  background-color: rgb(242, 246, 248);
+  cursor: pointer;
+  border: 1px solid #dce3e6;
+}
+
+.header-title {
+  margin-left: 25px;
+}
+
+.header-title:after {
+  content: '\e697';
+  font-weight: bold;
+  margin-left: 5px;
+  -moz-transform: rotate(270deg);
+  -o-transform: rotate(270deg);
+  -webkit-transform: rotate(270deg);
+  transform: rotate(270deg);
+  display: inline-block;
+  transition: .3s;
+}
+
+.meter-alarm-collapse:after {
+  transition: .3s;
+  -moz-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+
+.setter-content-collapse{
+  transition: height .4s;
+  height: 0;  
+  border: transparent;
+  overflow: hidden;
+}
+
+.btn-alarm-condition{
+  width: 120px;
+  border-radius: 4px;
+  background-color: #4b89dc;
+  border: 1px solid #4b89dc;
+  color: #fff;
+}
+
+.alarm-btn-grp{
+  position: absolute;
+  right: 30px;
+  top: 10px;
+}
+
+.alarm-condition-list,
+.alarm-condition-tpl{
+  margin: -30px -25px 0 -25px;
+}
+
+.alarm-condition-list table,
+.alarm-condition-tpl table {
+  width: 100%;
+}
+
+.alarm-condition-list table tr th,
+.alarm-condition-list table tr td,
+.alarm-condition-tpl table tr th,
+.alarm-condition-tpl table tr td{
+  height: 40px;
+  border-right: 1px solid #dce3e6;
+  border-bottom: 1px solid #dce3e6;
+  text-align: center;
+}
+
+.alarm-condition-list table tr th:last-of-type,
+.alarm-condition-list table tr td:last-of-type,
+.alarm-condition-tpl table tr th:last-of-type,
+.alarm-condition-tpl table tr td:last-of-type{
+  border-right: transparent;
+}
+
+.alarm-condition-list table tbody tr:last-of-type td,
+.alarm-condition-tpl table tbody tr:last-of-type td{
+  border-bottom: transparent;
+}
+
+.tpl-list{
+  border-bottom: 1px solid #dce3e6;
+  padding: 20px 30px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.tpl-list .opt{  
+  display: inline-block;
+  margin-right: 20px;
+  margin: 5px 30px 5px 0;
+}
+
+.meter-alarm-history {
+  position: absolute;
+  right: 30px;
+  top: 0;
+}
+
+.btn-history{
+  width: 80px;
+  border-radius: 4px;
+  background-color: #4b89dc;
+  border: 1px solid #4b89dc;
+  color: #fff;
+}
 /** end page**/

@@ -396,67 +396,179 @@
         </div>
         <div class="alarm-info">
           <div class="meter-alarm-info hidden"></div>
-          <div class="area-alarm-info">
-            <table>
-              <tbody>
-                <tr>
-                  <td>总表数：45502 个</td>
-                  <td>离线仪表：<span class="exception-title">550</span>&nbsp;个</td>
-                  <td>超限仪表：<span class="exception-title">440</span>&nbsp;个</td>
-                </tr>
-                <tr>
-                  <td>正常仪表：550 个</td>
-                  <td>已屏蔽仪表：0 个</td>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div class="area-alarm-info"></div>
           <div class="exception-operate-box">
-            <input type="button" class="btn exception-operate-btn" value="解除报警">
-            <input type="button" class="btn exception-operate-btn" value="屏蔽设备">
+            <input type="button" id="area-alarm" class="btn exception-operate-btn" value="解除报警">
+            <input type="button" id="shield-device" class="btn exception-operate-btn" value="屏蔽设备">
+          </div>
+          <div class="meter-operate-box hidden">
+            <input type="button" id="meter-alarm" class="btn exception-operate-btn" value="解除报警">
+            <input type="button" id="meter-shield-device" class="btn exception-operate-btn" value="屏蔽设备">
+            <input type="button" id="meter-stop-alarm" class="btn exception-operate-btn" value="解除屏蔽">
+            <input type="button" id="shutdown-power" class="btn exception-operate-btn" value="关闭电源">
           </div>
           <div class="clear"></div>
         </div>
-        <div class="alarm-setter">
-
+        <div class="alarm-setter hidden">
+          <div class="setter-header"><span class="header-title icon iconfont">报警设置</span></div>
+          <div class="setter-content">
+            <div class="left-blank"></div>
+            <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief" style="margin: 0 25px; padding: 10px 0 0 0">
+              <ul class="layui-tab-title">
+                <li class="layui-this" data-id="alarm-condition-list" style="font-size: 14px !important; font-weight: normal; padding-left: 0">报警条件列表</li>
+                <li data-id="alarm-condition-tpl" style="font-size: 14px !important; font-weight: normal">报警条件模板</li>
+              </ul>
+              <div class="layui-tab-content">
+                <div id="alarm-condition-list" class="alarm-condition-list">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>报警名称</th>
+                        <th>参数类型</th>
+                        <th>报警类型</th>
+                        <th>预警值</th>
+                        <th>报警值</th>
+                        <th>生效时间</th>
+                        <th>重复</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody class="alarm-condition">
+                      <tr>
+                        <td colspan="8" class="norecord-cell">未设置报警条件，点击右上方按钮添加</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="paging-device" id="paging-alarm-condition"></div>
+                  <div class="clear"></div>
+                </div>
+                <div id="alarm-condition-tpl" class="alarm-condition-tpl hidden">
+                  <div class="tpl-list"></div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>报警名称</th>
+                        <th>参数类型</th>
+                        <th>报警类型</th>
+                        <th>预警值</th>
+                        <th>报警值</th>
+                        <th>生效时间</th>
+                        <th>重复</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody class="alarm-tpl">
+                      <tr>
+                        <td colspan="8" class="norecord-cell">未设置报警条件，点击右上方按钮添加</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="paging-device" id="paging-alarm-tpl"></div>
+                  <div class="clear"></div>
+                </div>
+              </div>
+            </div>
+            <div class="right-blank"></div>
+            <div class="alarm-btn-grp">
+              <input type="button" class="btn btn-alarm-condition" value="+ 添加报警条件">
+            </div>
+          </div>
         </div>
         <div class="alarm-list">
           <div class="meter-alarm-event hidden">
-            <div class="event-header"></div>
-            <div class="event-list"></div>
-          </div>
-          <div class="area-alarm-device-list">
-            <div class="device-header">
-              <div>当前报警设备<span class="exception-title alarm-device-count">15</span></div>
-              <div class="alarm-device-filter">
-                <div class="opt chk">
-                  <input class="magic-checkbox" type="checkbox" checked>
+            <div class="event-header">
+              <div>当前报警事件<span class="exception-title alarm-meter-count">0</span></div>
+              <div class="meter-alarm-filter">
+                <div class="opt chk" data-id="sa">
+                  <input class="magic-checkbox" id="meter-alarm-all" type="checkbox" value='4'>
                   <label class="check-box all-checkbox"></label>
-                  <span class="all-span">全选</span>                
+                  <span class="all-span">全部</span>
                 </div>
-                <div class="opt chk">
-                  <input class="magic-checkbox" type="checkbox">
+                <div class="opt chk" data-id="ofl">
+                  <input class="magic-checkbox" type="checkbox" value='2'>
                   <label class="check-box offline-checkbox"></label>
                   <span class="offline-span">离线</span>
                 </div>
-                <div class="opt chk">
-                  <input class="magic-checkbox" type="checkbox">
+                <div class="opt chk" data-id="yj">
+                  <input class="magic-checkbox" type="checkbox" value='0'>
                   <label class="check-box warn-checkbox"></label>
                   <span class="warn-span">预警</span>
                 </div>
-                <div class="opt chk">
-                  <input class="magic-checkbox" type="checkbox">
+                <div class="opt chk" data-id="bj">
+                  <input class="magic-checkbox" type="checkbox" value='1'>
                   <label class="check-box alarm-checkbox"></label>
                   <span class="alarm-span">报警</span>
-                </div>        
+                </div>
+              </div>
+              <div class="meter-alarm-history">
+                <input type="button" class="btn btn-history" value="历史报警">
+              </div>
+            </div>
+            <div class="event-list">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 50px">
+                      <div class="opt">
+                        <input class="magic-checkbox" type="checkbox" id="meter-select-all">
+                        <label for="meter-select-all" class="select-all"></label>
+                      </div>
+                    </th>
+                    <th>报警名称</th>
+                    <th>发生时间</th>
+                    <th>采集值</th>
+                    <th>超限量</th>
+                    <th>报警类型</th>
+                    <th>预警值</th>
+                    <th>报警值</th>
+                  </tr>
+                </thead>
+                <tbody id="meter-alarm-list">
+                  <tr>
+                    <td colspan="8" class="norecord-cell">设备当前运行正常，无报警</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="paging-meter" id="paging-meter"></div>
+            <div class="clear"></div>
+          </div>
+          <div class="area-alarm-device-list">
+            <div class="device-header">
+              <div>当前报警设备<span class="exception-title alarm-device-count">0</span></div>
+              <div class="alarm-device-filter">
+                <div class="opt chk" data-id="sa">
+                  <input class="magic-checkbox" id="alarm-all" type="checkbox" value='4'>
+                  <label class="check-box all-checkbox"></label>
+                  <span class="all-span">全部</span>
+                </div>
+                <div class="opt chk" data-id="ofl">
+                  <input class="magic-checkbox" type="checkbox" value='2'>
+                  <label class="check-box offline-checkbox"></label>
+                  <span class="offline-span">离线</span>
+                </div>
+                <div class="opt chk" data-id="yj">
+                  <input class="magic-checkbox" type="checkbox" value='0'>
+                  <label class="check-box warn-checkbox"></label>
+                  <span class="warn-span">预警</span>
+                </div>
+                <div class="opt chk" data-id="bj">
+                  <input class="magic-checkbox" type="checkbox" value='1'>
+                  <label class="check-box alarm-checkbox"></label>
+                  <span class="alarm-span">报警</span>
+                </div>
               </div>
             </div>
             <div class="device-list">
               <table>
                 <thead>
                   <tr>
-                    <th style="width: 50px">选择</th>
+                    <th style="width: 50px">
+                      <div class="opt">
+                        <input class="magic-checkbox" type="checkbox" id="select-all">
+                        <label for="select-all" class="select-all"></label>
+                      </div>
+                    </th>
                     <th>设备名称</th>
                     <th>报警数</th>
                     <th>最后报警发生时间</th>
@@ -470,44 +582,9 @@
                     <th>操作</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody id="device-alarm-list">
                   <tr>
-                    <td>
-                      <div class="opt device-chk">
-                        <input class="magic-checkbox" type="checkbox" checked>
-                        <label class="check-box"></label> 
-                      </div>
-                    </td>
-                    <td>ADO-Device-COM</td>
-                    <td>98</td>
-                    <td>08-16 12:20</td>
-                    <td>离线报警</td>
-                    <td>A相电流</td>
-                    <td>150</td>
-                    <td>46%</td>
-                    <td>上限</td>
-                    <td>90</td>
-                    <td>100</td>
-                    <td><span class="link">查看详情</span></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="opt device-chk">
-                        <input class="magic-checkbox" type="checkbox">
-                        <label class="check-box"></label> 
-                      </div>
-                    </td>
-                    <td>ADO-Device-COM01</td>
-                    <td>198</td>
-                    <td>08-16 12:20</td>
-                    <td>离线报警</td>
-                    <td>B相电流</td>
-                    <td>350</td>
-                    <td>66%</td>
-                    <td>上限</td>
-                    <td>190</td>
-                    <td>780</td>
-                    <td><span class="link">查看详情</span></td>
+                    <td colspan="12" class="norecord-cell">设备当前运行正常，无报警</td>
                   </tr>
                 </tbody>
               </table>
@@ -619,6 +696,62 @@
           <span class="currentPage">1</span>/
           <span class="totalPage">3</span>
           <input type="button" id="next-btn" class="btn page-btn" value="下一页">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="area-alarm-modal" style="display: none;">
+    <div class="dialogModal_header modal_header">解除报警</div>
+    <div class="dialogModal_content area-alarm-content">
+      <div class="">
+        <div class="radio-grp">
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="r1" value="0">
+            <label for="r1">常规设置报警</label>
+          </div>
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="r2" value="1">
+            <label for="r2">设备故障</label>
+          </div>
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="r3" value="2">
+            <label for="r3">人为原因</label>
+          </div>
+        </div>
+        <div>
+          <div class="opt other-reason">
+            <input class="magic-radio" type="radio" id="other-reason" value="3">
+            <label for="other-reason">其他原因（选填）</label>
+          </div>
+          <div style="position: relative">
+            <textarea class="area-alarm-modal-textarea" readonly></textarea>
+            <span class="len-limit">0/30</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialogModal_footer">
+      <button type="button" class="save-btn" data-dialogModalBut="ok">确定</button>
+      <button type="button" class="cancel-btn" data-dialogModalBut="cancel">取消</button>
+    </div>
+  </div>
+  <div id="set-shield-modal" style="display: none;">
+    <div class="dialogModal_content device-shield-content">
+      <div style='margin: 30px;'>
+        <div class="radio-grp" style='margin-bottom: 30px'>
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="shield" value="1">
+            <label for="shield">屏蔽</label>
+          </div>
+        </div>
+        <div class style="position: relative">
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="shield-time" value="2">
+            <label for="shield-time">时间段屏蔽</label>
+          </div>
+          <div class="date-component icon iconfont icon-rili sheild-time-container">
+            <input type="text" id="sheild-time-container" class="date-input" style="width: 320px">
+          </div>
         </div>
       </div>
     </div>
@@ -778,6 +911,94 @@
     <td>{{data.val}}</td>
   </tr>
   {{/each}}{{/if}}
+</script>
+<script type="text/html" id="area-exception-info-template">
+  <table>
+    <tbody>
+      <tr>
+        <td>总表数：{{data.AllMeterCount}} 个</td>
+        <td>离线仪表：<span class="exception-title">{{data.OffLineMeterCount}}</span>&nbsp;个</td>
+        <td>超限仪表：<span class="exception-title">{{data.OverRunMeterCount}}</span>&nbsp;个</td>
+      </tr>
+      <tr>
+        <td>正常仪表：{{data.NormalMeterCount}} 个</td>
+        <td>已屏蔽仪表：{{data.ShieldMeterCount}} 个</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</script>
+<script type="text/html" id="device-alarm-list-template">
+  {{if deviceAlarmList.length > 0 }}
+  {{each deviceAlarmList data index}}
+  <tr>
+    <td>
+      <div class="opt device-chk" data-id="{{data.MeterId}}">
+        {{if data.isChecked}}
+        <input class="magic-checkbox" type="checkbox" checked>
+        {{else}}
+        <input class="magic-checkbox" type="checkbox">
+        {{/if}}
+        <label class="check-box">&nbsp;&nbsp;&nbsp;&nbsp;</label> 
+      </div>
+    </td>
+    <td>{{data.MeterName}}</td>
+    <td>{{data.Count}}</td>
+    <td>{{data.LastAlarmTime}}</td>
+    <td>{{data.AlarmName}}</td>
+    <td>{{data.MfName}}</td>
+    <td>{{data.Value}}</td>
+    <td>{{data.percent}}</td>
+    <td>{{data.alarmType}}</td>
+    <td>{{data.PreWarnValue}}</td>
+    <td>{{data.OnWarnValue}}</td>
+    <td><span class="link" data-id="{{data.MeterId}}" data-mfid="{{data.MfId}}">查看详情</span></td>
+  </tr>
+  {{/each}}
+  {{else}}
+  <tr><td colspan="12" class="norecord-cell">设备当前运行正常，无报警</td></tr>
+  {{/if}}
+</script>
+<script type="text/html" id="meter-alarm-info-template">
+  <table>
+    <tbody>
+      <tr>
+        <td>区域名称：{{data.areaName}}</td>
+        <td>仪表地址：{{data.MeterAddress}}</td>
+        <td>数据类型：{{data.DataType}}</td>
+      </tr>
+      <tr>
+        <td>仪表型号：{{data.MeterModelName}}</td>
+        <td>串口：{{data.SpPortName}}</td>
+        <td>仪表状态：{{data.MeterStatus}}</td>
+      </tr>
+    </tbody>
+  </table>
+</script>
+<script type="text/html" id="tpl-list-template">
+  {{if tplTypeList.length > 0}}{{each tplTypeList data index}}
+  <div class="opt">
+    <input class="magic-checkbox" type="radio" id="r_{{data.Id}}" value="{{data.Id}}">
+    <label>{{data.Name}}报警模板</label>
+  </div>
+  {{/each}}
+  {{/if}}
+</script>
+<script type="text/html" id="alarm-condition-template">
+{{if }}
+{{each}}
+<tr>
+  <td>报警名称</td>
+  <td>参数类型</td>
+  <td>报警类型</td>
+  <td>预警值</td>
+  <td>报警值</td>
+  <td>生效时间</td>
+  <td>重复</td>
+  <td>操作</td>
+</tr>
+{{/each}}
+{{/if}}
 </script>
 
 </html>

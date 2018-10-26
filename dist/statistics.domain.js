@@ -9,16 +9,58 @@ $(function () {
   let currentSelectedNode = null;
   let currentMeterParameters = [];
   let comparsionSelectedMeters = [];
-  let areaSubscribeModule = [], areaSubscribeModuleClone = [];
-  let areaConfigureMeters = [], areaConfigureMetersClone = [];
+  let areaSubscribeModule = [],
+    areaSubscribeModuleClone = [];
+  let areaConfigureMeters = [],
+    areaConfigureMetersClone = [];
   let areaConfigure = {};
   let sortColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F',
     '#808000', '#FFE4C4', '#F5DEB3', '#40E0D0', '#7FFFAA', '#008B8B', '#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
   ];
   let usageColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
   let costColor = ['#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
+  //alarm field
+  let areaTotalRecord = 0;
+  let areaAlarmList = [];
+  let alarmLevelEnum = {
+    0: '超限预警', 
+    1: '超限报警', 
+    2: '离线', 
+    3: '在线', 
+    4: '全部'
+  };
+  let alarmTypeEnum = {
+    0: '累计值：上限/年',
+    1: '累计值：上限/月',
+    2: '累计值：上限/日',
+    3: '累计值：上限/时',
+    4: '累计值：上限',
+    5: '累计值：下限',
+    6: '瞬时值：上限',
+    7: '瞬时值：下限',
+    8: '离线',
+    9: '在线'
+  };
+  let alarmDealStatusEnum = {
+    0: '未处理', //刚生成的数据的状态
+    1: '已读', // 解除报警后的状态
+    2: '已屏蔽', //屏蔽报警后的状态
+    3: '已关闭' //关闭电闸后的状态
+  };
+  let alarmDealReasonEnum = {
+    0: '解除报警',  //常规设置报警
+    1: '解除报警', //设备故障
+    2: '解除报警', //人为原因
+    3: '解除报警', //其他原因
+    4: '屏蔽报警', // 默认就是屏蔽
+    5: '默认值', //未处理时的状态
+    6: '关闭电闸'
+  };
+  let alarmlay = null;
+  let tplTypeList = [];
+  //end alarm field
   //#endregion
-  let numberFormat = function(num) {
+  let numberFormat = function (num) {
     let parts = _.toString(num).split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return parts.join(".");
@@ -698,7 +740,7 @@ $(function () {
     let option = {
       title: {
         subtext: '单位：' + unit,
-        padding: [-6,0,0,0]
+        padding: [-6, 0, 0, 0]
       },
       tooltip: {
         trigger: 'axis'
@@ -740,7 +782,7 @@ $(function () {
     let option = {
       title: {
         subtext: '单位：' + unit,
-        padding: [-6,0,0,0]
+        padding: [-6, 0, 0, 0]
       },
       tooltip: {
         trigger: 'axis'
@@ -837,12 +879,12 @@ $(function () {
         $('.list-body>div.choose-param-item').removeClass('param-item-active');
         $(currentDom).addClass('param-item-active');
         let mfid = $(currentDom).attr('data-id');
-        if($(currentDom).parent().parent().hasClass('param-position')){
+        if ($(currentDom).parent().parent().hasClass('param-position')) {
           $('.choose-param-list>.list-body>div.choose-param-item').removeClass('param-item-active');
           $('.choose-param-list>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');
-        }else{
+        } else {
           $('.param-position>.list-body>div.choose-param-item').removeClass('param-item-active');
-          $('.param-position>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');          
+          $('.param-position>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');
         }
         let originalList = _.find(searchResult.datas, item => item.mfid === mfid);
         let originalDatas = {
@@ -1251,7 +1293,7 @@ $(function () {
           let totalSum = _.sum(_.map(datas, a => a.value));
           _.each(datas, (data, index) => {
             tooltip += "<div style='width: 12px;height:12px;background-color: " + (chartType === 0 ? usageColor[index] : costColor[index]) + "; display: inline-block;margin-right: 10px'></div>" + data.seriesName + (chartType === 0 ? '用量：' : '费用：') +
-            numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
+              numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
           });
           tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + numberFormat(totalSum.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元');
           return tooltip;
@@ -1312,7 +1354,7 @@ $(function () {
       },
       tooltip: {
         trigger: 'item',
-        formatter: function(data){
+        formatter: function (data) {
           return `${data.seriesName} <br/>${data.name} (${numberFormat(data.value)}` + (chartType === 0 ? searchResult.unit : '元') + ")";
         },
         padding: [5, 5, 5, 10]
@@ -1470,7 +1512,7 @@ $(function () {
           let totalSum = _.sum(_.map(datas, a => a.value));
           _.each(datas, (data, index) => {
             tooltip += "<div style='width: 12px;height:12px;background-color: " + (chartType === 0 ? usageColor[index] : costColor[index]) + "; display: inline-block;margin-right: 10px'></div>" + data.seriesName + (chartType === 0 ? '用量：' : '费用：') +
-            numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
+              numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
           });
           tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + numberFormat(totalSum.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元');
           return tooltip;
@@ -1531,7 +1573,7 @@ $(function () {
       },
       tooltip: {
         trigger: 'item',
-        formatter: function (data){
+        formatter: function (data) {
           return `${data.seriesName} <br/>${data.name} (${numberFormat(data.value)}` + (chartType === 0 ? searchResult.unit : '元') + ")";
         },
         padding: [5, 5, 5, 10]
@@ -1659,8 +1701,8 @@ $(function () {
             toastr.warning('只能配置同一种能源类型的仪表，请重新选择');
             return;
           }
-          let exist = _.find(areaConfigureMeters, a=>a.id === node.id);
-          if(exist){
+          let exist = _.find(areaConfigureMeters, a => a.id === node.id);
+          if (exist) {
             toastr.warning('同一个仪表只能选择一次');
             return;
           }
@@ -1867,19 +1909,19 @@ $(function () {
   let generatePieForAggregateData = (xAxisData, seriesData, unit, tooltip = '能耗对比') => {
     let option = {
       title: {
-        subtext: '单位：' + unit,        
-        padding: [-6,0,0,0]
+        subtext: '单位：' + unit,
+        padding: [-6, 0, 0, 0]
       },
       tooltip: {
         trigger: 'item',
-        formatter: function (data){
-          return  `${data.seriesName} <br/>${data.name} : ${numberFormat(data.value)} (${data.percent}%)`;
+        formatter: function (data) {
+          return `${data.seriesName} <br/>${data.name} : ${numberFormat(data.value)} (${data.percent}%)`;
         }
       },
       legend: {
         orient: 'horizontal',
         left: 'center',
-        data: xAxisData,        
+        data: xAxisData,
         padding: [0, 50, 50, 100]
       },
       series: [{
@@ -2068,21 +2110,360 @@ $(function () {
   let isParentNode = (parentId, nodeId) => {
     let node = _.find(meterDataList, a => a.id === nodeId);
     let parent = node.parent;
-    if(parentId === parent) return true;
-    if(parent === '#') return false;
+    if (parentId === parent) return true;
+    if (parent === '#') return false;
     isParentNode(parentId, parent);
   };
   let checkElementInVisiable = () => {
-    if($(window).scrollTop() > ($('#list-body').offset().top + $('#list-body').outerHeight() - 100)) {
+    if ($(window).scrollTop() > ($('#list-body').offset().top + $('#list-body').outerHeight() - 100)) {
       $('.param-position>.list-body').show();
-    } else { 
+    } else {
       $('.param-position>.list-body').hide();
     }
   };
+  let loadAreaAlarmTable = (pageNo, level) => {
+    esdpec.framework.core.getJsonResult(`alarmcenter/getareameterdata?pageIndex=${pageNo}&areaId=${currentSelectedNode.id}&warnLevel=${level}`, function (response) {
+      if(response.IsSuccess){
+        areaTotalRecord = response.Remark;
+        $('.alarm-device-count').text(areaTotalRecord);
+        let data = {
+          deviceAlarmList: response.Content || []
+        };
+        _.each(data.deviceAlarmList, a => {
+          a.LastAlarmTime = _.replace(a.LastAlarmTime.substring(0, 19), 'T', ' ');
+          a.alarmType = alarmTypeEnum[a.AlarmTypeEnum];
+          a.isChecked = false;
+          if(a.Value !== '') a.Value = parseFloat(a.Value).toFixed(3);
+          switch(a.WarnLevel){
+            case 0:
+              a.percent = (a.PreWarnValue === '' || a.PreWarnValue === "0") ? '--' : (a.Value * 100 / a.PreWarnValue) + '%';
+            break;
+            case 1:
+              a.percent = (a.OnWarnValue === '' || a.OnWarnValue === "0") ? '--' : (a.Value * 100 / a.OnWarnValue) + '%';
+            break;
+          }
+          if(a.AlarmTypeEnum === 8){
+            a.Value = '--';
+            a.PreWarnValue = '--';
+            a.OnWarnValue = '--';
+            a.percent = '--';
+          }
+        });
+        areaAlarmList = data;
+        let templateHtml = template('device-alarm-list-template', data);
+        $('#device-alarm-list').html(templateHtml);
+        layui.use('laypage', function () {
+          let laypage = layui.laypage;
+          laypage.render({
+            elem: 'paging-device',
+            count: areaTotalRecord,
+            layout: ['count', 'prev', 'page', 'next', 'skip'],
+            jump: function (page, first) {
+              if (!first) loadAreaAlarmTable(page.curr, level);
+            }
+          });
+        });
+        setTimeout(()=>{
+          $('#device-alarm-list .device-chk').on('click', function(e) {
+            e.stopPropagation();
+            let mId = $(e.currentTarget).attr('data-id');
+            let node =  _.find(areaAlarmList.deviceAlarmList, a=>a.MeterId === mId);
+            if(node.isChecked){
+              $(e.currentTarget).children().first().prop('checked', false);
+              node.isChecked = false;
+              let exists = _.find(areaAlarmList.deviceAlarmList, a => a.isChecked);
+              if(!exists) $('#select-all').prop('checked', false);
+            }else{
+              $(e.currentTarget).children().first().prop('checked', true);
+              node.isChecked = true;
+            }
+          });
+        }, 300);
+      }
+    });
+  };
+  let loadAreaAlarmPage = () =>{
+    $('#alarm-all').prop('checked', true);
+    $('#select-all').prop('checked', false);
+    esdpec.framework.core.getJsonResult('alarmcenter/getareametercount?areaId=' + currentSelectedNode.id, function (response) {
+      if (response.IsSuccess) {
+        let responseObj = JSON.parse(response.Content);
+        let areaAlarmData = {
+          data: responseObj
+        };
+        let templateHtml = template('area-exception-info-template', areaAlarmData);
+        $('.area-alarm-info').html(templateHtml);
+      }
+    });
+    loadAreaAlarmTable(1, 4);
+    $('.alarm-device-filter .chk').on('click', function (e) {
+      e.stopPropagation();
+      let id = $(e.currentTarget).attr('data-id');
+      $('.alarm-device-filter .chk input').prop('checked', false);
+      let input = $(e.currentTarget).children().first();
+      input.prop('checked', true);      
+      $('#select-all').prop('checked', false);
+      switch(id){
+        case 'sa':
+          loadAreaAlarmTable(1, 4);
+        break;
+        case 'ofl':
+          loadAreaAlarmTable(1, 2);
+        break;
+        case 'yj':
+          loadAreaAlarmTable(1, 0);
+        break;
+        case 'bj':
+          loadAreaAlarmTable(1, 1);
+        break;
+      }
+    });
+    $('.exception-operate-box>input.btn').off('click').on('click', function (e) {
+      e.stopPropagation();
+      if(!operateBefore()) return;
+      let id = $(e.currentTarget).attr('id');
+      let mIds = _.map(_.filter(areaAlarmList.deviceAlarmList, a=> a.isChecked), b => b.MeterId);
+      let type = $('.alarm-device-filter .chk>input:checked').val();
+      if(mIds.length <= 0){
+        toastr.warning('请先选择要操作的仪表设备');
+        return;
+      }
+      switch(id){
+        case 'area-alarm':
+          $('#area-alarm-modal').dialogModal({
+            onOkBut: function () { 
+              let dealReason = $('.open .radio-grp .opt input:checked').val();
+              let dealObj = {
+                MeterIds: mIds,
+                AlarmDealStatus: 1,
+                AlarmDealReason: !dealReason ? $('.open #other-reason').val() : dealReason,
+                AlarmDealReasonDetail: $('.open .area-alarm-modal-textarea').val()
+              };
+              esdpec.framework.core.doPutOperation('alarmcenter/updatealarmdatarelease', dealObj, function(response) {
+                if(response.IsSuccess){
+                  loadAreaAlarmTable(1, parseInt(type));
+                }
+              });
+            },
+            onCancelBut: function () { },
+            onLoad: function () { 
+              setTimeout(()=>{
+                $('.open #r1').prop('checked', true);
+                $('.open .radio-grp .opt').on('click', function(e){
+                  e.stopPropagation();
+                  let currentDom = e.currentTarget;
+                  $('.open .radio-grp .opt input').prop('checked', false);
+                  $(currentDom).children().first().prop('checked', true);
+                  $('.open #other-reason').prop('checked', false);
+                  $('.open .area-alarm-modal-textarea').val('').prop('readonly', true);
+                });
+                $('.open .area-alarm-modal-textarea').on('input', function(e) {
+                  e.stopPropagation();
+                  if(e.currentTarget.value.length > 30){
+                    e.currentTarget.value = e.currentTarget.value.substring(0, 30);
+                    return;
+                  }
+                  $('.open .len-limit').text(e.currentTarget.value.length + '/30');
+                });
+                $('.open .other-reason').on('click', function(e) {
+                  e.stopPropagation();
+                  $('.open .radio-grp .opt input').prop('checked', false);
+                  let currentDom = e.currentTarget;
+                  $(currentDom).children().first().prop('checked', true);
+                  $('.open .area-alarm-modal-textarea').prop('readonly', false).focus();
+                });
+              }, 300);
+            },
+            onClose: function () { },
+          });
+          break;
+        case 'shield-device':
+          $('#shield').prop('checked', true);
+          layui.use(['layer', 'laydate'], function(){
+            alarmlay = layui.layer; 
+            let laydate = layui.laydate;
+            let setTop = function() {
+                let that = this; 
+                alarmlay.open({
+                  type: 1,
+                  title: '屏蔽设置',
+                  area: ['590px', '260px'],
+                  shade: 0.6,
+                  content: $('#set-shield-modal'),
+                  btn: ['确定', '取消'],
+                  yes: function(){
+                    $(that).click(); 
+                    let time = $('#sheild-time-container').val();
+                    let sheildObj = {
+                      MeterIds: mIds,
+                      AlarmDealStatus: 2,
+                      AlarmDealReason: 4,
+                      AlarmDealReasonDetail: '',
+                      MeterDealStatus: status ? status: 2,
+                      StartTime: $('#shield').prop('checked') ? '1973-01-01 00:00:01' : time.split(' -- ')[0],
+                      EndTime: $('#shield').prop('checked') ? "2099-12-31 59:59:59" : time.split(' -- ')[1]
+                    };
+                    esdpec.framework.core.doPutOperation('alarmcenter/updatealarmdatashield', sheildObj, function(response) {
+                      if(response.IsSuccess){
+                        loadAreaAlarmTable(1, parseInt(type));
+                        alarmlay.closeAll();
+                      }
+                    });
+                  },
+                  btn2: function(){
+                    alarmlay.closeAll();
+                  },
+                  zIndex: alarmlay.zIndex,
+                  success: function(layero){
+                    laydate.render({
+                      elem: '#sheild-time-container',
+                      btns: ['confirm'],
+                      range: '--',
+                      format: 'yyyy-MM-dd HH:mm',
+                      type: 'datetime',
+                      trigger: 'click',
+                      value: new Date().format('yyyy-MM-dd hh:mm') + ' -- ' + new Date().format('yyyy-MM-dd hh:mm'),
+                      done: (value, date) => {},
+                      end: function() {
+                        $(".layui-layer-shade").remove();
+                      }
+                    });
+                  }
+                });
+              };          
+            setTop();         
+          });
+          $('.device-shield-content .opt').on('click', function(e) {
+            e.stopPropagation();
+            $('.device-shield-content .opt input').prop('checked', false);
+            $(e.currentTarget).children().first().prop('checked', true);
+          });
+          break;
+      }
+    });
+    $('.device-list thead .opt').on('click', function(e) {
+      e.stopPropagation();
+      if($('#select-all').prop('checked')){
+        $('#select-all').prop('checked', false);
+        $('#device-alarm-list .device-chk input').prop('checked', false);
+        _.each(areaAlarmList.deviceAlarmList, a=> a.isChecked = false);
+      }else{
+        $('#select-all').prop('checked', true);
+        $('#device-alarm-list .device-chk input').prop('checked', true);
+        _.each(areaAlarmList.deviceAlarmList, a=> a.isChecked = true);
+      }
+    });
+  };
+  let loadMeterAlarmPage = () => {
+    esdpec.framework.core.getJsonResult('alarmcenter/getmetermessage?meterId='+ currentSelectedNode.id, function(response){
+      if(response.IsSuccess){
+        let rtn = response.Content;
+        rtn.areaName = getMeterBelongArea(currentSelectedNode.id);
+        let data = {
+          data: rtn
+        };
+        let templateHtml = template('meter-alarm-info-template', data)
+        $('.meter-alarm-info').html(templateHtml);
+      }
+    });
+    let id = $('.setter-content ul>li.layui-this').attr('data-id');
+    switch(id){
+      case 'alarm-condition-tpl':
+        let id = $('.tpl-list .opt>input:checked').val();
+        esdpec.framework.core.getJsonResult('alarmcenter/getalarmtemplatedata?energyId='+ id +'&pageIndex=1', function(response) {
+          if(response.IsSuccess){
 
-  $('.main-content .content-right').on('scroll', function(e) {
+          }
+        });
+      break;
+      case 'alarm-condition-list':
+        esdpec.framework.core.getJsonResult('alarmcenter/getalarmruledata?meterId='+ currentSelectedNode.id +'&pageIndex=1', function(response) {
+          if(response.IsSuccess){
+            
+          }
+        });
+      break;
+    }
+    
+  };
+  let alarmPageChange = () => {
+    if(currentSelectedNode.modeltype === 'area'){
+      $('.area-alarm-info').removeClass('hidden');
+      $('.meter-alarm-info').addClass('hidden');
+      $('.exception-operate-box').show();
+      $('.meter-operate-box').hide();
+      $('.alarm-setter').hide();
+      $('.meter-alarm-event').hide();
+      $('.area-alarm-device-list').show();
+      $('.alarm-setter').hide();
+      loadAreaAlarmPage();
+    }else{
+      $('.area-alarm-info').addClass('hidden');
+      $('.meter-alarm-info').removeClass('hidden'); 
+      $('.exception-operate-box').hide();
+      $('.meter-operate-box').show();
+      $('.alarm-setter').show();            
+      $('.meter-alarm-event').show();
+      $('.area-alarm-device-list').hide();
+      $('.alarm-setter').show();
+      $('.alarm-setter .setter-header').off('click').on('click', function(e) {
+        e.stopPropagation();
+        $('.alarm-setter .setter-header>span').toggleClass('meter-alarm-collapse');
+        $('.setter-content').toggleClass('setter-content-collapse');
+      });
+      $('.setter-content ul>li').off('click').on('click', function(e) {
+        e.stopPropagation();
+        let currentDom = e.currentTarget;
+        let preId = $('.setter-content ul>li.layui-this').attr('data-id');
+        $('.setter-content ul>li').removeClass('layui-this');
+        $(currentDom).addClass('layui-this');
+        let id = $(currentDom).attr('data-id');
+        $('#'+preId).hide();
+        $('#'+id).show();
+        switch(id){
+          case 'alarm-condition-list':
+            esdpec.framework.core.getJsonResult('alarmcenter/getalarmruledata?meterId=' + currentSelectedNode.id+'&pageIndex=1', function(response) {
+              if(response.IsSuccess){
+
+              }
+            });
+          break;
+          case 'alarm-condition-tpl':
+            esdpec.framework.core.getJsonResult('alarmcenter/getenergys', function(response) {
+              if(response.IsSuccess){
+                tplTypeList = response.Content;
+                let data = {
+                  tplTypeList
+                };
+                let templateHtml = template('tpl-list-template', data);
+                $('.tpl-list').html(templateHtml);
+                setTimeout(() => {
+                  $('.tpl-list .opt').off('click').on('click', function(e) {
+                    e.stopPropagation();
+                    $('.tpl-list .opt input').prop('checked', false);
+                    let currentDom = e.currentTarget;
+                    $(currentDom).children().first().prop('checked', true);
+                    let id = $(currentDom).children().first().val();
+                    esdpec.framework.core.getJsonResult('alarmcenter/getalarmtemplatedata?energyId='+ id +'&pageIndex=1', function(response) {
+                      if(response.IsSuccess){
+                        
+                      }
+                    });
+                  });
+                  $('.tpl-list .opt').first().click();
+                }, 300);
+              }
+            })
+          break;
+        }
+      });
+      loadMeterAlarmPage();
+    }
+  };
+
+  $('.main-content .content-right').on('scroll', function (e) {
     e.stopPropagation();
-    if(currentSelectedNode.modeltype !== 'area') checkElementInVisiable();
+    if (currentSelectedNode.modeltype !== 'area') checkElementInVisiable();
   });
 
   $('#onshowmeterinfo').on('click', function (e) {
@@ -2474,11 +2855,11 @@ $(function () {
     showModuleConfigureModal();
   });
 
-  $(window).resize(function(e) {
-    if(currentPage === 'alarm'){
-      if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')){
+  $(window).resize(function (e) {
+    if (currentPage === 'alarm') {
+      if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')) {
         $('.alarm-content>.alarm-footer').show();
-      }else{
+      } else {
         $('.alarm-content>.alarm-footer').hide();
       }
     }
@@ -2486,29 +2867,19 @@ $(function () {
 
   $('.content__header--btngrp .alarm-container').on('click', function (e) {
     e.stopPropagation();
-    // currentPage = 'alarm';
-    // $('.main-content').hide();
-    // $('.alarm-content').show();
-    // $('.meterName').addClass('nav-history');
-    // $('.detail').addClass('nav-history');
-    // $('#nav-alarm').show();
-    // $('#item-name').text(currentSelectedNode.text);
-    // layui.use('laypage', function() {
-    //   let laypage = layui.laypage;
-    //   laypage.render({
-    //     elem: 'paging-device',
-    //     count: 100,
-    //     layout: ['count', 'prev', 'page', 'next', 'skip'],
-    //     jump: function(obj){
-    //       console.log(obj)
-    //     }
-    //   });
-    // });
-    // if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')){
-    //   $('.alarm-content>.alarm-footer').show();
-    // }else{
-    //   $('.alarm-content>.alarm-footer').hide();
-    // }
+    currentPage = 'alarm';
+    $('.main-content').hide();
+    $('.alarm-content').show();
+    $('.meterName').addClass('nav-history');
+    $('.detail').addClass('nav-history');
+    $('#nav-alarm').show();
+    $('#item-name').text(currentSelectedNode.text);
+    if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')) {
+      $('.alarm-content>.alarm-footer').show();
+    } else {
+      $('.alarm-content>.alarm-footer').hide();
+    }
+    alarmPageChange();
   });
 
   $('.alarm-content-right>.alarm-header>.navigate-back>span').on('click', function (e) {
@@ -2519,7 +2890,7 @@ $(function () {
     $('.meterName').removeClass('nav-history');
     $('.detail').removeClass('nav-history');
     $('#nav-alarm').hide();
-    if(currentSelectedNode.modeltype === 'area') searchAreaData();
+    if (currentSelectedNode.modeltype === 'area') searchAreaData();
     else searchMeterData();
   });
 
@@ -2532,7 +2903,7 @@ $(function () {
     $('#choose-meter-for-comparison').dialogModal({
       onOkBut: function () {
         let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
-        nodeIds = _.filter(nodeIds, a=> a !== currentSelectedNode.id);
+        nodeIds = _.filter(nodeIds, a => a !== currentSelectedNode.id);
         let nodes = _.filter(meterDataList, a => _.includes(nodeIds, a.id) && a.modeltype !== 'area');
         comparsionSelectedMeters = [];
         comparsionSelectedMeters = _.concat([], nodes);
@@ -2615,11 +2986,11 @@ $(function () {
               let disableNode = instance.get_node(currentSelectedNode.id);
               instance.select_node(disableNode);
               instance.disable_node(disableNode);
-            }).on('select_node.jstree', function(e, data){
+            }).on('select_node.jstree', function (e, data) {
               let instance = data.instance;
               let node = data.node.original;
               let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
-              if(nodeIds.length > 6){
+              if (nodeIds.length > 6) {
                 toastr.warning('对比仪表个数不能超过6个');
                 instance.deselect_node(instance.get_node(node.id));
                 return;
@@ -2627,8 +2998,8 @@ $(function () {
             }).on('deselect_node.jstree', function (e, data) {
               let instance = data.instance;
               let node = data.node.original;
-              if(node.modeltype === 'area' && isParentNode(node.id, currentSelectedNode.id)){
-                setTimeout(()=>{
+              if (node.modeltype === 'area' && isParentNode(node.id, currentSelectedNode.id)) {
+                setTimeout(() => {
                   instance.select_node(instance.get_node(currentSelectedNode.id));
                   return;
                 }, 100);
@@ -2902,10 +3273,10 @@ $(function () {
     e.stopPropagation();
     $('.parameter-overlay').addClass('hidden');
     let current = e.target;
-    if($(current).hasClass('dialogModal open')) {
+    if ($(current).hasClass('dialogModal open')) {
       $('.dialogModal.open').remove();
       areaSubscribeModule = _.cloneDeep(areaSubscribeModuleClone);
-        areaConfigureMeters = _.cloneDeep(areaConfigureMetersClone);
+      areaConfigureMeters = _.cloneDeep(areaConfigureMetersClone);
     }
   });
 
@@ -3175,8 +3546,8 @@ $(function () {
                   if (comparsionSelectedMeters.length > 0) {
                     $('.parameter-right>.para-active').removeClass('para-active');
                     $(currentDom).addClass('para-active');
-                    _.each(currentMeterParameters, a=>{
-                      if(a.id === id) a.isChecked = true;
+                    _.each(currentMeterParameters, a => {
+                      if (a.id === id) a.isChecked = true;
                       else a.isChecked = false;
                     });
                     // if (type !== 0) {
@@ -3200,10 +3571,10 @@ $(function () {
                     chooseNode.isChecked = !chooseNode.isChecked;
                     $(currentDom).toggleClass('para-active');
                   }
-                  if(type === 1){
+                  if (type === 1) {
                     $('.operate-grp>i.should-uniq').removeClass('btn-active');
                     $('#meter-zone .icon-line-chart_icon').addClass('btn-active');
-                  }else{
+                  } else {
                     $('.operate-grp>i.should-uniq').removeClass('btn-active');
                     $('.operate-grp>i.should-uniq').first().addClass('btn-active');
                   }
@@ -3225,8 +3596,9 @@ $(function () {
             }
           });
         }
-        if(currentPage === 'alarm'){
-
+        if (currentPage === 'alarm') {
+          $('#item-name').text(currentSelectedNode.text);
+          alarmPageChange();
         }
       });
       let searchTimeout = false;
@@ -3240,7 +3612,7 @@ $(function () {
         }, 100);
       });
     }
-  });  
+  });
 
   toastr.options = _.merge(toastr.options, {
     positionClass: "toast-top-center",
