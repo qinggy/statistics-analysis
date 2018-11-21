@@ -25,7 +25,7 @@
 
 .icon-edit:before { content: "\eb31"; }
 
-.icon-zuidahua:before { content: "\e62e"; }
+.icon-zuidahua:before { content: "\e62e";color: #708195; }
 
 .icon-rili:before { content: "\e60e"; }
 
@@ -47,7 +47,7 @@
 
 .icon-tubiao-bingtu:before { content: "\e67e"; }
 
-.icon-RMB:before { content: "\e626"; }
+.icon-RMB:before { content: "\e626"; color: #708195;}
 
 .icon-RMB-area:before {content: "\e626";}
 

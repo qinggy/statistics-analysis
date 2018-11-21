@@ -1,4 +1,5 @@
 var e_macarons = {
+  
   // 默认色板
   color: [
     '#2ec7c9', '#b6a2de', '#5ab1ef', '#ffb980', '#d87a80',
@@ -17,7 +18,11 @@ var e_macarons = {
 
   // 图例
   legend: {
-    itemGap: 8
+    itemGap: 8,
+    // orient: 'vertical',
+    // left: 'right',
+    // top: '0%',
+    // right: '10%'
   },
 
   // 值域
@@ -39,13 +44,17 @@ var e_macarons = {
       lineStyle: { // 直线指示器样式设置
         color: '#008acd'
       },
+      
       crossStyle: {
         color: '#008acd'
+        // color: '#000000'
       },
       shadowStyle: { // 阴影指示器样式设置
         color: 'rgba(200,200,200,0.2)'
       }
-    }
+    },
+    confine: true,
+    extraCssText:'width:50%;'
   },
   // 区域缩放控制器
   dataZoom: {
@@ -126,7 +135,8 @@ var e_macarons = {
   bar: {
     itemStyle: {
       normal: {
-        borderRadius: 5
+        borderRadius: 5,
+        // show: false
       },
       emphasis: {
         borderRadius: 5

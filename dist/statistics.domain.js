@@ -1,24 +1,161 @@
 $(function () {
   //#region fields 
-  let currentPage = 'analysis';
+  let globalCurrentPage = 'analysis';
   let lastclicktime = null;
   let analysisChart = null;
   let areaChart = null;
   let meterDataList = [];
   let searchResult = {};
   let currentSelectedNode = null;
+  let currentSelectedNodeBak = null;
   let currentMeterParameters = [];
   let comparsionSelectedMeters = [];
-  let areaSubscribeModule = [], areaSubscribeModuleClone = [];
-  let areaConfigureMeters = [], areaConfigureMetersClone = [];
+  let areaSubscribeModule = [],
+    areaSubscribeModuleClone = [];
+  let areaConfigureMeters = [],
+    areaConfigureMetersClone = [];
   let areaConfigure = {};
-  let sortColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F',
+  let now_Sum = 0;
+  let sortColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#4B0082', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F',
     '#808000', '#FFE4C4', '#F5DEB3', '#40E0D0', '#7FFFAA', '#008B8B', '#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
   ];
-  let usageColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#00FF7F', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
+  let usageColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#4B0082', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
   let costColor = ['#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
+  //alarm field
+  let areaTotalRecord = 0;
+  let areaAlarmList = [];
+  let meterEventList = [];
+  let alarmLevelEnum = {
+    0: '超限预警',
+    1: '超限报警',
+    2: '离线',
+    3: '在线',
+    4: '全部'
+  };
+  let alarmTypeEnum = {
+    0: '累计值：上限/年',
+    1: '累计值：上限/月',
+    2: '累计值：上限/日',
+    3: '累计值：上限/时',
+    4: '累计值：上限',
+    5: '累计值：下限',
+    6: '瞬时值：上限',
+    7: '瞬时值：下限',
+    8: '离线',
+    9: '在线'
+  };
+  let alarmTypeValueList = [{
+      id: 0,
+      val: '上限',
+    },
+    {
+      id: 1,
+      val: '上限/时'
+    },
+    {
+      id: 2,
+      val: '上限/日'
+    },
+    {
+      id: 3,
+      val: '上限/月'
+    },
+    {
+      id: 4,
+      val: '上限/年'
+    },
+    {
+      id: 5,
+      val: '下限'
+    }
+  ];
+  let weekDayList = [{
+      val: 1,
+      name: '星期一'
+    },
+    {
+      val: 2,
+      name: '星期二'
+    },
+    {
+      val: 3,
+      name: '星期三'
+    },
+    {
+      val: 4,
+      name: '星期四'
+    },
+    {
+      val: 5,
+      name: '星期五'
+    },
+    {
+      val: 6,
+      name: '星期六'
+    },
+    {
+      val: 0,
+      name: '星期天'
+    }
+  ];
+  let alarmDealStatusEnum = {
+    0: '未处理', //刚生成的数据的状态
+    1: '已读', // 解除报警后的状态
+    2: '屏蔽', //屏蔽报警后的状态
+    3: '已关闭' //关闭电闸后的状态
+  };
+  let alarmDealReasonEnum = {
+    // 0: '解除报警', //常规设置报警
+    // 1: '解除报警', //设备故障
+    // 2: '解除报警', //人为原因
+    // 3: '解除报警', //其他原因
+    // 4: '屏蔽报警', // 默认就是屏蔽
+    // 5: '默认值', //未处理时的状态
+    // 6: '关闭电闸'
+    0: '常规设置报警', //常规设置报警
+    1: '设备故障', //设备故障
+    2: '解除报警', //人为原因
+    3: '设备离线', //其他原因
+    4: '屏蔽', // 默认就是屏蔽，屏蔽报警
+    5: '未处理', //未处理时的状态
+    6: '关闭电闸'
+  };
+  let weekDayChn = week => {
+    let weekObj = {
+      1: '星期一',
+      2: '星期二',
+      3: '星期三',
+      4: '星期四',
+      5: '星期五',
+      6: '星期六',
+      0: '星期天'
+    };
+    let weekArray = week.split(',');
+    let weekStr = '';
+    _.each(weekArray, w => {
+      if (w === '') return true;
+      weekStr += weekObj[w] + '、';
+    });
+    return weekStr.substring(0, weekStr.length - 1);
+  };
+  let alarmlay = null;
+  let tplTypeList = [];
+  let meterFieldTypes = [];
+  let historyTime = {
+    minTime: '1973-01-01',
+    maxTime: '2099-12-31'
+  };
+  let backSource = '';
+  //end alarm field
   //#endregion
-  let numberFormat = function(num) {
+  let hasScrolled = function (element, direction) {
+    if (direction === 'vertical') {
+      return element.scrollHeight > element.clentHeight;
+    } else if (direction === 'horizontal') {
+      return element.scrollWidth > element.clientWidth;
+    }
+  };
+  let numberFormat = function (num) {
     let parts = _.toString(num).split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return parts.join(".");
@@ -42,6 +179,24 @@ $(function () {
       case 3:
         return '屏蔽直到某个时间点开启'
     }
+  };
+  let getChartCostLine = function (selector) {
+    if ($(selector + ' .icon-btn-RMB').hasClass('btn-active')) {
+      let costSeries = [];
+      if (comparsionSelectedMeters.length > 0) {
+        costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap,
+          searchResult.chartXaxisData, $(selector + ' .icon-btn-tishi').hasClass('btn-active') ? true : false);
+      } else {
+        costSeries = getChartSeriesForCost(searchResult.datas, _.map((searchResult.checkedParameters || searchResult.meterAndParaMap), a => {
+          return {
+            id: a.id,
+            name: a.name
+          };
+        }), searchResult.chartXaxisData, $(selector + ' .icon-btn-tishi').hasClass('btn-active') ? true : false);
+      }
+      return costSeries;
+    }
+    return null;
   };
   let getMeterBelongArea = function (meterId) {
     let nodeInfo = _.find(meterDataList, a => a.id === meterId);
@@ -80,13 +235,13 @@ $(function () {
     let pieRmb = $('.comparison-proportion .proportion-grp .comparison-rmb.btn-active');
     return pieRmb.length > 0;
   };
-  let operateBefore = function () {
+  let operateBefore = (defaultInterval = 300) => {
     if (lastclicktime === null)
       lastclicktime = new Date();
     else {
       let currentTime = new Date();
-      if (parseInt(currentTime - lastclicktime) <= 300) {
-        // console.log('Frequent operation, no response!');
+      if (parseInt(currentTime - lastclicktime) <= defaultInterval) {
+        console.log('Frequent operation, no response!');
         return false;
       } else {
         lastclicktime = currentTime;
@@ -113,6 +268,11 @@ $(function () {
       return resetSTimeAndETime(type);
     }
     return stimeAndetime;
+  };
+  let getExceptionState = () => {
+    let exceptionDom = $('.graph-data .exception-manager');
+    if (exceptionDom) return exceptionDom.attr('data-toggle') === 'open';
+    return false;
   };
   let getAreaDefaultSTimeAndETime = function (type) {
     let stimeAndetime = $('#area-datevalue').val();
@@ -201,15 +361,19 @@ $(function () {
   };
   let getChartSeries = function (datas, mfIdAndNameMap, xAxisData, type = 'bar', showLabel = false) {
     let seriesArray = [];
+    // console.log(showLabel)
+    let showLabel_1 = $('.show-tip').hasClass('btn-active') ? true : false;
     _.each(datas, data => {
+      let mfMap = _.find(mfIdAndNameMap, a => a.id === data.mfid);
       let series = {
-        name: _.find(mfIdAndNameMap, a => a.id === data.mfid).name,
-        type: type
+        name: mfMap ? mfMap.name : '',
+        type: type,
+
       };
       series.itemStyle = {
         normal: {
           label: {
-            show: showLabel,
+            show: showLabel_1,
           }
         }
       };
@@ -233,6 +397,9 @@ $(function () {
         data: [{
           type: 'average',
           name: '平均值',
+          label: {
+            position: "right"
+          },
           tooltip: {
             trigger: 'item',
             formatter: function (params) {
@@ -357,6 +524,9 @@ $(function () {
         data: [{
           type: 'average',
           name: '平均值',
+          label: {
+            position: "right"
+          },
           tooltip: {
             trigger: 'item',
             formatter: function (params) {
@@ -436,6 +606,7 @@ $(function () {
     let templateHtml = template('area-sort-list-template', data);
     $('.area-sort-list').html(templateHtml);
   }
+  // 区域饼图
   let generateAreaPie = function () {
     let datas = [];
     let legends = [];
@@ -449,6 +620,10 @@ $(function () {
         mfid: mmArray[1]
       });
     });
+    // console.log(datas);
+    // console.log(legends);
+    // console.log(meterAndMfIdMap);
+    // console.log(meterAndMfIdArray);
     _.each(searchResult.datas, data => {
       let mmp = _.find(meterAndMfIdMap, a => a.mfid === data.mfid);
       let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
@@ -459,11 +634,20 @@ $(function () {
       datas.push(sumVal);
       legends.push(meter.text);
     });
+    // console.log(searchResult);
+    // 区域分项占比实例化
     let option = generatePieForAggregateData(legends, datas, searchResult.unit);
     let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
+    areaChart.off('legendselectchanged');
     areaChart.setOption(option, true);
-    window.onresize = areaChart.resize;
+    areaChart.resize();
+    window.addEventListener('resize', function () {
+      areaChart.resize();
+    });
+    // window.onresize = areaChart.resize;
+
   };
+
   let generateAreaCostPie = function () {
     let datas = [];
     let legends = [];
@@ -490,7 +674,15 @@ $(function () {
     let option = generatePieForAggregateData(legends, datas, '元', '费用对比');
     let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
     areaChart.setOption(option, true);
-    window.onresize = areaChart.resize;
+    areaChart.resize();
+    // $(window).resize(function () {
+    //   //重置容器高宽
+    //   areaChart.resize();
+    // });
+    window.addEventListener('resize', function () {
+      areaChart.resize();
+    });
+    // window.onresize = areaChart.resize;
   };
   let searchMeterData = function () {
     if (currentMeterParameters.length <= 0) {
@@ -498,7 +690,7 @@ $(function () {
       return;
     }
     let currentSelectedParameters = _.filter(currentMeterParameters, a => a.isChecked);
-    if (currentSelectedParameters.length <= 0) return;
+    if (currentSelectedParameters.length <= 0) currentSelectedParameters = currentMeterParameters;
     let parameter = _.head(currentSelectedParameters);
     let dateType = getSearchDateType();
     let searchDateType = dateType === -1 ? 2 : dateType;
@@ -507,9 +699,14 @@ $(function () {
     let timeArray = defaultTimeStr.split(' -- ');
     let sTime = timeArray[0];
     let eTime = timeArray[1];
+    $(window).resize();
+    $('#vmeter-summary').hide();
     if (comparsionSelectedMeters.length > 0) {
       $('.comparison-tab').show();
       $('.func-tab').hide();
+      $('.parameter-container .bottom-chart').width('142%');
+      $('.parameter-container').css('border-right','none');
+      $('.top-chart').css('border-right','1px solid #dce3e6');
       $('#summary-container').hide();
       if (searchParaType === 0) {
         $('#pie').show();
@@ -559,8 +756,9 @@ $(function () {
               generateComparisonData(meterAndParaMap, response.Content, searchParaType);
               if (ifShowPieChart()) {
                 generatePieChart();
-              } else
+              } else {
                 assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, response.Content, meterAndParaMap, 'chart-instance', getChartType());
+              }
             }
           });
         }
@@ -569,6 +767,10 @@ $(function () {
       $('.comparison-tab').hide();
       $('.func-tab').show();
       $('#summary-container').show();
+      $('.parameter-container .bottom-chart').width('96%');
+      $('.parameter-container').css('border-right','1px solid #dce3e6');
+      $('.top-chart').css('border-right','none');
+      checkElementInVisiable();
       let mfids = _.map(currentSelectedParameters, a => a.id);
       let uriparam = `mfids=${_.join(mfids, ',')}&paraType=${searchParaType}&dateType=${searchDateType}&sTime=${sTime}&eTime=${eTime}`;
       esdpec.framework.core.getJsonResult('dataanalysis/getdata?' + uriparam, function (response) {
@@ -576,6 +778,11 @@ $(function () {
           let chartLegend = [];
           let chartXaxisData = [];
           let checkedParameters = _.filter(currentMeterParameters, p => _.includes(mfids, p.id));
+          if(!response.Content.now_sum_val || response.Content.now_sum_val === ''){
+            now_Sum = 0;
+          }else{
+            now_Sum = numberFormat((response.Content.now_sum_val).toFixed(2))
+          }
           chartLegend = _.map(checkedParameters, a => a.name);
           chartXaxisData = searchParaType === 0 ? getXAxisData(dateType, sTime, eTime) : getOriginalXAxisData(response.Content.data_list);
           chartXaxisData = _.uniq(_.orderBy(chartXaxisData, a => a, "asc"));
@@ -591,14 +798,99 @@ $(function () {
           if (currentSelectedNode.modeltype === 'meter') {
             $('#summary-container').show();
             $('.func-tab').show();
-            if (searchParaType === 0 && dateType === 2 && sTime.substring(0, 10) === eTime.substring(0, 10)) {
+            if (searchParaType === 0 && dateType !== 3) { // && sTime.substring(0, 10) === eTime.substring(0, 10)
               $('.summary-container').show();
-              generateContemporaryComparison(response.Content.avg_per, response.Content.avg_val, response.Content.last_sum_val, response.Content.now_sum_val, response.Content.sum_per, parameter.unit);
-            } else if (searchParaType !== 0) $('.summary-container').hide();
+              let firstTitle = '今日',
+                lastTitle = '昨日',
+                title = '日用量对比昨日同期';
+              switch (dateType) {
+                case 2:
+                  title = '日用量对比昨日同期';
+                  firstTitle = '今日';
+                  lastTitle = '昨日';
+                  break;
+                case 4:
+                  title = '月用量对比上月同期';
+                  firstTitle = '本月';
+                  lastTitle = '上月';
+                  break;
+                case 5:
+                  title = '年用量对比去年同期';
+                  firstTitle = '今年';
+                  lastTitle = '去年';
+                  break;
+              }
+              generateContemporaryComparison(response.Content.avg_per, response.Content.avg_val, response.Content.last_sum_val, response.Content.now_sum_val, response.Content.sum_per, parameter.unit, firstTitle, lastTitle, title);
+            } else if (searchParaType !== 0) {
+              $('.summary-container').hide();
+              $('.func-tab').hide();
+              $('#vmeter-summary').show();
+              let vals = _.map(datas[0].now_data_list, a => a.val);
+              let max = _.max(vals);
+              let min = _.min(vals);
+              let sum = _.sum(vals);
+              let average = (datas[0].now_data_list !== null && datas[0].now_data_list.length > 0) ? sum / datas[0].now_data_list.length : 0;
+              let summaryData = {
+                vMeterFeatureData: [{
+                    name: '最大值',
+                    val: numberFormat((max || 0).toFixed(3)),
+                    bgcolor: '#4b89dc',
+                    unit: parameter.unit
+                  },
+                  {
+                    name: '平均值',
+                    val: numberFormat((average || 0).toFixed(3)),
+                    bgcolor: '#f6bb43',
+                    unit: parameter.unit
+                  },
+                  {
+                    name: '最小值',
+                    val: numberFormat((min || 0).toFixed(3)),
+                    bgcolor: '#38bc9b',
+                    unit: parameter.unit
+                  }
+                ]
+              };
+              let templateHtml = template('vmeter-data-comparison', summaryData);
+              $('#vmeter-content').html(templateHtml);
+            }
             generateGraphData(parameter.unit, searchParaType);
             generateOriginalData();
             generateFgpData();
+          } else if (currentSelectedNode.modeltype === 'vmeter') {
+            $('#summary-container').hide();
+            $('.func-tab').hide();
+            $('#vmeter-summary').show();
+            let vals = _.map(datas[0].now_data_list, a => a.val);
+            let max = _.max(vals);
+            let min = _.min(vals);
+            let sum = _.sum(vals);
+            let average = (datas[0].now_data_list !== null && datas[0].now_data_list.length > 0) ? sum / datas[0].now_data_list.length : 0;
+            let summaryData = {
+              vMeterFeatureData: [{
+                  name: '最大值',
+                  val: numberFormat((max || 0).toFixed(3)),
+                  bgcolor: '#4b89dc',
+                  unit: parameter.unit
+                },
+                {
+                  name: '平均值',
+                  val: numberFormat((average || 0).toFixed(3)),
+                  bgcolor: '#f6bb43',
+                  unit: parameter.unit
+                },
+                {
+                  name: '最小值',
+                  val: numberFormat((min || 0).toFixed(3)),
+                  bgcolor: '#38bc9b',
+                  unit: parameter.unit
+                }
+              ]
+            };
+            let templateHtml = template('vmeter-data-comparison', summaryData);
+            $('#vmeter-content').html(templateHtml);
           } else {
+
             $('#summary-container').hide();
             $('.func-tab').hide();
           }
@@ -637,6 +929,7 @@ $(function () {
       let uriparam = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
       esdpec.framework.core.getJsonResult('dataanalysis/getdata?' + uriparam, function (response) {
         if (response.IsSuccess) {
+          // console.log(response)
           let chartLegend = [];
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
@@ -662,6 +955,7 @@ $(function () {
       let uriparams = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
       esdpec.framework.core.getJsonResult('dataanalysis/getcomparedata?' + uriparams, function (response) {
         if (response.IsSuccess) {
+          console.log(response);
           let chartLegend = [];
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
@@ -692,25 +986,42 @@ $(function () {
         name: a.name
       };
     }), chartXaxisData, chartType);
+    let costSeries = getChartCostLine('.operate-grp');
+    if (costSeries !== null) chartSeries = _.concat(chartSeries, costSeries);
     generateChart(unit, chartLegend, chartXaxisData, chartSeries, chartDom);
   };
+  //点击后触发改变第一张图表
   let generateChart = function (unit, chartLegend, chartXaxisData, chartSeries, chartDom) {
     let option = {
       title: {
         subtext: '单位：' + unit,
-        padding: [-6,0,0,0]
+        padding: [-6, 0, 0, 0],
+        //  新增
+        right: '40',
+        top: '80'
       },
       tooltip: {
         trigger: 'axis'
       },
       grid: {
-        left: 15,
-        right: 100,
-        bottom: 20
+        // left: 15,
+        // right: 100,
+        // bottom: 20
+
+        //  改动
+        left: 70,
+        right: 50,
+        bottom: 20,
+        top: 120
       },
       legend: {
         data: chartLegend,
-        padding: [0, 50, 50, 80]
+        padding: [0, 50, 50, 80],
+        // 新增
+        // orient: 'vertical',
+        width: '70%',
+        height: 80,
+        left: -85
       },
       calculable: true,
       xAxis: [{
@@ -719,7 +1030,7 @@ $(function () {
       }],
       yAxis: [{
         type: 'value',
-        position: 'right'
+        position: 'left'
       }],
       dataZoom: [{
         type: "inside"
@@ -728,31 +1039,53 @@ $(function () {
     };
     analysisChart = echarts.init(document.getElementById(chartDom), e_macarons);
     analysisChart.setOption(option, true);
-    window.onresize = analysisChart.resize;
+    // window.onresize = analysisChart.resize; // 多个表格自适应屏幕大小
+    analysisChart.resize();
+    // $(window).resize(function () {
+    //   //重置容器高宽
+    //   analysisChart.resize();
+    // });
+    window.addEventListener('resize', function () {
+      analysisChart.resize();
+    });
   };
+  //创建echart表格,第一张
   let generateAreaChart = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartDom, chartType = 'bar') {
+    // console.log(unit)
+    // console.log(chartLegend)
+    // console.log(chartXaxisData)
+    // console.log(datas)
     let chartSeries = getChartSeries(datas, _.map(checkedParameters, a => {
       return {
         id: a.id,
-        name: a.name
+        name: a.name,
       };
     }), chartXaxisData, chartType);
+    let costSeries = getChartCostLine('.area-operate-grp');
+    if (costSeries !== null) chartSeries = _.concat(chartSeries, costSeries);
     let option = {
       title: {
         subtext: '单位：' + unit,
-        padding: [-6,0,0,0]
+        padding: [-6, 0, 0, 0],
+        right: '40',
+        top: '80'
       },
       tooltip: {
         trigger: 'axis'
       },
       grid: {
-        left: 15,
-        right: 100,
-        bottom: 20
+        left: 70,
+        right: 50,
+        bottom: 20,
+        top: 120
       },
       legend: {
         data: chartLegend,
-        padding: [0, 50, 50, 80]
+        // orient: 'vertical',
+        padding: [0, 50, 80, 80],
+        width: '70%',
+        height: 80,
+        left: -85
       },
       calculable: true,
       xAxis: [{
@@ -761,48 +1094,77 @@ $(function () {
       }],
       yAxis: [{
         type: 'value',
-        position: 'right'
+        position: 'left'
       }],
       dataZoom: [{
         type: "inside"
       }],
-      series: chartSeries
+      series: chartSeries,
     };
     areaChart = echarts.init(document.getElementById(chartDom), e_macarons);
-    window.onresize = areaChart.resize;
+    areaChart.off('legendselectchanged');
     areaChart.setOption(option, true);
+    areaChart.resize();
+    // $(window).resize(function () {
+    //   //重置容器高宽
+    //   areaChart.resize();
+    // });
+    window.addEventListener('resize', function () {
+      areaChart.resize();
+    });
+    let datasArr = [];
+    areaChart.on('legendselectchanged', function (params) {
+      // params.preventDefault();
+      console.log(params);
+      console.log(datas);
+      console.log(chartLegend);
+      datasArr.length = chartLegend.length;
+      for(let i = 0;i < datas.length;i++){
+        if(params.name === chartLegend[i] && !params.selected[params.name]){
+          datasArr.splice(i,1,datas[i])
+          datas.splice(i,1);
+          console.log(datasArr);
+          console.log(datas);
+        }else if(params.name === chartLegend[i] && params.selected[params.name]){
+          datas.splice(i,0,datasArr[i]);
+        }
+      }
+      generateAreaPie(datas)
+    });
+    // areaChart.on('click', function (params) {
+    //   // console.log(params);
+    //   areaChart.dispatchAction({
+    //     type: 'legendunselected',
+    //     // 切换的图例名称
+    //     name: '产品单耗',
+    //     // 所有图例的选中状态表
+    //     selected: {
+    //       '产品单耗': false,
+    //     }
+    //   })
+    // });
   };
-  let generateContemporaryComparison = function (avg_per, avg_val, last_sum_val, now_sum_val, sum_per, unit) {
+  let generateContemporaryComparison = function (avg_per, avg_val, last_sum_val, now_sum_val, sum_per, unit, firstTitle, lastTitle, title) {
     let maxVal = _.max([last_sum_val, now_sum_val, avg_val]);
     let data = {
       data: {
         unit,
-        avg_per: numberFormat(avg_per.toFixed(2)),
-        sum_per: numberFormat(sum_per.toFixed(2)),
-        avg_val: numberFormat(avg_val.toFixed(2)),
-        last_sum_val: numberFormat(last_sum_val.toFixed(2)),
-        now_sum_val: numberFormat(now_sum_val.toFixed(2)),
-        last_sum_width: maxVal === last_sum_val ? '98%' : ((last_sum_val / maxVal) * 100) + '%',
-        now_sum_width: maxVal === now_sum_val ? '98%' : ((now_sum_val / maxVal) * 100) + '%',
-        avg_val_width: maxVal === avg_val ? '98%' : ((avg_val / maxVal) * 100) + '%'
+        title,
+        firstTitle,
+        lastTitle,
+        avg_per: (!avg_per || avg_per === '') ? 0 : numberFormat(parseFloat(avg_per).toFixed(2)),
+        sum_per: (!sum_per || sum_per === '') ? 0 : numberFormat(parseFloat(sum_per).toFixed(2)),
+        avg_val: (!avg_val || avg_val === '') ? 0 : numberFormat(parseFloat(avg_val).toFixed(2)),
+        last_sum_val: (!last_sum_val || last_sum_val === '') ? 0 : numberFormat(last_sum_val.toFixed(2)),
+        now_sum_val: (!now_sum_val || now_sum_val === '') ? 0 : numberFormat(now_sum_val.toFixed(2)),
+        last_sum_width: maxVal === 0 ? '0%' : maxVal === last_sum_val ? '98%' : ((last_sum_val / maxVal) * 100) + '%',
+        now_sum_width: maxVal === 0 ? '0%' : maxVal === now_sum_val ? '98%' : ((now_sum_val / maxVal) * 100) + '%',
+        avg_val_width: maxVal === 0 ? '0%' : maxVal === avg_val ? '98%' : ((avg_val / maxVal) * 100) + '%'
       }
     };
     let templateHtml = template('contemporary-Comparison-template', data);
     $('#summary-container').html(templateHtml);
     setTimeout(() => {
-      $('#onshowdata').on('click', function (e) {
-        e.stopPropagation();
-        $('#onshowdata').toggleClass('close');
-        if ($('#onshowdata').hasClass('close')) {
-          $('#onshowdata').html('展开数据<i class="icon iconfont icon-xiaotuziCduan_"></i>');
-          $('.summary-container').addClass('collapse-height');
-          $('.progress-container').hide();
-        } else {
-          $('#onshowdata').html('收起展示<i class="icon iconfont icon-xiaotuziCduan_1"></i>');
-          $('.summary-container').removeClass('collapse-height');
-          $('.progress-container').show();
-        }
-      });
       if ($('#now_sum_val').parent().parent().width() <= 130) {
         $('#now_sum_val').css('left', '0');
       } else {
@@ -820,85 +1182,20 @@ $(function () {
       }
     }, 100);
   };
-  let generateGraphData = function (unit, type) {
-    let currentSelectedParameters = _.filter(currentMeterParameters, a => a.isChecked);
-    if (currentSelectedParameters.length <= 0) return;
-    let data = {
-      selectedParameterList: currentSelectedParameters
-    };
-    let head = _.head(data.selectedParameterList);
-    head.isDefault = true;
-    let templateHtml = template('list-body-template', data);
-    $('.list-body').html(templateHtml);
-    setTimeout(() => {
-      $('.list-body>div.choose-param-item').on('click', function (e) {
-        e.stopPropagation();
-        let currentDom = e.currentTarget;
-        $('.list-body>div.choose-param-item').removeClass('param-item-active');
-        $(currentDom).addClass('param-item-active');
-        let mfid = $(currentDom).attr('data-id');
-        if($(currentDom).parent().parent().hasClass('param-position')){
-          $('.choose-param-list>.list-body>div.choose-param-item').removeClass('param-item-active');
-          $('.choose-param-list>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');
-        }else{
-          $('.param-position>.list-body>div.choose-param-item').removeClass('param-item-active');
-          $('.param-position>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');          
-        }
-        let originalList = _.find(searchResult.datas, item => item.mfid === mfid);
-        let originalDatas = {
-          data: {
-            mfid,
-            unit,
-            type,
-            graphDataList: originalList ? originalList.now_data_list || [] : []
-          }
-        }
-        _.each(originalDatas.data.graphDataList, a => a.isChecked = true);
-        let originalDataHtml = template('graph-table-template', originalDatas);
-        $('#graph-table').html(originalDataHtml);
-        setTimeout(() => {
-          $('.switch-box input.exception-switch').on('click', function (e) {
-            e.stopPropagation();
-            let currentDom = e.currentTarget;
-            let id = $(currentDom).attr('data-id');
-            let date = $(currentDom).attr('data-date');
-            let exceptionItem = {
-              mfid: id,
-              time: date,
-              val: 0
-            }
-            if ($(currentDom).is(':checked') == true) {
-              $(currentDom).parent().parent().parent().parent().removeClass('shouldremove');
-              esdpec.framework.core.doPostOperation('abnormaldata/cancelsingledata', exceptionItem, function (response) {
-                if (response.IsSuccess) {
-                  reloadMeterChartData();
-                }
-              });
-            } else {
-              $(currentDom).parent().parent().parent().parent().addClass('shouldremove');
-              esdpec.framework.core.doPostOperation('abnormaldata/savesingledata', exceptionItem, function (response) {
-                if (response.IsSuccess) {
-                  reloadMeterChartData();
-                }
-              });
-            }
-          });
-          let exception = $('.graph-data .exception-manager');
-          if (exception.attr('data-toggle') === 'open') $('.inException').show();
-          else $('.inException').hide();
-        }, 300);
-      });
-    }, 100);
-    let originalList = _.find(searchResult.datas, item => item.mfid === head.id);
+  let assembleExceptionTable = (originalList, mfid, unit, type) => {
+    originalList = _.uniqBy(_.orderBy(originalList, a => a.date, 'asc'), a => a.date);
+    _.each(originalList, a => {
+      a.val = numberFormat(a.val)
+    });
     let originalDatas = {
       data: {
-        mfid: head.id,
+        mfid,
         unit,
         type,
-        graphDataList: originalList ? originalList.now_data_list || [] : [],
+        graphDataList: originalList
       }
     };
-    _.each(originalDatas.data.graphDataList, a => a.isChecked = true);
+    //_.each(originalDatas.data.graphDataList, a => a.isChecked = true);
     let originalDataHtml = template('graph-table-template', originalDatas);
     $('#graph-table').html(originalDataHtml);
     setTimeout(() => {
@@ -912,7 +1209,7 @@ $(function () {
           time: date,
           val: 0
         }
-        if ($(currentDom).is(':checked') == true) {
+        if ($(currentDom).is(':checked')) {
           $(currentDom).parent().parent().parent().parent().removeClass('shouldremove');
           esdpec.framework.core.doPostOperation('abnormaldata/cancelsingledata', exceptionItem, function (response) {
             if (response.IsSuccess) {
@@ -932,6 +1229,141 @@ $(function () {
       if (exception.attr('data-toggle') === 'open') $('.inException').show();
       else $('.inException').hide();
     }, 300);
+  }
+  let generateGraphData = function (unit, type) {
+    let currentSelectedParameters = _.filter(currentMeterParameters, a => a.isChecked);
+    if (currentSelectedParameters.length <= 0) return;
+    let data = {
+      selectedParameterList: currentSelectedParameters
+    };
+    let head = _.find(data.selectedParameterList, a => a.isDefault);
+    if (!head) {
+      head = _.head(data.selectedParameterList);
+      head.isDefault = true;
+    }
+    let templateHtml = template('list-body-template', data);
+    $('.list-body').html(templateHtml);
+    $('span.now_Sum').text(now_Sum);
+    setTimeout(() => {
+      $('.list-body>div.choose-param-item').on('click', function (e) {
+        e.stopPropagation();
+        let currentDom = e.currentTarget;
+        $('.list-body>div.choose-param-item').removeClass('param-item-active');
+        $(currentDom).addClass('param-item-active');
+        let mfid = $(currentDom).attr('data-id');
+        if ($(currentDom).parent().parent().hasClass('param-position')) {
+          $('.choose-param-list>.list-body>div.choose-param-item').removeClass('param-item-active');
+          $('.choose-param-list>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');
+        } else {
+          $('.param-position>.list-body>div.choose-param-item').removeClass('param-item-active');
+          $('.param-position>.list-body>div[data-id=' + mfid + ']').addClass('param-item-active');
+        }
+        let originalList = _.find(searchResult.datas, item => item.mfid === mfid);
+        let graphData = originalList ? originalList.now_data_list || [] : [];
+        _.each(graphData, a => a.isChecked = true);
+        if (getExceptionState()) {
+          let dateType = getSearchDateType();
+          let searchDateType = dateType === -1 ? 2 : dateType;
+          let defaultTimeStr = getDefaultSTimeAndETime(searchDateType);
+          let dateArray = defaultTimeStr.split(' -- ');
+          let uriparam = `mfid=${mfid}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
+          esdpec.framework.core.getJsonResult('abnormaldata/getdata?' + uriparam, function (response) {
+            if (response.IsSuccess) {
+              if (response.Content.length > 0) {
+                let exceptionDatas = [];
+                _.each(response.Content, a => {
+                  exceptionDatas.push({
+                    val: a.val,
+                    cost: 0,
+                    date: a.time,
+                    isChecked: false
+                  });
+                });
+                let graphList = _.concat(graphData, exceptionDatas);
+                assembleExceptionTable(graphList, mfid, unit, type);
+              }
+            }
+          });
+        } else {
+          assembleExceptionTable(graphData, mfid, unit, type);
+        }
+      });
+    }, 100);
+    let originalDatas = {
+      data: {
+        mfid: head.id,
+        unit,
+        type
+      }
+    };
+    if (getExceptionState()) {
+      let dateType = getSearchDateType();
+      let searchDateType = dateType === -1 ? 2 : dateType;
+      let defaultTimeStr = getDefaultSTimeAndETime(searchDateType);
+      let dateArray = defaultTimeStr.split(' -- ');
+      let uriparam = `mfid=${head.id}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
+      esdpec.framework.core.getJsonResult('abnormaldata/getdata?' + uriparam, function (response) {
+        if (response.IsSuccess) {
+          if (response.Content.length > 0) {
+            let exceptionDatas = [];
+            _.each(response.Content, a => {
+              exceptionDatas.push({
+                val: a.val,
+                cost: 0,
+                date: a.time,
+                isChecked: false
+              });
+            });
+            let originalList = _.find(searchResult.datas, item => item.mfid === head.id);
+            let graphData = originalList ? originalList.now_data_list || [] : [];
+            _.each(graphData, a => a.isChecked = true);
+            let graphList = _.concat(graphData, exceptionDatas);
+            assembleExceptionTable(graphList, head.id, unit, type);
+          }
+        }
+      });
+    } else {
+      let originalList = _.find(searchResult.datas, item => item.mfid === head.id);
+      originalDatas.data.graphDataList = originalList ? originalList.now_data_list || [] : []
+      _.each(originalDatas.data.graphDataList, a => {
+        a.isChecked = true;
+        a.val = numberFormat(a.val);
+      });
+      originalDatas.data.graphDataList = _.uniqBy(originalDatas.data.graphDataList, a => a.date);
+      let originalDataHtml = template('graph-table-template', originalDatas);
+      $('#graph-table').html(originalDataHtml);
+      setTimeout(() => {
+        $('.switch-box input.exception-switch').on('click', function (e) {
+          e.stopPropagation();
+          let currentDom = e.currentTarget;
+          let id = $(currentDom).attr('data-id');
+          let date = $(currentDom).attr('data-date');
+          let exceptionItem = {
+            mfid: id,
+            time: date,
+            val: 0
+          }
+          if ($(currentDom).is(':checked')) {
+            $(currentDom).parent().parent().parent().parent().removeClass('shouldremove');
+            esdpec.framework.core.doPostOperation('abnormaldata/cancelsingledata', exceptionItem, function (response) {
+              if (response.IsSuccess) {
+                reloadMeterChartData();
+              }
+            });
+          } else {
+            $(currentDom).parent().parent().parent().parent().addClass('shouldremove');
+            esdpec.framework.core.doPostOperation('abnormaldata/savesingledata', exceptionItem, function (response) {
+              if (response.IsSuccess) {
+                reloadMeterChartData();
+              }
+            });
+          }
+        });
+        let exception = $('.graph-data .exception-manager');
+        if (exception.attr('data-toggle') === 'open') $('.inException').show();
+        else $('.inException').hide();
+      }, 300);
+    }
   };
   let generateOriginalData = function () {
     let nodeId = currentSelectedNode.id;
@@ -947,7 +1379,7 @@ $(function () {
         });
         let templateHtml = template('original-table-body-template', data);
         $('#original-table-body').html(templateHtml);
-        $('#original-table-body tr>td').on('click', function (e) {
+        $('#original-table-body tr').on('click', function (e) {
           e.stopPropagation();
           let currentDom = e.currentTarget;
           let id = $(currentDom).attr('data-id');
@@ -1079,9 +1511,7 @@ $(function () {
       }
     });
   };
-  let getToolTipTitle = data => {
-    return data.axisValueLabel;
-  };
+  let getToolTipTitle = data => data.axisValueLabel;
   let getStackSeriesData = (list, key, chartType, type = 's') => {
     let data = _.find(list, a => a.name === key);
     if (data && data.list && data.list.length > 0) {
@@ -1101,8 +1531,8 @@ $(function () {
           name: b,
           type: 'bar',
           stack: '堆积',
-          barWidth: 30,
-          data: [getStackSeriesData(datas.now_data_list, b, chartType), getStackSeriesData(datas.last_data_list, b, chartType)],
+          barMaxWidth: 30,
+          data: [getStackSeriesData(datas.last_data_list, b, chartType), getStackSeriesData(datas.now_data_list, b, chartType)],
           itemStyle: {
             normal: {
               color: chartType === 0 ? usageColor[index] : costColor[index]
@@ -1116,7 +1546,7 @@ $(function () {
           name: b,
           type: 'bar',
           stack: '堆积',
-          barWidth: 30,
+          barMaxWidth: 30,
           data: getStackSeriesData(datas.now_data_list, b, chartType, 'm'),
           itemStyle: {
             normal: {
@@ -1133,12 +1563,12 @@ $(function () {
     let series = [];
     let nowbranchs = _.map(datas.now_data_list, a => a.name);
     let lastbranchs = _.map(datas.last_data_list, a => a.name);
-    let branchs = _.merge(nowbranchs, lastbranchs);
+    let branchs = _.orderBy(_.merge(nowbranchs, lastbranchs), a => a, 'asc');
     switch (dateType) {
       case '2':
         let flag = 0;
         if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) && dateArray[1].substring(0, 10) === new Date().format('yyyy-MM-dd')) {
-          xAxisData = [new Date(dateArray[0]).format('yyyy-MM-dd'), new Date(dateArray[1]).addDays(-1).format('yyyy-MM-dd')];
+          xAxisData = [new Date(dateArray[1]).addDays(-1).format('yyyy-MM-dd'), new Date(dateArray[0]).format('yyyy-MM-dd')];
           flag = 0;
           $('#usage-title').hide();
           $('#cost-title').hide();
@@ -1154,8 +1584,8 @@ $(function () {
             lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
             lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
           });
-          $('.usage-title-container').show().html("<span>本日用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>昨日用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
-          $('.cost-title-container').show().html("<span>本日费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>昨日费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
+          $('.usage-title-container').show().html("<span>昨日用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span><span>今日用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+          $('.cost-title-container').show().html("<span>昨日费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span><span>今日费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span>");
         } else {
           $('.cost-title-container').hide();
           $('.usage-title-container').hide();
@@ -1194,15 +1624,15 @@ $(function () {
           lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
           lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
         });
-        xAxisData = [getWeek().monday.substring(0, 10) + ' 至 ' + getWeek().sunday.substring(0, 10), new Date(getWeek().monday).addDays(-7).format('yyyy-MM-dd') + ' 至 ' + new Date(getWeek().sunday).addDays(-7).format('yyyy-MM-dd')];
-        $('.usage-title-container').show().html("<span>本周用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>上周用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
-        $('.cost-title-container').show().html("<span>本周费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>上周费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
+        xAxisData = [new Date(getWeek().monday).addDays(-7).format('yyyy-MM-dd') + ' 至 ' + new Date(getWeek().sunday).addDays(-7).format('yyyy-MM-dd'), getWeek().monday.substring(0, 10) + ' 至 ' + getWeek().sunday.substring(0, 10)];
+        $('.usage-title-container').show().html("<span>上周用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span><span>本周用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+        $('.cost-title-container').show().html("<span>上周费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span><span>本周费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span>");
         series = getStackSeries(branchs, datas, 0, chartType);
         break;
       case '4':
         let flaga = 0;
         if (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) && dateArray[1].substring(0, 7) === new Date().format('yyyy-MM')) {
-          xAxisData = [new moment(dateArray[0]).format('YYYY-MM'), new moment(dateArray[1]).subtract(1, 'months').format('YYYY-MM')];
+          xAxisData = [new moment(dateArray[1]).subtract(1, 'months').format('YYYY-MM'), new moment(dateArray[0]).format('YYYY-MM')];
           $('#usage-title').hide();
           $('#cost-title').hide();
           let nowUsageSum = 0,
@@ -1217,8 +1647,8 @@ $(function () {
             lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
             lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
           });
-          $('.usage-title-container').show().html("<span>本月用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>上月用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
-          $('.cost-title-container').show().html("<span>本月费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>上月费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
+          $('.usage-title-container').show().html("<span>上月用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span><span>本月用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+          $('.cost-title-container').show().html("<span>上月费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span><span>本月费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span>");
         } else {
           $('.cost-title-container').hide();
           $('.usage-title-container').hide();
@@ -1251,7 +1681,7 @@ $(function () {
           let totalSum = _.sum(_.map(datas, a => a.value));
           _.each(datas, (data, index) => {
             tooltip += "<div style='width: 12px;height:12px;background-color: " + (chartType === 0 ? usageColor[index] : costColor[index]) + "; display: inline-block;margin-right: 10px'></div>" + data.seriesName + (chartType === 0 ? '用量：' : '费用：') +
-            numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
+              numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
           });
           tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + numberFormat(totalSum.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元');
           return tooltip;
@@ -1277,17 +1707,21 @@ $(function () {
         splitLine: {
           show: false,
         },
-        position: 'right'
+        position: 'left'
       },
       series: series
     };
     let areaFgpChart = echarts.init(document.getElementById(chartDom), e_macarons);
     areaFgpChart.setOption(option, true);
+    areaFgpChart.resize();
+    window.addEventListener('resize', function () {
+      areaFgpChart.resize();
+    });
   };
   let generateFgpPieChart = function (chartDom, fgpDatas, dateArray, dateType, chartType, title) {
     let datas = [];
     let seriesColor = [];
-    let branchs = _.map(fgpDatas, a => a.name);
+    let branchs = _.orderBy(_.map(fgpDatas, a => a.name), a => a, 'asc');
     let legend = [];
     let totalSum = 0;
     _.each(fgpDatas, fgp => totalSum = _.sum([totalSum, _.sum(_.map(fgp.list, a => chartType === 0 ? a.data : a.cost))]));
@@ -1304,30 +1738,34 @@ $(function () {
         seriesColor.push(chartType === 0 ? usageColor[index] : costColor[index]);
       }
     });
+
+    //new code    区域最下面两个饼图
     let option = {
       title: {
         subtext: title,
         x: 'left',
-        left: 20
+        left: '20%'
       },
       tooltip: {
         trigger: 'item',
-        formatter: function(data){
+        formatter: function (data) {
           return `${data.seriesName} <br/>${data.name} (${numberFormat(data.value)}` + (chartType === 0 ? searchResult.unit : '元') + ")";
         },
         padding: [5, 5, 5, 10]
       },
       legend: {
-        orient: 'vertical',
-        right: 20,
-        data: legend
+        // orient: 'vertical',
+        left: '5%',
+        top: '65%',
+        width: '90%',
+        data: legend,
       },
       calculable: true,
       series: [{
         name: title,
         type: 'pie',
-        radius: '55%',
-        center: ['50%', '50%'],
+        radius: '50%',
+        center: ['40%', '40%'],
         label: {
           normal: {
             position: 'inner'
@@ -1346,18 +1784,25 @@ $(function () {
     };
     let pieChart = echarts.init(document.getElementById(chartDom), e_macarons);
     pieChart.setOption(option, true);
+    pieChart.resize();
+    // $(window).resize(function () {
+    //   //重置容器高宽
+    // });
+    window.addEventListener('resize', function () {
+      pieChart.resize();
+    });
   };
   let generateMeterStackChart = function (chartDom, datas, dateArray, dateType, chartType) {
     let xAxisData = [];
     let series = [];
     let nowbranchs = _.map(datas.now_data_list, a => a.name);
     let lastbranchs = _.map(datas.last_data_list, a => a.name);
-    let branchs = _.merge(nowbranchs, lastbranchs);
+    let branchs = _.orderBy(_.merge(nowbranchs, lastbranchs), a => a, 'asc');
     switch (dateType) {
       case '2':
         let flag = 0;
         if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) && dateArray[1].substring(0, 10) === new Date().format('yyyy-MM-dd')) {
-          xAxisData = [new Date(dateArray[0]).format('yyyy-MM-dd'), new Date(dateArray[1]).addDays(-1).format('yyyy-MM-dd')];
+          xAxisData = [new Date(dateArray[1]).addDays(-1).format('yyyy-MM-dd'), new Date(dateArray[0]).format('yyyy-MM-dd')];
           flag = 0;
           $('#meter-usage-title').hide();
           $('#meter-cost-title').hide();
@@ -1373,8 +1818,8 @@ $(function () {
             lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
             lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
           });
-          $('.meter-usage-title-container').show().html("<span>本日用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>昨日用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
-          $('.meter-cost-title-container').show().html("<span>本日费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>昨日费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
+          $('.meter-usage-title-container').show().html("<span>昨日用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span><span>今日用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+          $('.meter-cost-title-container').show().html("<span>昨日费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span><span>今日费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span>");
         } else {
           $('.meter-cost-title-container').hide();
           $('.meter-usage-title-container').hide();
@@ -1413,15 +1858,15 @@ $(function () {
           lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
           lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
         });
-        xAxisData = [getWeek().monday.substring(0, 10) + ' 至 ' + getWeek().sunday.substring(0, 10), new Date(getWeek().monday).addDays(-7).format('yyyy-MM-dd') + ' 至 ' + new Date(getWeek().sunday).addDays(-7).format('yyyy-MM-dd')];
-        $('.meter-usage-title-container').show().html("<span>本周用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>上周用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
-        $('.meter-cost-title-container').show().html("<span>本周费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>上周费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
+        xAxisData = [new Date(getWeek().monday).addDays(-7).format('yyyy-MM-dd') + ' 至 ' + new Date(getWeek().sunday).addDays(-7).format('yyyy-MM-dd'), getWeek().monday.substring(0, 10) + ' 至 ' + getWeek().sunday.substring(0, 10)];
+        $('.meter-usage-title-container').show().html("<span>上周用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span><span>本周用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+        $('.meter-cost-title-container').show().html("<span>上周费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span><span>本周费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span>");
         series = getStackSeries(branchs, datas, 0, chartType);
         break;
       case '4':
         let flaga = 0;
         if (dateArray[0].substring(0, 7) === dateArray[1].substring(0, 7) && dateArray[1].substring(0, 7) === new Date().format('yyyy-MM')) {
-          xAxisData = [new moment(dateArray[0]).format('YYYY-MM'), new moment(dateArray[1]).subtract(1, 'months').format('YYYY-MM')];
+          xAxisData = [new moment(dateArray[1]).subtract(1, 'months').format('YYYY-MM'), new moment(dateArray[0]).format('YYYY-MM')];
           $('#meter-usage-title').hide();
           $('#meter-cost-title').hide();
           let nowUsageSum = 0,
@@ -1436,8 +1881,8 @@ $(function () {
             lastUsageSum = _.sum([lastUsageSum, _.sum(_.map(a.list, b => b.data))]);
             lastCostSum = _.sum([lastCostSum, _.sum(_.map(a.list, b => b.cost))]);
           });
-          $('.meter-usage-title-container').show().html("<span>本月用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span><span>上月用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span>");
-          $('.meter-cost-title-container').show().html("<span>本月费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span><span>上月费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span>");
+          $('.meter-usage-title-container').show().html("<span>上月用量：" + numberFormat(lastUsageSum.toFixed(3)) + searchResult.unit + "</span><span>本月用量：" + numberFormat(nowUsageSum.toFixed(3)) + searchResult.unit + "</span>");
+          $('.meter-cost-title-container').show().html("<span>上月费用：" + numberFormat(lastCostSum.toFixed(3)) + "元</span><span>本月费用：" + numberFormat(nowCostSum.toFixed(3)) + "元</span>");
         } else {
           $('.meter-cost-title-container').hide();
           $('.meter-usage-title-container').hide();
@@ -1470,7 +1915,7 @@ $(function () {
           let totalSum = _.sum(_.map(datas, a => a.value));
           _.each(datas, (data, index) => {
             tooltip += "<div style='width: 12px;height:12px;background-color: " + (chartType === 0 ? usageColor[index] : costColor[index]) + "; display: inline-block;margin-right: 10px'></div>" + data.seriesName + (chartType === 0 ? '用量：' : '费用：') +
-            numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
+              numberFormat(data.value.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元') + '， 比例：' + ((data.value / totalSum) * 100).toFixed(3) + '%' + '<br/>';
           });
           tooltip += (chartType === 0 ? '用量' : '费用') + '总计：' + numberFormat(totalSum.toFixed(3)) + (chartType === 0 ? searchResult.unit : '元');
           return tooltip;
@@ -1496,17 +1941,25 @@ $(function () {
         splitLine: {
           show: false,
         },
-        position: 'right'
+        position: 'left'
       },
       series: series
     };
     let meterFgpChart = echarts.init(document.getElementById(chartDom), e_macarons);
     meterFgpChart.setOption(option, true);
+    meterFgpChart.resize();
+    // $(window).resize(function () {
+    //   //重置容器高宽
+    //   meterFgpChart.resize();
+    // });
+    window.addEventListener('resize', function () {
+      meterFgpChart.resize();
+    });
   };
   let generateMeterFgpPieChart = function (chartDom, fgpDatas, dateArray, dateType, chartType, title) {
     let datas = [];
     let seriesColor = [];
-    let branchs = _.map(fgpDatas, a => a.name);
+    let branchs = _.orderBy(_.map(fgpDatas, a => a.name), a => a, 'asc');
     let legend = [];
     let totalSum = 0;
     _.each(fgpDatas, fgp => totalSum = _.sum([totalSum, _.sum(_.map(fgp.list, a => chartType === 0 ? a.data : a.cost))]));
@@ -1523,30 +1976,34 @@ $(function () {
         seriesColor.push(chartType === 0 ? usageColor[index] : costColor[index]);
       }
     });
+
+    //详情最下面两个饼图
     let option = {
       title: {
         subtext: title,
         x: 'left',
-        left: 20
+        left: '20%'
       },
       tooltip: {
         trigger: 'item',
-        formatter: function (data){
+        formatter: function (data) {
           return `${data.seriesName} <br/>${data.name} (${numberFormat(data.value)}` + (chartType === 0 ? searchResult.unit : '元') + ")";
         },
         padding: [5, 5, 5, 10]
       },
       legend: {
-        orient: 'vertical',
-        right: 20,
+        // orient: 'vertical',
+        left: '5%',
+        top: '65%',
+        width: '90%',
         data: legend
       },
       calculable: true,
       series: [{
         name: title,
         type: 'pie',
-        radius: '55%',
-        center: ['50%', '60%'],
+        radius: '50%',
+        center: ['40%', '40%'],
         label: {
           normal: {
             position: 'inner'
@@ -1565,6 +2022,14 @@ $(function () {
     };
     let meterPieChart = echarts.init(document.getElementById(chartDom), e_macarons);
     meterPieChart.setOption(option, true);
+    meterPieChart.resize();
+    // $(window).resize(function () {
+    //   //重置容器高宽
+    //   meterPieChart.resize();
+    // });
+    window.addEventListener('resize', function () {
+      meterPieChart.resize();
+    });
   };
   let generatePieChart = function () {
     let datas = [];
@@ -1579,9 +2044,14 @@ $(function () {
     });
     let option = generatePieForAggregateData(legends, datas, searchResult.unit);
     if (analysisChart) analysisChart.clear();
+    // 仪表详情 增加对比表饼图 实例化
     analysisChart = echarts.init(document.getElementById('chart-instance'), e_macarons);
     analysisChart.setOption(option, true);
-    window.onresize = analysisChart.resize;
+    // window.onresize = analysisChart.resize;
+    analysisChart.resize();
+    window.addEventListener('resize', function () {
+      analysisChart.resize();
+    });
   };
   let generateComparisonData = function (meterAndParaMap, resultData, type) {
     let data = {
@@ -1659,14 +2129,13 @@ $(function () {
             toastr.warning('只能配置同一种能源类型的仪表，请重新选择');
             return;
           }
-          let exist = _.find(areaConfigureMeters, a=>a.id === node.id);
-          if(exist){
+          let exist = _.find(areaConfigureMeters, a => a.id === node.id);
+          if (exist) {
             toastr.warning('同一个仪表只能选择一次');
             return;
           }
           areaConfigureMeters.push(node);
         }
-        console.log(areaConfigureMetersClone);
         bindSelectedMeterList();
       }
     });
@@ -1696,6 +2165,7 @@ $(function () {
       return;
     }
     $('.area-no-data').hide();
+    $(window).resize();
     let fgp = _.find(areaSubscribeModule, a => a.key === '_AreaFgpStatistics');
     if (fgp) {
       $('.area-fgp').show();
@@ -1864,30 +2334,38 @@ $(function () {
       },
     });
   };
+  //分项占比&能耗对比 option数据
   let generatePieForAggregateData = (xAxisData, seriesData, unit, tooltip = '能耗对比') => {
     let option = {
       title: {
-        subtext: '单位：' + unit,        
-        padding: [-6,0,0,0]
+        show: true,
+        subtext: '单位：' + unit,
+        padding: [-6, 0, 0, 0]
       },
       tooltip: {
         trigger: 'item',
-        formatter: function (data){
-          return  `${data.seriesName} <br/>${data.name} : ${numberFormat(data.value)} (${data.percent}%)`;
+        formatter: function (data) {
+          return `${data.seriesName} <br/>${data.name} : ${numberFormat(data.value)} (${data.percent}%)`;
         }
       },
       legend: {
-        orient: 'horizontal',
-        left: 'center',
-        data: xAxisData,        
-        padding: [0, 50, 50, 100]
+        // orient: 'vertical',
+        left: '5%',
+        bottom: '-5',
+        height: '100%',
+        width: '100%',
+        data: xAxisData,
+        // padding: [0, 50, 50, 100]
       },
       series: [{
         name: tooltip,
         type: 'pie',
-        center: ['50%', '60%'],
+        center: ['50%', '35%'],
+        radius: '50%',
+        padding: [10, 10, 100, 10],
         label: {
           normal: {
+            show: false,
             position: 'inner'
           }
         },
@@ -1943,8 +2421,10 @@ $(function () {
     });
   };
   let reloadExceptionGraphData = function () {
-    let date = $('#datevalue').val();
-    let dateArray = date.split(' -- ');
+    let dateType = getSearchDateType();
+    let searchDateType = dateType === -1 ? 2 : dateType;
+    let defaultTimeStr = getDefaultSTimeAndETime(searchDateType);
+    let dateArray = defaultTimeStr.split(' -- ');
     let parameters = _.filter(currentMeterParameters, a => a.isChecked);
     let mfids = _.head(parameters);
     let uriparam = `mfid=${mfids.id}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
@@ -1975,7 +2455,10 @@ $(function () {
     let originalList = _.find(searchResult.datas, item => item.mfid === head.id);
     let graphData = originalList ? originalList.now_data_list || [] : [];
     _.each(graphData, a => a.isChecked = true);
-    let graphList = _.merge(graphData, datas);
+    let graphList = _.uniqBy(_.concat(graphData, datas), a => a.date); // _.merge(graphData, datas);
+    _.each(graphList, a => {
+      a.val = numberFormat(a.val)
+    });
     let originalDatas = {
       data: {
         mfid: head.id,
@@ -1997,7 +2480,7 @@ $(function () {
           time: date,
           val: 0
         }
-        if ($(currentDom).is(':checked') == true) {
+        if ($(currentDom).is(':checked')) {
           $(currentDom).parent().parent().parent().parent().removeClass('shouldremove');
           esdpec.framework.core.doPostOperation('abnormaldata/cancelsingledata', exceptionItem, function (response) {
             if (response.IsSuccess) {
@@ -2068,21 +2551,1585 @@ $(function () {
   let isParentNode = (parentId, nodeId) => {
     let node = _.find(meterDataList, a => a.id === nodeId);
     let parent = node.parent;
-    if(parentId === parent) return true;
-    if(parent === '#') return false;
+    if (parentId === parent) return true;
+    if (parent === '#') return false;
     isParentNode(parentId, parent);
   };
   let checkElementInVisiable = () => {
-    if($(window).scrollTop() > ($('#list-body').offset().top + $('#list-body').outerHeight() - 100)) {
-      $('.param-position>.list-body').show();
-    } else { 
-      $('.param-position>.list-body').hide();
+
+    // console.log($(window).scrollTop())
+
+
+    if ($(window).scrollTop() > ($('#list-body').offset().top + $('#list-body').outerHeight() - 50)) {
+      $('.param-position>.list-body').removeClass('hidden');
+      $('.param-position').addClass('mTop');
+    } else {
+      $('.param-position').removeClass('mTop');
+      $('.param-position>.list-body').addClass('hidden');
     }
   };
+  let loadAreaAlarmTable = (pageNo, level) => {
+    esdpec.framework.core.getJsonResult(`alarmcenter/getareameterdata?pageIndex=${pageNo}&areaId=${currentSelectedNode.id}&warnLevel=${level}`, function (response) {
+      if (response.IsSuccess) {
+        areaTotalRecord = response.Remark;
+        $('.alarm-device-count').text(areaTotalRecord);
+        let data = {
+          deviceAlarmList: response.Content || []
+        };
+        if (areaTotalRecord === '0') {
+          $('#area-alarm').addClass('disabled').attr('disabled', 'disabled');
+        } else {
+          $('#area-alarm').removeClass('disabled').removeAttr('disabled');
+        }
+        _.each(data.deviceAlarmList, a => {
+          a.LastAlarmTime = _.replace(a.LastAlarmTime.substring(0, 19), 'T', ' ');
+          a.alarmType = alarmTypeEnum[a.AlarmTypeEnum];
+          a.isChecked = false;
+          a.CollectValue = a.Value === '' ? '--' : numberFormat(parseFloat(a.Value).toFixed(3));
+          a.percent = (a.OnWarnValue === '' || a.OnWarnValue === "0") ? '--' : numberFormat((a.Value * 100 / a.OnWarnValue).toFixed(3)) + '%'; //fixed bugs
+          if (a.AlarmTypeEnum === 8) {
+            a.Value = '--';
+            a.PreWarnValue = '--';
+            a.OnWarnValue = '--';
+            a.percent = '--';
+          }
+        });
+        areaAlarmList = data;
+        let templateHtml = template('device-alarm-list-template', data);
+        $('#device-alarm-list').html(templateHtml);
+        layui.use('laypage', function () {
+          let laypage = layui.laypage;
+          laypage.render({
+            elem: 'paging-device',
+            count: areaTotalRecord,
+            curr: pageNo,
+            layout: ['count', 'prev', 'page', 'next', 'skip'],
+            jump: function (page, first) {
+              if (!first) loadAreaAlarmTable(page.curr, level);
+            }
+          });
+        });
+        setTimeout(() => {
+          //查看详情
+          $("#device-alarm-list .link").off('click').on('click', function (e) {
+            e.stopPropagation(e);
+            let meterId = $(e.currentTarget).attr('data-id');
+            currentSelectedNodeBak = _.cloneDeep(currentSelectedNode);
+            let treeInstance = $('#metertree').jstree(true);
+            treeInstance.deselect_node(treeInstance.get_selected(true));
+            treeInstance.select_node(treeInstance.get_node(meterId));
+            backSource = 'alarm-detail';
+          });
+          $('#device-alarm-list .device-chk').on('click', function (e) {
+            e.stopPropagation();
+            let mId = $(e.currentTarget).attr('data-id');
+            let node = _.find(areaAlarmList.deviceAlarmList, a => a.MeterId === mId);
+            if (node.isChecked) {
+              $(e.currentTarget).children().first().prop('checked', false);
+              node.isChecked = false;
+              let exists = _.find(areaAlarmList.deviceAlarmList, a => a.isChecked);
+              if (!exists) $('#select-all').prop('checked', false);
+            } else {
+              $(e.currentTarget).children().first().prop('checked', true);
+              node.isChecked = true;
+            }
+          });
+        }, 300);
+      }
+    });
+  };
+  //加载区域报警
+  let loadAreaAlarmPage = () => {
+    $('#alarm-all').prop('checked', true);
+    $('#select-all').prop('checked', false);
+    $('.area__meter').html(' - 区域报警中心');
+    $('.detail').html(' - 区域数据详情');
+    esdpec.framework.core.getJsonResult('alarmcenter/getareametercount?areaId=' + currentSelectedNode.id, function (response) {
+      if (response.IsSuccess) {
+        let responseObj = JSON.parse(response.Content);
+        let areaAlarmData = {
+          data: responseObj
+        };
+        let templateHtml = template('area-exception-info-template', areaAlarmData);
+        $('.area-alarm-info').html(templateHtml);
+      }
+    });
+    loadAreaAlarmTable(1, 4);
+    $('.alarm-device-filter .chk').on('click', function (e) {
+      e.stopPropagation();
+      let id = $(e.currentTarget).attr('data-id');
+      $('.alarm-device-filter .chk input').prop('checked', false);
+      let input = $(e.currentTarget).children().first();
+      input.prop('checked', true);
+      $('#select-all').prop('checked', false);
+      switch (id) {
+        case 'sa':
+          loadAreaAlarmTable(1, 4);
+          break;
+        case 'ofl':
+          loadAreaAlarmTable(1, 2);
+          break;
+        case 'yj':
+          loadAreaAlarmTable(1, 0);
+          break;
+        case 'bj':
+          loadAreaAlarmTable(1, 1);
+          break;
+      }
+    });
+    $('.exception-operate-box>input.btn').off('click').on('click', function (e) {
+      e.stopPropagation();
+      if (!operateBefore()) return;
+      let id = $(e.currentTarget).attr('id');
+      let mIds = _.map(_.filter(areaAlarmList.deviceAlarmList, a => a.isChecked), b => b.MeterId);
+      let type = $('.alarm-device-filter .chk>input:checked').val();
+      if (mIds.length <= 0) {
+        toastr.warning('请先选择要操作的仪表设备');
+        return;
+      }
+      switch (id) {
+        case 'area-alarm':
+          $('#area-alarm-modal').dialogModal({
+            onOkBut: function () {
+              let dealReason = $('.open .radio-grp .opt input:checked').val();
+              let dealObj = {
+                MeterIds: mIds,
+                AlarmDealStatus: 1,
+                AlarmDealReason: !dealReason ? $('.open #other-reason').val() : dealReason,
+                AlarmDealReasonDetail: $('.open .area-alarm-modal-textarea').val()
+              };
+              esdpec.framework.core.doPutOperation('alarmcenter/updatealarmdatarelease', dealObj, function (response) {
+                if (response.IsSuccess) {
+                  loadAreaAlarmTable(1, parseInt(type));
+                }
+              });
+            },
+            onCancelBut: function () {},
+            onLoad: function () {
+              setTimeout(() => {
+                $('.open #r1').prop('checked', true);
+                $('.open .radio-grp .opt').on('click', function (e) {
+                  e.stopPropagation();
+                  let currentDom = e.currentTarget;
+                  $('.open .radio-grp .opt input').prop('checked', false);
+                  $(currentDom).children().first().prop('checked', true);
+                  $('.open #other-reason').prop('checked', false);
+                  $('.open .area-alarm-modal-textarea').val('').prop('readonly', true);
+                });
+                $('.open .area-alarm-modal-textarea').on('input', function (e) {
+                  e.stopPropagation();
+                  if (e.currentTarget.value.length > 30) {
+                    e.currentTarget.value = e.currentTarget.value.substring(0, 30);
+                    return;
+                  }
+                  $('.open .len-limit').text(e.currentTarget.value.length + '/30');
+                });
+                $('.open .other-reason').on('click', function (e) {
+                  e.stopPropagation();
+                  $('.open .radio-grp .opt input').prop('checked', false);
+                  let currentDom = e.currentTarget;
+                  $(currentDom).children().first().prop('checked', true);
+                  $('.open .area-alarm-modal-textarea').prop('readonly', false).focus();
+                });
+              }, 300);
+            },
+            onClose: function () {},
+          });
+          break;
+        case 'shield-device':
+          $('#shield').prop('checked', true);
+          $('#shield-time').prop('checked', false);
+          layui.use(['layer', 'laydate'], function () {
+            alarmlay = layui.layer;
+            let laydate = layui.laydate;
+            let setTop = function () {
+              let that = this;
+              alarmlay.open({
+                type: 1,
+                title: '屏蔽设置',
+                area: ['560px', '260px'],
+                shade: 0.6,
+                content: $('#set-shield-modal'),
+                btn: ['确定', '取消'],
+                yes: function () {
+                  $(that).click();
+                  let time = $('#sheild-time-container').val();
+                  let status = $('#shield').is(':checked') ? 1 : 2;
+                  let sheildObj = {
+                    MeterIds: mIds,
+                    AlarmDealStatus: 2,
+                    AlarmDealReason: 4,
+                    AlarmDealReasonDetail: '',
+                    MeterDealStatus: status,
+                    StartTime: $('#shield').prop('checked') ? '1973-01-01 00:00:01' : time.split(' -- ')[0],
+                    EndTime: $('#shield').prop('checked') ? "2099-12-31 23:59:59" : time.split(' -- ')[1]
+                  };
+                  esdpec.framework.core.doPutOperation('alarmcenter/updatealarmdatashield', sheildObj, function (response) {
+                    if (response.IsSuccess) {
+                      loadAreaAlarmTable(1, parseInt(type));
+                      alarmlay.closeAll();
+                    }
+                  });
+                },
+                btn2: function () {
+                  alarmlay.closeAll();
+                },
+                zIndex: alarmlay.zIndex,
+                success: function (layero) {
+                  laydate.render({
+                    elem: '#sheild-time-container',
+                    btns: ['confirm'],
+                    range: '--',
+                    format: 'yyyy-MM-dd HH:mm',
+                    type: 'datetime',
+                    trigger: 'click',
+                    value: new Date().format('yyyy-MM-dd hh:mm') + ' -- ' + new Date().format('yyyy-MM-dd hh:mm'),
+                    done: (value, date) => {},
+                    end: function () {
+                      $(".layui-layer-shade").remove();
+                    }
+                  });
+                }
+              });
+            };
+            setTop();
+          });
+          $('.device-shield-content .opt').on('click', function (e) {
+            e.stopPropagation();
+            $('.device-shield-content .opt input').prop('checked', false);
+            $(e.currentTarget).children().first().prop('checked', true);
+          });
+          break;
+      }
+    });
+    $('.device-list thead .opt').on('click', function (e) {
+      e.stopPropagation();
+      if ($('#select-all').prop('checked')) {
+        $('#select-all').prop('checked', false);
+        $('#device-alarm-list .device-chk input').prop('checked', false);
+        _.each(areaAlarmList.deviceAlarmList, a => a.isChecked = false);
+      } else {
+        $('#select-all').prop('checked', true);
+        $('#device-alarm-list .device-chk input').prop('checked', true);
+        _.each(areaAlarmList.deviceAlarmList, a => a.isChecked = true);
+      }
+    });
+  };
+  let getWeekDateStr = repeatDate => {
+    let repeatArray = repeatDate.split(',');
+    let dateStr = '';
+    _.each(repeatArray, a => {
+      switch (a) {
+        case '1':
+          dateStr += '星期一、';
+          break;
+        case '2':
+          dateStr += '星期二、';
+          break;
+        case '3':
+          dateStr += '星期三、';
+          break;
+        case '4':
+          dateStr += '星期四、';
+          break;
+        case '5':
+          dateStr += '星期五、';
+          break;
+        case '6':
+          dateStr += '星期六、';
+          break;
+        case '0':
+          dateStr += '星期天、';
+          break;
+      }
+    });
+    return dateStr.substring(0, dateStr.length - 1);
+  };
+  //加载  报警条件设置
+  let loadAlarmCondition = pageIndex => {
+    esdpec.framework.core.getJsonResult('alarmcenter/getalarmruledata?meterId=' + currentSelectedNode.id + '&pageIndex=' + pageIndex, function (response) {
+      if (response.IsSuccess) {
+        // 报警条件总数
+        let totalSize = parseInt(response.Remark);
+        let data = {
+          // 报警条件列表
+          alarmConditionList: response.Content
+        };
+        _.each(data.alarmConditionList, a => {
+          a.AlarmType = alarmTypeEnum[a.AlarmTypeEnum].substring(4);
+          a.Validate = a.ValidStartTime.substring(11, 16) + ' -- ' + a.ValidEndTime.substring(11, 16);
+          a.RepeatWeek = getWeekDateStr(a.RepeatDate);
+        });
+        let tempConditionList = data.alarmConditionList;
+        let templateHtml = template('alarm-condition-template', data);
+        $('.alarm-condition').html(templateHtml);
+        for (var i = 0; i < tempConditionList.length; i++) {
+          if (!tempConditionList[i].IsAlarmTemplate) {
+            $("span.tempIcon_" + i).css('display', 'none');
+          }
+        }
+        setTimeout(() => {
+          $('.alarm-condition .con-oper-grp .con_enable').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let id = $(e.currentTarget).attr('data-id');
+            esdpec.framework.core.doPutOperation('alarmcenter/updatealarmruleenable', {
+              Id: id,
+              IsEnabled: !$('#c_' + id).is(':checked')
+            }, function (response) {
+              if (response.IsSuccess && response.Content) {
+                if ($('#c_' + id).is(':checked')) $('#c_' + id).prop('checked', false);
+                else $('#c_' + id).prop('checked', true);
+                toastr.info('当前规则状态修改成功');
+              }
+            });
+          });
+          $('.alarm-condition .con-oper-grp .con_edit').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let ruleId = _.replace(Math.random(), '.', '');
+            let id = $(e.currentTarget).attr('data-id');
+            let alarmName = $('#myAlarmName_' + id).text();
+            let preWarnValue = $('#myPreValue_' + id).text();
+            let onWarnValue = $('#myOnValue_' + id).text();
 
-  $('.main-content .content-right').on('scroll', function(e) {
+            function getItem(element) {
+              return element.Id == id
+            }
+            let currItem = tempConditionList.find(getItem);
+            let tempAlarmType = currItem.AlarmType;
+            let data = {
+              ruleId: ruleId,
+              id: id,
+              AlarmName: alarmName,
+              meterFieldTypes,
+              alarmTypeValueList,
+              PreWarnValue: preWarnValue,
+              OnWarnValue: onWarnValue,
+              weekList: weekDayList
+            };
+            let newRow = template('new-rule-template', data);
+            $(e.currentTarget).parents('tr').before(newRow).hide();
+            // -------------------------------------
+            setTimeout(() => {
+              let tempInput = $('#' + ruleId + ' .fieldTd>.opt>input');
+              let alarmTypeText = $('#' + ruleId + ' .alarmTypetd>.opt>input');
+              let isTemplate = $('.tempIcon_' + id);
+              for (var i = 0; i < tempInput.length; i++) {
+                if ($(tempInput[i]).val() == currItem.BaseMeterFieldTypeId) {
+                  $(tempInput[i]).prop('checked', 'checked');
+                }
+              }
+              for (var i = 0; i < alarmTypeText.length; i++) {
+                if ($(alarmTypeText[i]).next('label').text() == tempAlarmType) {
+                  $(alarmTypeText[i]).prop('checked', 'checked');
+                }
+              }
+              $('.fieldTd>.opt').off('click').on('click', function (e) {
+                e.stopPropagation();
+                $('.fieldTd>.opt>input').prop('checked', false);
+                let inputDom = $(e.currentTarget).children().first();
+                let type = inputDom.attr('data-type');
+                inputDom.prop('checked', true);
+                if (type === '0') {
+                  $('#' + ruleId + '_1').removeAttr('disabled');
+                  $('#' + ruleId + '_2').removeAttr('disabled');
+                  $('#' + ruleId + '_3').removeAttr('disabled');
+                  $('#' + ruleId + '_4').removeAttr('disabled');
+                } else {
+                  $('#' + ruleId + '_1').attr('disabled', 'disabled');
+                  $('#' + ruleId + '_2').attr('disabled', 'disabled');
+                  $('#' + ruleId + '_3').attr('disabled', 'disabled');
+                  $('#' + ruleId + '_4').attr('disabled', 'disabled');
+                  let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
+                  if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4')
+                    $('.alarmTypetd>.opt>input').prop('checked', false);
+                }
+              });
+
+              $('.alarmTypetd>.opt').off('click').on('click', function (e) {
+                e.stopPropagation();
+                let alarmInput = $(e.currentTarget).children().first();
+                let alarmVal = alarmInput.val();
+                if (alarmVal == '0' || alarmVal == '5') {
+                  //可选
+                  $(this).parent('td').parent('tr').find('.validate-container').removeAttr('disabled');
+                  $(this).parent('td').parent('tr').find('.magic-checkbox').removeAttr('disabled');
+                } else {
+                  $(this).parent('td').parent('tr').find('.validate-container').attr('disabled', 'disabled').val('');
+                  $(this).parent('td').parent('tr').find('.magic-checkbox').attr('disabled', 'disabled').prop('checked', false);
+                }
+                if (alarmInput.is(':disabled')) return;
+                $('.alarmTypetd>.opt>input').prop('checked', false);
+                alarmInput.prop('checked', true);
+              });
+
+              layui.use('laydate', function () {
+                let laydate = layui.laydate;
+                laydate.render({
+                  elem: '.validate-container',
+                  btns: ['confirm'],
+                  range: '--',
+                  format: 'HH:mm',
+                  type: 'time',
+                  value: currItem.Validate,
+                });
+              });
+
+              function getRepeatWeek(j) {
+                let repeatArray = j.split(',');
+                return repeatArray;
+              }
+              let tempArr = getRepeatWeek(currItem.RepeatDate);
+              let myTempInput = $('tr#' + ruleId + '>td.weektd>.opt>input');
+              for (var j = 0; j < myTempInput.length; j++) {
+                for (var i = 0; i < tempArr.length; i++) {
+                  if ($(myTempInput[j]).val() == tempArr[i]) {
+                    $(myTempInput[j]).prop('checked', 'checked');
+                  }
+                };
+              }
+
+              $('.weektd>.opt').off('click').on('click', function (e) {
+                e.stopPropagation();
+                let currentDom = e.currentTarget;
+                let currentInput = $(currentDom).children().first();
+                if ($(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '0' || $(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '5') {
+                  currentInput.prop('checked', !currentInput.is(':checked'));
+                } else {
+                  currentInput.prop('checked', false);
+                }
+              });
+
+
+              $('#ok_' + ruleId).off('click').on('click', function (e) {
+                e.stopPropagation();
+                let alarmName = $('#name_' + ruleId).val();
+                if (alarmName === '') {
+                  toastr.warning('请输入报警名称');
+                  return;
+                }
+                let bmfId = $('#' + ruleId + ' .fieldTd>.opt>input:checked').val();
+                let bmfType = $('#' + ruleId + ' .fieldTd>.opt>input:checked').attr('data-type');
+                if (!bmfId) {
+                  toastr.warning('请选择参数类型');
+                  return;
+                }
+                let alarmType = $('#' + ruleId + ' .alarmTypetd>.opt>input:checked').val();
+                if (!alarmType) {
+                  toastr.warning('请选择报警类型');
+                  return;
+                }
+                let rule = {
+                  Id: currItem.Id,
+                  BaseMeterFieldTypeId: bmfId,
+                  AlarmName: alarmName,
+                  AlarmTypeEnum: getAlarmType(bmfType, alarmType),
+                  PreWarnValue: $('#prewarn_' + ruleId).val(),
+                  OnWarnValue: $('#warn_' + ruleId).val(),
+                  ValidStartTime: getValidate(ruleId).startTime,
+                  ValidEndTime: getValidate(ruleId).endTime,
+                  RepeatDate: getRepeatDateStr(ruleId),
+                  IsEnabled: $('#enable_' + ruleId + '>input').is(':checked'),
+                  IsAlarmTemplate: $('#tpl_' + ruleId + '>input').is(':checked'),
+                }
+                esdpec.framework.core.doPostOperation('alarmcenter/addalarmrule', rule, function (response) {
+                  if (response.IsSuccess) {
+                    loadAlarmCondition(1);
+                  }
+                })
+              });
+              if (currItem.IsAlarmTemplate) {
+                $('#tpl_' + ruleId + '>input').prop('checked', 'checked');
+              }
+              if (currItem.IsEnabled) {
+                $('#enable_' + ruleId + '>input').prop('checked', 'checked');
+              }
+              $('#tpl_' + ruleId).off('click').on('click', function (e) {
+                e.stopPropagation();
+                $('#tpl_' + ruleId + '>input').prop('checked', !$('#tpl_' + ruleId + '>input').is(':checked'));
+              });
+              $('#enable_' + ruleId).off('click').on('click', function (e) {
+                e.stopPropagation();
+                $('#enable_' + ruleId + '>input').prop('checked', !$('#enable_' + ruleId + '>input').is(':checked'));
+              });
+            }, 300);
+            $('#cancel_' + ruleId).off('click').on('click', function (e) {
+              e.stopPropagation();
+              $('#' + ruleId).next().show();
+              $(e.currentTarget).parents('tr').remove();
+              if ($('.alarm-condition>tr').length <= 0)
+
+                $('.alarm-condition').append('<tr class="alaram-condition-norecord"><td colspan="8" class="norecord-cell">未设置报警条件，点击右上方按钮添加</td></tr>');
+            });
+          });
+          $('.alarm-condition .con-oper-grp .con_del').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let currentDom = e.currentTarget;
+            let id = $(currentDom).attr('data-id');
+            $('#delete-confirm-modal').dialogModal({
+              onOkBut: function () {
+                esdpec.framework.core.doDeleteOperation('alarmcenter/deletealarmrule?alarmRuleId=' + id, {
+                  alarmRuleId: id
+                }, function (response) {
+                  if (response.IsSuccess && response.Content) {
+                    $('tr#' + id).remove();
+                    esdpec.framework.core.getJsonResult('alarmcenter/getalarmruledata?meterId=' + currentSelectedNode.id + '&pageIndex=' + pageIndex, function (response) {
+                      if (response.IsSuccess) {
+                        totalSize = parseInt(response.Remark);
+                        data.alarmConditionList = response.Content;
+                        layui.use('laypage', function () {
+                          let laypage = layui.laypage;
+                          laypage.render({
+                            elem: 'paging-alarm-condition',
+                            count: totalSize,
+                            curr: pageIndex,
+                            layout: ['count', 'prev', 'page', 'next', 'skip'],
+                            jump: function (page, first) {
+                              loadAlarmCondition(page.curr);
+                            }
+                          });
+                        });
+                      }
+                    })
+                  }
+                });
+              },
+              onCancelBut: function () {},
+            });
+          });
+        }, 300);
+        layui.use('laypage', function () {
+          let laypage = layui.laypage;
+          laypage.render({
+            elem: 'paging-alarm-condition',
+            count: totalSize,
+            curr: pageIndex,
+            layout: ['count', 'prev', 'page', 'next', 'skip'],
+            jump: function (page, first) {
+              if (!first) loadAlarmCondition(page.curr);
+            }
+          });
+        });
+      }
+    });
+  };
+  //加载报警条件模板
+  let loadAlarmTpl = (filterId, pageIndex) => {
+    esdpec.framework.core.getJsonResult('alarmcenter/getalarmtemplatedata?energyId=' + filterId + '&pageIndex=' + pageIndex, function (response) {
+      if (response.IsSuccess) {
+        // 报警条件模板总数
+        let totalSize = parseInt(response.Remark);
+        // 报警模板详情
+        let data = {
+          alarmTplList: response.Content
+        };
+        _.each(data.alarmTplList, a => {
+          a.alarmType = alarmTypeEnum[a.AlarmTypeEnum];
+          a.validate = a.ValidEndTime.substring(11, 16) + ' -- ' + a.ValidStartTime.substring(11, 16);
+          a.repeatChn = weekDayChn(a.RepeatDate);
+        });
+        var alarmTempList = data.alarmTplList;
+        let templateHtml = template('alarm-tpl-template', data);
+        $('.alarm-tpl').html(templateHtml);
+        setTimeout(() => {
+          $('.alarm-tpl div.enable_').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let id = $(e.currentTarget).attr('data-id');
+            esdpec.framework.core.doPutOperation('alarmcenter/updatealarmtemplateenable', {
+              Id: id,
+              IsEnabled: !$('#c_' + id).is(':checked')
+            }, function (response) {
+              if (response.IsSuccess && response.Content) {
+                if ($('#c_' + id).is(':checked')) $('#c_' + id).prop('checked', false);
+                else $('#c_' + id).prop('checked', true);
+                toastr.info('当前规则状态修改成功');
+              }
+            });
+          });
+          $('.alarm-tpl div.edit_').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let id = $(e.currentTarget).attr('data-id');
+            let ruleId = _.replace(Math.random(), '.', '');
+            let alarmName = $('#myAlarmName_' + id).text();
+            let preWarnValue = $('#myPreValue_' + id).text();
+            let onWarnValue = $('#myOnValue_' + id).text();
+
+            function getItem(element) {
+              return element.Id == id
+            }
+            var currItem = alarmTempList.find(getItem);
+            let tempAlarmType = currItem.alarmType.split('：')[1];
+            let data = {
+              ruleId,
+              id,
+              AlarmName: alarmName,
+              meterFieldTypes,
+              alarmTypeValueList,
+              PreWarnValue: preWarnValue,
+              OnWarnValue: onWarnValue,
+              weekList: weekDayList,
+            };
+            let newRow = template('new-rule-template', data);
+            $(e.currentTarget).parents('tr').before(newRow).hide();
+            // -------------------------------------
+            setTimeout(() => {
+              $('.alarm-tpl-operate>.opt:first-child').css('display', 'none')
+              let tempInput = $('#' + ruleId + ' .fieldTd>.opt>input');
+              let alarmTypeText = $('#' + ruleId + ' .alarmTypetd>.opt>input');
+              for (var i = 0; i < tempInput.length; i++) {
+                if ($(tempInput[i]).next('label').text() == currItem.Name) {
+                  $(tempInput[i]).prop('checked', 'checked');
+                }
+              }
+              for (var i = 0; i < alarmTypeText.length; i++) {
+                if ($(alarmTypeText[i]).next('label').text() == tempAlarmType) {
+                  $(alarmTypeText[i]).prop('checked', 'checked');
+                }
+              }
+              $('.fieldTd>.opt').off('click').on('click', function (e) {
+                e.stopPropagation();
+                $('.fieldTd>.opt>input').prop('checked', false);
+                let inputDom = $(e.currentTarget).children().first();
+                let type = inputDom.attr('data-type');
+                inputDom.prop('checked', true);
+                if (type === '0') {
+                  $('#' + ruleId + '_1').removeAttr('disabled');
+                  $('#' + ruleId + '_2').removeAttr('disabled');
+                  $('#' + ruleId + '_3').removeAttr('disabled');
+                  $('#' + ruleId + '_4').removeAttr('disabled');
+                } else {
+                  $('#' + ruleId + '_1').attr('disabled', 'disabled');
+                  $('#' + ruleId + '_2').attr('disabled', 'disabled');
+                  $('#' + ruleId + '_3').attr('disabled', 'disabled');
+                  $('#' + ruleId + '_4').attr('disabled', 'disabled');
+                  let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
+                  if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4')
+                    $('.alarmTypetd>.opt>input').prop('checked', false);
+                }
+              });
+              $('.alarmTypetd>.opt').off('click').on('click', function (e) {
+                e.stopPropagation();
+                let alarmInput = $(e.currentTarget).children().first();
+                if (alarmInput.is(':disabled')) return;
+                $('.alarmTypetd>.opt>input').prop('checked', false);
+                alarmInput.prop('checked', true);
+              });
+              layui.use('laydate', function () {
+                let laydate = layui.laydate;
+                laydate.render({
+                  elem: '.validate-container',
+                  btns: ['confirm'],
+                  range: '--',
+                  format: 'HH:mm',
+                  type: 'time',
+                  value: currItem.validate,
+                });
+              });
+
+              function getRepeatWeek(j) {
+                let repeatArray = j.split(',');
+                return repeatArray;
+              }
+              let tempArr = getRepeatWeek(currItem.RepeatDate);
+              let myTempInput = $('tr#' + ruleId + '>td.weektd>.opt>input');
+              for (var j = 0; j < myTempInput.length; j++) {
+                for (var i = 0; i < tempArr.length; i++) {
+                  if ($(myTempInput[j]).val() == tempArr[i]) {
+                    $(myTempInput[j]).prop('checked', 'checked');
+                  }
+                };
+              }
+
+              $('.weektd>.opt').off('click').on('click', function (e) {
+                e.stopPropagation();
+                let currentDom = e.currentTarget;
+                let currentInput = $(currentDom).children().first();
+                if ($(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '0' || $(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '5') {
+                  currentInput.prop('checked', !currentInput.is(':checked'));
+                } else {
+                  currentInput.prop('checked', false);
+                }
+              });
+
+              $('#ok_' + ruleId).off('click').on('click', function (e) {
+                e.stopPropagation();
+                let alarmName = $('#name_' + ruleId).val();
+                if (alarmName === '') {
+                  toastr.warning('请输入报警名称');
+                  return;
+                }
+                let bmfId = $('#' + ruleId + ' .fieldTd>.opt>input:checked').val();
+                let bmfType = $('#' + ruleId + ' .fieldTd>.opt>input:checked').attr('data-type');
+                if (!bmfId) {
+                  toastr.warning('请选择参数类型');
+                  return;
+                }
+                let alarmType = $('#' + ruleId + ' .alarmTypetd>.opt>input:checked').val();
+                if (!alarmType) {
+                  toastr.warning('请选择报警类型');
+                  return;
+                }
+                let rule = {
+                  Id: currItem.Id,
+                  FieldTypeId: bmfId,
+                  AlarmName: alarmName,
+                  AlarmTypeEnum: getAlarmType(bmfType, alarmType),
+                  PreWarnValue: $('#prewarn_' + ruleId).val(),
+                  OnWarnValue: $('#warn_' + ruleId).val(),
+                  ValidStartTime: getValidate(ruleId).startTime,
+                  ValidEndTime: getValidate(ruleId).endTime,
+                  RepeatDate: getRepeatDateStr(ruleId),
+                  IsEnabled: $('#enable_' + ruleId + '>input').is(':checked')
+                }
+                esdpec.framework.core.doPostOperation('alarmcenter/addalarmtemplate', rule, function (response) {
+                  if (response.IsSuccess) {
+                    loadAlarmTpl(filterId, 1);
+                  }
+                })
+              });
+
+              if (currItem.IsAlarmTemplate) {
+                $('#tpl_' + ruleId + '>input').prop('checked', 'checked');
+              }
+              if (currItem.IsEnabled) {
+                $('#enable_' + ruleId + '>input').prop('checked', 'checked');
+              }
+              $('#tpl_' + ruleId).off('click').on('click', function (e) {
+                e.stopPropagation();
+                $('#tpl_' + ruleId + '>input').prop('checked', !$('#tpl_' + ruleId + '>input').is(':checked'));
+              });
+              $('#enable_' + ruleId).off('click').on('click', function (e) {
+                e.stopPropagation();
+                $('#enable_' + ruleId + '>input').prop('checked', !$('#enable_' + ruleId + '>input').is(':checked'));
+              });
+            }, 1);
+            $('#cancel_' + ruleId).off('click').on('click', function (e) {
+              e.stopPropagation();
+              $('#' + ruleId).next().show();
+              $(e.currentTarget).parents('tr').remove();
+              if ($('.alarm-condition>tr').length <= 0)
+                $('.alarm-condition').append('<tr class="alaram-condition-norecord"><td colspan="8" class="norecord-cell">未设置报警条件，点击右上方按钮添加</td></tr>');
+            });
+          });
+          $('.alarm-tpl div.del_').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let currentDom = e.currentTarget;
+            let id = $(currentDom).attr('data-id');
+            $('#delete-confirm-modal').dialogModal({
+              onOkBut: function () {
+                esdpec.framework.core.doDeleteOperation('alarmcenter/deletealarmtemplate?alarmTemplateId=' + id, {
+                  alarmTemplateId: id
+                }, function (response) {
+                  if (response.IsSuccess && response.Content) {
+                    $('tr#' + id).remove();
+                  }
+                });
+              },
+              onLoad: function () {
+                $('.open .modal_header').text('删除确认');
+                $('.open .device-shield-content').text('确认是否删除这个报警模板？');
+              },
+              onCancelBut: function () {},
+            });
+          });
+          $('.alarm-tpl div.rel_').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let tplId = $(e.currentTarget).attr('data-id');
+            $('#choose-meter-for-comparison').dialogModal({
+              onOkBut: function () {
+                let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
+                let nodes = _.filter(meterDataList, a => _.includes(nodeIds, a.id) && a.modeltype !== 'area');
+                let ids = _.map(nodes, a => a.id);
+                let associalObj = {
+                  MeterIds: ids,
+                  AlartTemplateId: tplId
+                }
+                esdpec.framework.core.doPostOperation('alarmcenter/alarmtemplateassociatemeters', associalObj, function (response) {
+                  if (response.IsSuccess && response.Content) {
+                    toastr.info('模板关联仪表成功');
+                    return;
+                  }
+                });
+              },
+              onCancelBut: function () {},
+              onLoad: function () {
+                setTimeout(() => {
+                  $('.open .modal_header').text('选择关联仪表');
+                  if ($('.open .choose-meter-list').html() === '') {
+                    $('.open .choose-meter-list').jstree({
+                      "core": {
+                        "multiple": true,
+                        "themes": {
+                          "responsive": false
+                        },
+                        "check_callback": true,
+                        'data': meterDataList
+                      },
+                      "types": {
+                        "default": {
+                          "icon": "fa fa-folder icon-state-warning icon-lg"
+                        },
+                        "file": {
+                          "icon": "fa fa-file icon-state-warning icon-lg"
+                        }
+                      },
+                      "plugins": ["types", "search", "crrm", "checkbox"],
+                      "checkbox": {
+                        "keep_selected_style": false
+                      },
+                    }).on('loaded.jstree', function (e, data) {
+                      let instance = data.instance;
+                      let target = instance.get_node(e.target.firstChild.firstChild.lastChild);
+                      instance.open_node(target);
+                      esdpec.framework.core.getJsonResult('alarmcenter/getassociatemeters?alarmTemplateId=' + tplId, function (response) {
+                        if (response.IsSuccess) {
+                          let meters = response.Content;
+                          //如果关联仪表成功
+                          if (meters && meters.length > 0)
+                            _.each(meters, meter => {
+                              instance.select_node(instance.get_node(meter).id);
+                            });
+                        }
+                      });
+                    });
+                  }
+                }, 150);
+              },
+              onClose: function () {},
+            });
+          });
+        }, 300);
+        layui.use('laypage', function () {
+          let laypage = layui.laypage;
+          laypage.render({
+            elem: 'paging-alarm-tpl',
+            count: totalSize,
+            curr: pageIndex,
+            layout: ['count', 'prev', 'page', 'next', 'skip'],
+            jump: function (page, first) {
+              if (!first) loadAlarmTpl(filterId, page.curr);
+            }
+          });
+        });
+      }
+    });
+  };
+  // 获取历史报警记录
+  let getMeterHistory = (sTime, eTime, level, pageIndex) => {
+    let uriparam = `meterId=${currentSelectedNode.id}&stime=${sTime}&etime=${eTime}&isHistory=true&pageIndex=${pageIndex}&warnLevel=${level}`;
+    esdpec.framework.core.getJsonResult('alarmcenter/getmeterdata?' + uriparam, function (response) {
+      if (response.IsSuccess) {
+        let totalSize = response.Remark;
+        let meterHistroyList = response.Content;
+        let data = {
+          meterHistroyList
+        };
+        _.each(data.meterHistroyList, a => {
+          a.AlarmTime = _.replace(a.LastAlarmTime.substring(0, 19), 'T', ' ');
+          a.AlarmType = alarmTypeEnum[a.AlarmTypeEnum];
+          // 处理方式
+          a.DealType = alarmDealStatusEnum[a.AlarmDealStatusEnum];
+          // 处理记录
+          a.AlarmDealReasonDetail = alarmDealReasonEnum[a.AlarmDealReasonEnum];
+          // 采集值
+          a.CollectValue = a.Value === '' ? '---' : numberFormat(parseFloat(a.Value).toFixed(3));
+          // 超限量
+          a.percent = (a.Value === '' || a.Value === '0') ? '--' : numberFormat((a.Value * 100 / a.OnWarnValue).toFixed(3));
+        });
+        let templateHtml = template('meter-history-modal-template', data);
+        $('.meter-history-modal').html(templateHtml);
+        $('#meterHistory').text(totalSize);
+        layui.use('laypage', function () {
+          let laypage = layui.laypage;
+          laypage.render({
+            elem: 'history-paging',
+            count: totalSize,
+            curr: pageIndex,
+            layout: ['count', 'prev', 'page', 'next', 'skip'],
+            jump: function (page, first) {
+              if (!first) getMeterHistory(sTime, eTime, level, page.curr);
+            }
+          });
+        });
+      }
+    });
+  };
+  //加载仪表报警数据
+  let loadMeterAlarmData = (sTime, eTime, level, isHistory, pageIndex) => {
+    $('.area__meter').html(' - 仪表报警中心');
+    $('.detail').html(' - 仪表数据详情');
+    let uriparam = `meterId=${currentSelectedNode.id}&stime=${sTime}&etime=${eTime}&isHistory=${isHistory}&pageIndex=${pageIndex}&warnLevel=${level}`;
+    esdpec.framework.core.getJsonResult('alarmcenter/getalarmruledata?meterId=' + currentSelectedNode.id + '&pageIndex=' + pageIndex, function (response) {
+      if (response.IsSuccess) {
+        // 报警条件总数
+        // $('.content__header--title span').html(node.original.text + ' - 仪表数据详情');
+        let totalSize = parseInt(response.Remark);
+        if (totalSize) {
+          $('#alarm-setting').attr("class", "header-title icon iconfont meter-alarm-collapse");
+          $('.setter-content').addClass("setter-content-collapse");
+        } else {
+          $('#alarm-setting').attr("class", "header-title icon iconfont");
+          $('.setter-content').removeClass("setter-content-collapse");
+        }
+      }
+    });
+
+    esdpec.framework.core.getJsonResult('alarmcenter/getmeterdata?' + uriparam, function (response) {
+      if (response.IsSuccess) {
+        // 当前报警事件总数
+        let totalSize = response.Remark;
+        if (!totalSize) {
+          $('#meter-alarm').addClass('change-gray')
+        } else(
+          $('#meter-alarm').removeClass('change-gray')
+        )
+        if (totalSize === '0') {
+          $('#meter-alarm').addClass('disabled').attr('disabled', 'disabled');
+        } else {
+          $('#meter-alarm').removeClass('disabled').removeAttr('disabled');
+        }
+        let meterAlarmList = response.Content;
+        // 当前页面报警事件详情
+        let data = {
+          meterAlarmList
+        };
+        _.each(data.meterAlarmList, a => {
+          a.AlarmType = alarmTypeEnum[a.AlarmTypeEnum];
+          a.AlarmTime = _.replace(a.LastAlarmTime.substring(0, 19), 'T', ' ');
+          a.CollectValue = a.Value === '' ? '--' : numberFormat(parseFloat(a.Value).toFixed(3));
+          a.percent = (a.Value === '0' || a.Value === '') ? '--' : numberFormat((a.Value * 100 / a.OnWarnValue).toFixed(3));
+          a.isChecked = false;
+        });
+        meterEventList = data.meterAlarmList;
+        let templateHtml = template('meter-alarm-list-template', data);
+        $('#meter-alarm-list').html(templateHtml);
+        $('#meter-alarm-count').text(totalSize);
+        setTimeout(() => {
+          $('.meter-alarm-history>input.btn-history').off('click').on('click', function (e) {
+            e.stopPropagation();
+            layui.use(['layer', 'laydate'], function () {
+              let lay = layui.layer;
+              let laydate = layui.laydate;
+              let setTop = function () {
+                lay.open({
+                  type: 1,
+                  area: ['1350px', '480px'],
+                  shade: 0.6,
+                  content: $('#meter-alarm-history-modal'),
+                  zIndex: lay.zIndex,
+                  success: function (layero) {
+                    $('.layui-layer-title').remove();
+                    laydate.render({
+                      elem: '#meter-history-daycontainer',
+                      btns: ['confirm'],
+                      range: '--',
+                      format: 'yyyy-MM-dd',
+                      type: 'date',
+                      value: new Date(historyTime.minTime).format('yyyy-MM-dd') + ' -- ' + new Date(historyTime.maxTime).format('yyyy-MM-dd'),
+                      done: value => {
+                        let truthValue = value.split('--');
+                        let level = $('#meter-alarm-history-modal .history-filter>.chk>input:checked').val();
+                        getMeterHistory(truthValue[0], truthValue[1], level || 4, 1);
+                      }
+                    });
+                    setTimeout(() => {
+                      $('.layui-layer-content').removeAttr('style');
+                      $('#history-all').prop('checked', true);
+                      getMeterHistory(historyTime.minTime, historyTime.maxTime, 4, 1);
+                      $('#meter-alarm-history-modal .history-filter>.chk').off('click').on('click', function (e) {
+                        e.stopPropagation();
+                        $('#meter-alarm-history-modal .history-filter>.chk>input').prop('checked', false);
+                        $(e.currentTarget).children().first().prop('checked', true);
+                        let level = $(e.currentTarget).children().first().val();
+                        let currentdate = $('#meter-history-daycontainer').val();
+                        let curDateArray = currentdate.split(' -- ');
+                        getMeterHistory(curDateArray[0], curDateArray[1], level, 1);
+                      });
+                    }, 300);
+                  }
+                });
+              };
+              setTop();
+            });
+          });
+        }, 300);
+        layui.use('laypage', function () {
+          let laypage = layui.laypage;
+          laypage.render({
+            elem: 'paging-meter',
+            count: totalSize,
+            curr: pageIndex,
+            layout: ['count', 'prev', 'page', 'next', 'skip'],
+            jump: function (page, first) {
+              if (!first) loadMeterAlarmData(sTime, eTime, level, isHistory, page.curr);
+            }
+          });
+        });
+      }
+    });
+  };
+  let loadMeterAlarmPage = () => {
+    esdpec.framework.core.getJsonResult('alarmcenter/getmetermessage?meterId=' + currentSelectedNode.id, function (response) {
+      if (response.IsSuccess) {
+        let rtn = response.Content;
+        rtn.areaName = getMeterBelongArea(currentSelectedNode.id);
+        // console.log('qy')
+        let data = {
+          data: rtn
+        };
+        let templateHtml = template('meter-alarm-info-template', data)
+        $('.meter-alarm-info').html(templateHtml);
+      }
+    });
+    esdpec.framework.core.getJsonResult('alarmcenter/getmeterparadata?meterId=' + currentSelectedNode.id, function (response) {
+      if (response.IsSuccess) {
+        meterFieldTypes = response.Content;
+      }
+    });
+    let id = $('.setter-content ul>li.layui-this').attr('data-id');
+    switch (id) {
+      case 'alarm-condition-tpl':
+        let id = $('.tpl-list .opt>input:checked').val();
+        loadAlarmTpl(id, 1);
+        break;
+      case 'alarm-condition-list':
+        loadAlarmCondition(1);
+        break;
+    }
+    $('#meter-alarm-all').prop('checked', true);
+    $('.meter-alarm-filter .chk').on('click', function (e) {
+      e.stopPropagation();
+      let id = $(e.currentTarget).attr('data-id');
+      $('.meter-alarm-filter .chk input').prop('checked', false);
+      let input = $(e.currentTarget).children().first();
+      input.prop('checked', true);
+      $('#meter-select-all').prop('checked', false);
+      switch (id) {
+        case 'sa':
+          loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 4, false, 1);
+          break;
+        case 'ofl':
+          loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 2, false, 1);
+          break;
+        case 'yj':
+          loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 0, false, 1);
+          break;
+        case 'bj':
+          loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 1, false, 1);
+          break;
+      }
+    });
+    loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 4, false, 1);
+  };
+  let getAlarmType = (type, alarm) => {
+    if (type === '0') {
+      switch (alarm) {
+        case '0':
+          return 4;
+        case '1':
+          return 3;
+        case '2':
+          return 2;
+        case '3':
+          return 1;
+        case '4':
+          return 0;
+        case '5':
+          return 5;
+      }
+    }
+    switch (alarm) {
+      case '0':
+        return 6;
+      case '5':
+        return 7;
+    }
+  };
+  let getRepeatDateStr = ruleId => {
+    let checkedDates = $('tr#' + ruleId + '>td.weektd>.opt>input:checked');
+    return _.join(_.map(checkedDates, a => a.value), ',');
+  };
+  let getValidate = ruleId => {
+    let timeRange = $('#validate_' + ruleId).val();
+    let timeRangeArray = timeRange.split(' -- ');
+    let startTime = historyTime.minTime + ' ' + timeRangeArray[0];
+    let endTime = historyTime.maxTime + ' ' + timeRangeArray[1];
+    return {
+      startTime,
+      endTime
+    }
+  };
+  let alarmPageChange = () => {
+    if (currentSelectedNode.modeltype === 'area') {
+      $('.area-alarm-info').removeClass('hidden');
+      $('.meter-alarm-info').addClass('hidden');
+      $('.exception-operate-box').show();
+      $('.meter-operate-box').hide();
+      $('.alarm-setter').hide();
+      $('.meter-alarm-event').hide();
+      $('.area-alarm-device-list').show();
+      $('.alarm-setter').hide();
+      loadAreaAlarmPage();
+    } else {
+      $('.area-alarm-info').addClass('hidden');
+      $('.meter-alarm-info').removeClass('hidden');
+      $('.exception-operate-box').hide();
+      $('.meter-operate-box').show();
+      $('.alarm-setter').show();
+      $('.meter-alarm-event').show();
+      $('.area-alarm-device-list').hide();
+      $('.alarm-setter').show();
+      $('.alarm-setter .setter-header').off('click').on('click', function (e) {
+        e.stopPropagation();
+        $('.alarm-setter .setter-header>span').toggleClass('meter-alarm-collapse');
+        $('.setter-content').toggleClass('setter-content-collapse');
+      });
+      $('.setter-content ul>li').off('click').on('click', function (e) {
+        e.stopPropagation();
+        let currentDom = e.currentTarget;
+        let preId = $('.setter-content ul>li.layui-this').attr('data-id');
+        $('.setter-content ul>li').removeClass('layui-this');
+        $(currentDom).addClass('layui-this');
+        let id = $(currentDom).attr('data-id');
+        $('#' + preId).hide();
+        $('#' + id).show();
+        switch (id) {
+          case 'alarm-condition-list':
+            $('.alarm-btn-grp').show();
+            loadAlarmCondition(1);
+            break;
+          case 'alarm-condition-tpl':
+            $('.alarm-btn-grp').hide();
+            esdpec.framework.core.getJsonResult('alarmcenter/getenergys', function (response) {
+              if (response.IsSuccess) {
+                tplTypeList = response.Content;
+                let data = {
+                  tplTypeList
+                };
+                let templateHtml = template('tpl-list-template', data);
+                $('.tpl-list').html(templateHtml);
+                setTimeout(() => {
+                  $('.tpl-list .opt').off('click').on('click', function (e) {
+                    e.stopPropagation();
+                    $('.tpl-list .opt input').prop('checked', false);
+                    let currentDom = e.currentTarget;
+                    $(currentDom).children().first().prop('checked', true);
+                    let id = $(currentDom).children().first().val();
+                    loadAlarmTpl(id, 1);
+                  });
+                  $('.tpl-list .opt').first().click();
+                }, 300);
+              }
+            })
+            break;
+        }
+      });
+      $('.alarm-btn-grp>input').off('click').on('click', function (e) {
+        e.stopPropagation();
+        let ruleId = 'new_' + _.replace(Math.random(), '.', '');
+        let data = {
+          weekList: weekDayList,
+          ruleId: ruleId,
+          alarmTypeValueList,
+          meterFieldTypes
+        };
+        let newRow = template('new-rule-template', data);
+        $('.alarm-condition').prepend(newRow);
+        if ($('.alarm-condition>.alaram-condition-norecord').length > 0)
+          $('.alarm-condition>.alaram-condition-norecord').remove();
+        setTimeout(() => {
+          layui.use('laydate', function () {
+            let laydate = layui.laydate;
+            laydate.render({
+              elem: '.validate-container',
+              btns: ['confirm'],
+              range: '--',
+              format: 'HH:mm',
+              type: 'time',
+              value: '00:01 -- 23:59',
+            });
+          });
+          $('#cancel_' + ruleId).off('click').on('click', function (e) {
+            e.stopPropagation();
+            $('#' + ruleId).remove();
+            if ($('.alarm-condition>tr').length <= 0)
+              $('.alarm-condition').append('<tr class="alaram-condition-norecord"><td colspan="8" class="norecord-cell">未设置报警条件，点击右上方按钮添加</td></tr>');
+          });
+          $('#ok_' + ruleId).off('click').on('click', function (e) {
+            e.stopPropagation();
+            let alarmName = $('#name_' + ruleId).val();
+            if (alarmName === '') {
+              toastr.warning('请输入报警名称');
+              return;
+            }
+            let bmfId = $('#' + ruleId + ' .fieldTd>.opt>input:checked').val();
+            let bmfType = $('#' + ruleId + ' .fieldTd>.opt>input:checked').attr('data-type');
+            if (!bmfId) {
+              toastr.warning('请选择参数类型');
+              return;
+            }
+            let alarmType = $('#' + ruleId + ' .alarmTypetd>.opt>input:checked').val();
+            if (!alarmType) {
+              toastr.warning('请选择报警类型');
+              return;
+            }
+            let warningValue = $('.editable:eq(1)').val();
+            if (!warningValue) {
+              toastr.warning('请输入预警值');
+              return;
+            }
+            let alarmValue = $('.editable:eq(2)').val();
+            if (!alarmValue) {
+              toastr.warning('请输入报警值');
+              return;
+            }
+            let valiteTime = $('#validate_' + ruleId).val();
+            if (!valiteTime) {
+              toastr.warning('请选择生效时间');
+              return;
+            }
+            let dateRepeat = $('#' + ruleId + ' .weektd>.opt>input:checked').val();
+            if (!dateRepeat) {
+              toastr.warning('请选择重复日期');
+              return;
+            }
+            let rule = {
+              BaseMeterFieldTypeId: bmfId,
+              AlarmName: alarmName,
+              AlarmTypeEnum: getAlarmType(bmfType, alarmType),
+              PreWarnValue: $('#prewarn_' + ruleId).val(),
+              OnWarnValue: $('#warn_' + ruleId).val(),
+              ValidStartTime: getValidate(ruleId).startTime,
+              ValidEndTime: getValidate(ruleId).endTime,
+              RepeatDate: getRepeatDateStr(ruleId),
+              IsEnabled: $('#enable_' + ruleId + '>input').is(':checked'),
+              IsAlarmTemplate: $('#tpl_' + ruleId + '>input').is(':checked'),
+            }
+            esdpec.framework.core.doPostOperation('alarmcenter/addalarmrule', rule, function (response) {
+              if (response.IsSuccess) {
+                loadAlarmCondition(1);
+              }
+            })
+          });
+          $('.fieldTd>.opt').off('click').on('click', function (e) {
+            e.stopPropagation();
+            $('.fieldTd>.opt>input').prop('checked', false);
+            let inputDom = $(e.currentTarget).children().first();
+            let type = inputDom.attr('data-type');
+            inputDom.prop('checked', true);
+            if (type === '0') {
+              $('#' + ruleId + '_1').removeAttr('disabled');
+              $('#' + ruleId + '_2').removeAttr('disabled');
+              $('#' + ruleId + '_3').removeAttr('disabled');
+              $('#' + ruleId + '_4').removeAttr('disabled');
+            } else {
+              $('#' + ruleId + '_1').attr('disabled', 'disabled');
+              $('#' + ruleId + '_2').attr('disabled', 'disabled');
+              $('#' + ruleId + '_3').attr('disabled', 'disabled');
+              $('#' + ruleId + '_4').attr('disabled', 'disabled');
+              let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
+              if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4')
+                $('.alarmTypetd>.opt>input').prop('checked', false);
+            }
+          });
+          $('.alarmTypetd>.opt').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let alarmInput = $(e.currentTarget).children().first();
+            let alarmVal = alarmInput.val();
+            if (alarmVal == '0' || alarmVal == '5') {
+              //可选
+              $(this).parent('td').parent('tr').find('.validate-container').removeAttr('disabled');
+              $(this).parent('td').parent('tr').find('.magic-checkbox').removeAttr('disabled');
+            } else {
+              $(this).parent('td').parent('tr').find('.validate-container').attr('disabled', 'disabled').val('');
+              $(this).parent('td').parent('tr').find('.magic-checkbox').attr('disabled', 'disabled').prop('checked', false);
+            }
+            if (alarmInput.is(':disabled')) return;
+            $('.alarmTypetd>.opt>input').prop('checked', false);
+            alarmInput.prop('checked', true);
+          });
+          $('.weektd>.opt').off('click').on('click', function (e) {
+            e.stopPropagation();
+            let currentDom = e.currentTarget;
+            let currentInput = $(currentDom).children().first();
+            if ($(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '0' || $(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '5') {
+              currentInput.prop('checked', !currentInput.is(':checked'));
+            } else {
+              currentInput.prop('checked', false);
+            }
+          });
+          $('#tpl_' + ruleId).off('click').on('click', function (e) {
+            e.stopPropagation();
+            $('#tpl_' + ruleId + '>input').prop('checked', !$('#tpl_' + ruleId + '>input').is(':checked'));
+          });
+          $('#enable_' + ruleId).off('click').on('click', function (e) {
+            e.stopPropagation();
+            $('#enable_' + ruleId + '>input').prop('checked', !$('#enable_' + ruleId + '>input').is(':checked'));
+          });
+        }, 300);
+      });
+      $('.alarm-info .meter-operate-box>input').off('click').on('click', function (e) {
+        e.stopPropagation();
+        let id = $(e.currentTarget).attr('id');
+        switch (id) {
+          case 'meter-alarm':
+            $('#area-alarm-modal').dialogModal({
+              onOkBut: function () {
+                // 原因   处理记录
+                let dealReason = $('.open .radio-grp .opt input:checked').val();
+                let dealObj = {
+                  MeterIds: [currentSelectedNode.id],
+                  AlarmDealStatus: 1,
+                  AlarmDealReason: !dealReason ? $('.open #other-reason').val() : dealReason,
+                  AlarmDealReasonDetail: $('.open .area-alarm-modal-textarea').val(),
+                  DealType: 2
+                };
+                esdpec.framework.core.doPutOperation('alarmcenter/updatealarmdatarelease', dealObj, function (response) {
+                  if (response.IsSuccess && response.Content) {
+                    loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 4, false, 1);
+                    $('#alarm-status').text('仪表状态：无报警');
+                  }
+                });
+              },
+              onCancelBut: function () {},
+              onLoad: function () {
+                setTimeout(() => {
+                  $('.open #r1').prop('checked', true);
+                  $('.open .radio-grp .opt').on('click', function (e) {
+                    e.stopPropagation();
+                    let currentDom = e.currentTarget;
+                    $('.open .radio-grp .opt input').prop('checked', false);
+                    $(currentDom).children().first().prop('checked', true);
+                    $('.open #other-reason').prop('checked', false);
+                    $('.open .area-alarm-modal-textarea').val('').prop('readonly', true);
+                  });
+                  $('.open .area-alarm-modal-textarea').on('input', function (e) {
+                    e.stopPropagation();
+                    if (e.currentTarget.value.length > 30) {
+                      e.currentTarget.value = e.currentTarget.value.substring(0, 30);
+                      return;
+                    }
+                    $('.open .len-limit').text(e.currentTarget.value.length + '/30');
+                  });
+                  $('.open .other-reason').on('click', function (e) {
+                    e.stopPropagation();
+                    $('.open .radio-grp .opt input').prop('checked', false);
+                    let currentDom = e.currentTarget;
+                    $(currentDom).children().first().prop('checked', true);
+                    $('.open .area-alarm-modal-textarea').prop('readonly', false).focus();
+                  });
+                }, 300);
+              },
+              onClose: function () {},
+            });
+            return;
+          case 'meter-shield-device':
+            $('#shield').prop('checked', true);
+            $('#shield-time').prop('checked', false);
+            layui.use(['layer', 'laydate'], function () {
+              alarmlay = layui.layer;
+              let laydate = layui.laydate;
+              let setTop = function () {
+                let that = this;
+                alarmlay.open({
+                  type: 1,
+                  title: '屏蔽设置',
+                  area: ['560px', '260px'],
+                  shade: 0.6,
+                  content: $('#set-shield-modal'),
+                  btn: ['确定', '取消'],
+                  yes: function () {
+                    $(that).click();
+                    let time = $('#sheild-time-container').val();
+                    let status = $('#shield').is(':checked') ? 1 : 2;
+                    let sheildObj = {
+                      MeterIds: [currentSelectedNode.id],
+                      AlarmDealStatus: 2,
+                      AlarmDealReason: 4,
+                      AlarmDealReasonDetail: '',
+                      MeterDealStatus: status,
+                      StartTime: $('#shield').prop('checked') ? '1973-01-01 00:00:01' : time.split(' -- ')[0],
+                      EndTime: $('#shield').prop('checked') ? "2099-12-31 23:59:59" : time.split(' -- ')[1]
+                    };
+                    esdpec.framework.core.doPutOperation('alarmcenter/updatealarmdatashield', sheildObj, function (response) {
+                      if (response.IsSuccess && response.Content) {
+                        loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 4, false, 1);
+                        $('#alarm-status').text('仪表状态：已屏蔽');
+                        alarmlay.closeAll();
+                      }
+                    });
+                  },
+                  btn2: function () {
+                    alarmlay.closeAll();
+                  },
+                  zIndex: alarmlay.zIndex,
+                  success: function (layero) {
+                    laydate.render({
+                      elem: '#sheild-time-container',
+                      btns: ['confirm'],
+                      range: '--',
+                      format: 'yyyy-MM-dd HH:mm',
+                      type: 'datetime',
+                      trigger: 'click',
+                      value: new Date().format('yyyy-MM-dd hh:mm') + ' -- ' + new Date().format('yyyy-MM-dd hh:mm'),
+                      end: function () {
+                        $(".layui-layer-shade").remove();
+                      }
+                    });
+                  }
+                });
+              };
+              setTop();
+            });
+            $('.device-shield-content .opt').on('click', function (e) {
+              e.stopPropagation();
+              $('.device-shield-content .opt input').prop('checked', false);
+              $(e.currentTarget).children().first().prop('checked', true);
+            });
+            return;
+          case 'meter-stop-alarm':
+            $('#shield').prop('checked', true);
+            $('#shield-time').prop('checked', false);
+            layui.use(['layer', 'laydate'], function () {
+              alarmlay = layui.layer;
+              let laydate = layui.laydate;
+              let setTop = function () {
+                let that = this;
+                alarmlay.open({
+                  type: 1,
+                  title: '解除屏蔽',
+                  area: ['590px', '260px'],
+                  shade: 0.6,
+                  content: $('#rmove-shield-modal'),
+                  btn: ['确定', '取消'],
+                  yes: function () {
+                    $(that).click();
+                    let time = $('#sheild-time-container').val();
+                    let sheildObj = {
+                      MeterIds: [currentSelectedNode.id],
+                      AlarmDealStatus: 0,
+                      AlarmDealReason: 0,
+                      AlarmDealReasonDetail: '',
+                      MeterDealStatus: 0,
+                      StartTime: $('#shield').prop('checked') ? '1973-01-01 00:00:01' : time.split(' -- ')[0],
+                      EndTime: $('#shield').prop('checked') ? "2099-12-31 23:59:59" : time.split(' -- ')[1]
+                    };
+                    esdpec.framework.core.doPutOperation('alarmcenter/updatealarmmetercancleshield', sheildObj, function (response) {
+                      if (response.IsSuccess && response.Content) {
+                        loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 4, false, 1);
+                        $('#alarm-status').text('仪表状态：无报警');
+                        alarmlay.closeAll();
+                      }
+                    });
+                  },
+                  btn2: function () {
+                    alarmlay.closeAll();
+                  },
+                  zIndex: alarmlay.zIndex,
+                  success: function (layero) {
+                    laydate.render({
+                      elem: '#sheild-time-container',
+                      btns: ['confirm'],
+                      range: '--',
+                      format: 'yyyy-MM-dd HH:mm',
+                      type: 'datetime',
+                      trigger: 'click',
+                      value: new Date().format('yyyy-MM-dd hh:mm') + ' -- ' + new Date().format('yyyy-MM-dd hh:mm'),
+                      end: function () {
+                        $(".layui-layer-shade").remove();
+                      }
+                    });
+                  }
+                });
+              };
+              setTop();
+            });
+            $('.device-shield-content .opt').on('click', function (e) {
+              e.stopPropagation();
+              $('.device-shield-content .opt input').prop('checked', false);
+              $(e.currentTarget).children().first().prop('checked', true);
+            });
+            return;
+          case 'shutdown-power':
+            let status = 0;
+            $('#delete-confirm-modal').dialogModal({
+              onOkBut: function () {
+                if (status === 1) {
+                  $('.open .modal_header').text('关闭确认');
+                  $('.open .device-shield-content').text('确定要进行关闭电闸操作？');
+                  status = 2;
+                  return false;
+                } else if (status === 2) {
+                  let sheildObj = {
+                    MeterIds: [currentSelectedNode.id],
+                    AlarmDealStatus: 3,
+                    AlarmDealReason: 6,
+                    MeterDealStatus: 3
+                  };
+                  esdpec.framework.core.doPutOperation('alarmcenter/updatealarmdatashield', sheildObj, function (response) {
+                    if (response.IsSuccess && response.Content) {
+                      loadMeterAlarmData(historyTime.minTime, historyTime.maxTime, 4, false, 1);
+                      $('#alarm-status').text('仪表状态：已关闭');
+                      alarmlay.closeAll();
+                    }
+                  });
+                }
+              },
+              onCancelBut: function () {
+                status = 0;
+              },
+              onLoad: function () {
+                setTimeout(() => {
+                  status = 1;
+                  $('.open .modal_header').text('系统确认');
+                  $('.open .device-shield-content').text('确认该仪表有电闸？');
+                }, 300);
+              },
+              onClose: function () {
+                status = 0;
+              },
+            });
+            return;
+        }
+      });
+      loadMeterAlarmPage();
+    }
+    setTimeout(() => {
+      if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') >
+        $('.alarm-content>.alarm-content-right').prop('clientHeight')) {
+        $('.alarm-content>.alarm-footer').show();
+      } else {
+        $('.alarm-content>.alarm-footer').hide();
+      }
+    }, 300);
+  };
+  let getExceptionOriginData = mfid => {
+    let dateType = getSearchDateType();
+    let searchDateType = dateType === -1 ? 2 : dateType;
+    let defaultTimeStr = getDefaultSTimeAndETime(searchDateType);
+    let dateArray = defaultTimeStr.split(' -- ');
+    let uriparam = `mfid=${mfid}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
+    esdpec.framework.core.getJsonResult('abnormaldata/getdata?' + uriparam, function (response) {
+      if (response.IsSuccess) {
+        if (response.Content.length > 0) {
+          let exceptionDatas = [];
+          _.each(response.Content, a => {
+            exceptionDatas.push({
+              val: a.val,
+              cost: 0,
+              date: a.time,
+              isChecked: false
+            });
+          });
+          loadExceptionDataIntoGraphData(exceptionDatas);
+        }
+      }
+    });
+  };
+
+  $('.main-content .content-right').on('scroll', function (e) {
     e.stopPropagation();
-    if(currentSelectedNode.modeltype !== 'area') checkElementInVisiable();
+    if (currentSelectedNode && currentSelectedNode.modeltype !== 'area')
+      checkElementInVisiable();
   });
 
   $('#onshowmeterinfo').on('click', function (e) {
@@ -2090,13 +4137,14 @@ $(function () {
     $('.meter-info-container').toggleClass('close');
     if ($('.meter-info-container').hasClass('close')) {
       $('.meter-info-container').hide(300);
-      $('#onshowmeterinfo>span:first-of-type').html('展开表计详情<i class="icon iconfont icon-xiaotuziCduan_"></i>');
+      $('#onshowmeterinfo>span:first-of-type').html('展开表计详情 <i class="icon iconfont icon-xiaotuziCduan_"></i>');
     } else {
       $('.meter-info-container').show(300);
-      $('#onshowmeterinfo>span:first-of-type').html('收起表计详情<i class="icon iconfont icon-xiaotuziCduan_1"></i>');
+      $('#onshowmeterinfo>span:first-of-type').html('收起表计详情 <i class="icon iconfont icon-xiaotuziCduan_1"></i>');
     }
   });
 
+  //隐藏更多
   $('#onshowmoreparameter').on('click', function (e) {
     e.stopPropagation();
     $('#onshowmoreparameter').toggleClass('close');
@@ -2117,9 +4165,11 @@ $(function () {
     }
   });
 
+  //年月日切换
   $('.btn-grp .btn').on('click', function (e) {
     e.stopPropagation();
     const currentDom = e.currentTarget;
+    $("div[id*='layui-laydate']").remove();
     _.each($('.btn-grp .btn'), item => {
       if ($(item).attr('data-value') !== $(currentDom).attr('data-value')) {
         $(item).removeClass('date-active');
@@ -2127,6 +4177,7 @@ $(function () {
     });
     $(currentDom).toggleClass('date-active');
     let parameter = _.find(currentMeterParameters, a => a.type === 0 && a.isChecked);
+    $(".total_Unit").text(parameter.unit)
     if (parameter && getSearchDateType() !== -1) {
       $('.exception-manager').attr('data-toggle', 'close').hide();
       $('.exception-box').hide();
@@ -2171,6 +4222,7 @@ $(function () {
 
   $('.area-btn-grp .btn').on('click', function (e) {
     e.stopPropagation();
+    $("div[id*='layui-laydate']").remove();
     const currentDom = e.currentTarget;
     _.each($('.area-btn-grp .btn'), item => {
       if ($(item).attr('data-value') !== $(currentDom).attr('data-value')) {
@@ -2256,6 +4308,7 @@ $(function () {
           }
           chartSeries = _.concat(chartSeries, costSeries);
         }
+
         break;
         //#endregion
         //#region bar
@@ -2327,6 +4380,8 @@ $(function () {
         //#region tip
       case 'tip':
         if (ifShowPieChart()) return;
+        // console.log(currentDom);
+        //对比数据
         if (comparsionSelectedMeters.length > 0) {
           chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, getChartType(),
             $(currentDom).hasClass('btn-active') ? true : false);
@@ -2462,6 +4517,8 @@ $(function () {
     $('.func-tab .layui-tab-content>div').hide();
     $(currentDom).addClass('layui-this');
     $('#' + $(currentDom).attr('data-id')).show();
+    checkElementInVisiable();
+    // $(window).resize();
   })
 
   $('#area-zone .operate-hander').on('click', function (e) {
@@ -2474,57 +4531,64 @@ $(function () {
     showModuleConfigureModal();
   });
 
-  $(window).resize(function(e) {
-    if(currentPage === 'alarm'){
-      if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')){
+  $(window).resize(function (e) {
+    if (globalCurrentPage === 'alarm') {
+      if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')) {
         $('.alarm-content>.alarm-footer').show();
-      }else{
+      } else {
         $('.alarm-content>.alarm-footer').hide();
       }
     }
   });
-
+  //报警中心
   $('.content__header--btngrp .alarm-container').on('click', function (e) {
     e.stopPropagation();
-    // currentPage = 'alarm';
-    // $('.main-content').hide();
-    // $('.alarm-content').show();
-    // $('.meterName').addClass('nav-history');
-    // $('.detail').addClass('nav-history');
-    // $('#nav-alarm').show();
-    // $('#item-name').text(currentSelectedNode.text);
-    // layui.use('laypage', function() {
-    //   let laypage = layui.laypage;
-    //   laypage.render({
-    //     elem: 'paging-device',
-    //     count: 100,
-    //     layout: ['count', 'prev', 'page', 'next', 'skip'],
-    //     jump: function(obj){
-    //       console.log(obj)
-    //     }
-    //   });
-    // });
-    // if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') > $('.alarm-content>.alarm-content-right').prop('clientHeight')){
-    //   $('.alarm-content>.alarm-footer').show();
-    // }else{
-    //   $('.alarm-content>.alarm-footer').hide();
-    // }
+    globalCurrentPage = 'alarm';
+    $('.main-content').hide();
+    $('.alarm-content').show();
+    $('.meterName').addClass('nav-history');
+    $('.detail').addClass('nav-history');
+    $('#nav-alarm').show();
+    $('#item-name').text(currentSelectedNode.text);
+    alarmPageChange();
+    if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') >
+      $('.alarm-content>.alarm-content-right').prop('clientHeight')) {
+      $('.alarm-content>.alarm-footer').show();
+    } else {
+      $('.alarm-content>.alarm-footer').hide();
+    }
   });
 
+  //返回
   $('.alarm-content-right>.alarm-header>.navigate-back>span').on('click', function (e) {
     e.stopPropagation();
-    currentPage = 'analysis';
-    $('.main-content').show();
-    $('.alarm-content').hide();
-    $('.meterName').removeClass('nav-history');
-    $('.detail').removeClass('nav-history');
-    $('#nav-alarm').hide();
-    if(currentSelectedNode.modeltype === 'area') searchAreaData();
-    else searchMeterData();
+    if (backSource === '') {
+      globalCurrentPage = 'analysis';
+      $('.main-content').show();
+      $('.alarm-content').hide();
+      $('.meterName').removeClass('nav-history');
+      $('.detail').removeClass('nav-history');
+      $('#nav-alarm').hide();
+      let treeInstance = $('#metertree').jstree(true);
+      treeInstance.deselect_node(treeInstance.get_selected(true));
+      treeInstance.select_node(treeInstance.get_node(currentSelectedNode.id));
+    } else {
+      backSource = '';
+      globalCurrentPage = 'alarm';
+      let treeInstance = $('#metertree').jstree(true);
+      treeInstance.deselect_node(treeInstance.get_selected(true));
+      treeInstance.select_node(treeInstance.get_node(currentSelectedNodeBak.id));
+      currentSelectedNodeBak = null;
+    }
   });
 
+  //增加对比
   $('.comparsion-left>.meter-choose').on('click', function (e) {
     e.stopPropagation();
+    let tempPara = "";
+    $(".parameter-right div.para-item[class*='para-active']").each(function () {
+      tempPara += $(this).text();
+    })
     if (getSelectParameterLen() > 1) {
       toastr.warning('只能单参数对比');
       return;
@@ -2532,7 +4596,7 @@ $(function () {
     $('#choose-meter-for-comparison').dialogModal({
       onOkBut: function () {
         let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
-        nodeIds = _.filter(nodeIds, a=> a !== currentSelectedNode.id);
+        nodeIds = _.filter(nodeIds, a => a !== currentSelectedNode.id);
         let nodes = _.filter(meterDataList, a => _.includes(nodeIds, a.id) && a.modeltype !== 'area');
         comparsionSelectedMeters = [];
         comparsionSelectedMeters = _.concat([], nodes);
@@ -2542,6 +4606,7 @@ $(function () {
         let templateHtml = template('comparsion-right-template', data);
         $('.comparsion-right').html(templateHtml);
         setTimeout(() => {
+          //删除对比
           $('.comparsion-right .meter-item>i').on('click', function (e) {
             e.stopPropagation();
             let currentDom = e.currentTarget;
@@ -2552,7 +4617,9 @@ $(function () {
               //remove comparison data: remove chart data and parameter detail info
               if (removeMeter && removeMeter.length > 0) {
                 let p = _.find(removeMeter[0].parameters, a => a.isChecked);
-                _.remove(searchResult.datas, a => a.mfid === p.id);
+                if (p) {
+                  _.remove(searchResult.datas, a => a.mfid === p.id);
+                }
                 generateComparisonData(searchResult.meterAndParaMap, searchResult.datas, searchResult.type);
                 //generateComparisonChartData();
                 if (ifShowPieChart()) {
@@ -2583,6 +4650,7 @@ $(function () {
       onCancelBut: function () {},
       onLoad: function () {
         setTimeout(() => {
+          $('.open .modal_header').text('选择对比仪表');
           if ($('.open .choose-meter-list').html() === '') {
             $('.open .choose-meter-list').jstree({
               "core": {
@@ -2615,11 +4683,25 @@ $(function () {
               let disableNode = instance.get_node(currentSelectedNode.id);
               instance.select_node(disableNode);
               instance.disable_node(disableNode);
-            }).on('select_node.jstree', function(e, data){
+            }).on('select_node.jstree', function (e, data) {
               let instance = data.instance;
               let node = data.node.original;
               let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
-              if(nodeIds.length > 6){
+              tempNodeIds = _.filter(nodeIds, a => a !== currentSelectedNode.id);
+              let nodes = _.filter(meterDataList, a => _.includes(tempNodeIds, a.id) && a.modeltype !== 'area');
+              if (nodes) {
+                for (var i = 0; i < nodes.length; i++) {
+                  if (nodes[i].modeltype === "vmeter") {
+                    $.jstree.defaults.checkbox = {
+                      cascade_to_disabled: false
+                    }
+                    instance.deselect_node(instance.get_node(nodes[i].id));
+                    toastr.warning('该仪表无法对比');
+                    break;
+                  }
+                }
+              }
+              if (nodeIds.length > 6) {
                 toastr.warning('对比仪表个数不能超过6个');
                 instance.deselect_node(instance.get_node(node.id));
                 return;
@@ -2627,8 +4709,8 @@ $(function () {
             }).on('deselect_node.jstree', function (e, data) {
               let instance = data.instance;
               let node = data.node.original;
-              if(node.modeltype === 'area' && isParentNode(node.id, currentSelectedNode.id)){
-                setTimeout(()=>{
+              if (node.modeltype === 'area' && isParentNode(node.id, currentSelectedNode.id)) {
+                setTimeout(() => {
                   instance.select_node(instance.get_node(currentSelectedNode.id));
                   return;
                 }, 100);
@@ -2678,6 +4760,7 @@ $(function () {
   $('.area-fgp-data>.btn-group>div.btn').on('click', function (e) {
     e.stopPropagation();
     let currentDom = e.currentTarget;
+    $("div[id*='layui-laydate']").remove();
     $('.area-fgp-data>.btn-group>div.btn').removeClass('date-active');
     $(currentDom).addClass('date-active');
     switch ($(currentDom).attr('data-value')) {
@@ -2742,43 +4825,32 @@ $(function () {
   });
 
   $('.graph-data .exception-manager').on('click', function (e) {
-    e.stopPropagation();
+    e.stopImmediatePropagation();
     let currentDom = e.currentTarget;
+    let currentPara = $('.list-body div.param-item-active');
+    let mfid = currentPara.attr('data-id');
+    let parameters = _.filter(currentMeterParameters, a => a.isChecked);
+    let mfids = _.head(parameters);
     if ($(currentDom).attr('data-toggle') === 'close') {
       $('.exception-box').show();
       $(currentDom).attr('data-toggle', 'open');
       $(currentDom).children(0).children(0).removeClass('icon-xiaotuziCduan_').addClass('icon-xiaotuziCduan_1');
       $('.inException').show();
-      let date = $('#datevalue').val();
-      let dateArray = date.split(' -- ');
-      let parameters = _.filter(currentMeterParameters, a => a.isChecked);
-      let mfids = _.head(parameters);
-      let uriparam = `mfid=${mfids.id}&sTime=${dateArray[0]}&eTime=${dateArray[1]}`;
-      esdpec.framework.core.getJsonResult('abnormaldata/getdata?' + uriparam, function (response) {
-        if (response.IsSuccess) {
-          if (response.Content.length > 0) {
-            let exceptionDatas = [];
-            _.each(response.Content, a => {
-              exceptionDatas.push({
-                val: a.val,
-                cost: 0,
-                date: a.time,
-                isChecked: false
-              });
-            });
-            loadExceptionDataIntoGraphData(exceptionDatas);
-          }
-        }
-      });
+      if (currentPara) {
+        getExceptionOriginData(mfid);
+      } else {
+        getExceptionOriginData(mfids);
+      }
       $('#exception-open-history').on('click', function (e) {
-        e.stopPropagation();
+        e.stopImmediatePropagation();
         $('#exception-history-data').dialogModal({
           onOkBut: function () {},
           onCancelBut: function () {},
           onLoad: function () {
-            esdpec.framework.core.getJsonResult('abnormaldata/getdatabypage?mfid=' + mfids.id + '&pagenum=1', function (response) {
+            let currentPara = $('.list-body div.param-item-active');
+            esdpec.framework.core.getJsonResult('abnormaldata/getdatabypage?mfid=' + currentPara.attr('data-id') + '&pagenum=1', function (response) {
               if (response.IsSuccess) {
-                generateExceptionHistory(response.Content, mfids.id);
+                generateExceptionHistory(response.Content, currentPara.attr('data-id'));
               }
             });
           },
@@ -2787,15 +4859,35 @@ $(function () {
       });
       $('#exception-filter-rule').on('click', function (e) {
         e.stopPropagation();
+        if (!operateBefore()) return;
         let exceptionItem = {
-          mfid: mfids.id
+          mfid: currentPara.attr('data-id')
         };
+        $(this).attr('disabled', 'disabled');
+        setTimeout(() => {
+          $('#exception-filter-rule').removeAttr('disabled')
+        }, 1000);
         let time = $('#exception-daycontainer').val();
         let timeArray = time.split(' -- ');
         exceptionItem.stime = timeArray[0] + ' 00:00:01';
         exceptionItem.etime = timeArray[1] + ' 23:59:59';
         let minVal = $('#min-val-input').val();
         let maxVal = $('#max-val-input').val();
+        toastr.options = {
+          closeButton: false,
+          debug: false,
+          progressBar: false,
+          positionClass: "toast-top-center",
+          onclick: null,
+          showDuration: "300",
+          hideDuration: "1000",
+          timeOut: "1000",
+          extendedTimeOut: "1000",
+          showEasing: "swing",
+          hideEasing: "linear",
+          showMethod: "fadeIn",
+          hideMethod: "fadeOut"
+        };
         if (minVal !== '') {
           exceptionItem.lt_val = parseFloat(minVal);
         }
@@ -2814,9 +4906,28 @@ $(function () {
         });
       });
       $('#exception-filter').on('click', function (e) {
-        e.stopPropagation();
+        e.stopImmediatePropagation();
         let exceptionItem = {
-          mfid: mfids.id
+          mfid: currentPara.attr('data-id')
+        };
+        $(this).attr('disabled', 'disabled');
+        setTimeout(() => {
+          $('#exception-filter').removeAttr('disabled')
+        }, 1000);
+        toastr.options = {
+          closeButton: false,
+          debug: false,
+          progressBar: false,
+          positionClass: "toast-top-center",
+          onclick: null,
+          showDuration: "300",
+          hideDuration: "1000",
+          timeOut: "1000",
+          extendedTimeOut: "1000",
+          showEasing: "swing",
+          hideEasing: "linear",
+          showMethod: "fadeIn",
+          hideMethod: "fadeOut"
         };
         let time = $('#exception-daycontainer').val();
         let timeArray = time.split(' -- ');
@@ -2825,26 +4936,45 @@ $(function () {
         let minVal = $('#min-val-input').val();
         let maxVal = $('#max-val-input').val();
         if (minVal !== '') {
-          exceptionItem.lt_val = parseFloat(minVal);
+          exceptionItem.gt_val = parseFloat(minVal);
         }
         if (maxVal !== '') {
-          exceptionItem.gt_val = parseFloat(maxVal);
+          exceptionItem.lt_val = parseFloat(maxVal);
         }
-        if (exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val) {
-          toastr.warning('数值范围异常，最大值必须大于最小值');
+        if (exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.gt_val <= exceptionItem.lt_val) {
+          esdpec.framework.core.doPostOperation('abnormaldata/savelistdata', exceptionItem, function (response) {
+            if (response.IsSuccess) {
+              reloadMeterChartData();
+              reloadExceptionGraphData();
+            }
+          });
           return;
         }
-        esdpec.framework.core.doPostOperation('abnormaldata/savelistdata', exceptionItem, function (response) {
-          if (response.IsSuccess) {
-            reloadMeterChartData();
-            reloadExceptionGraphData();
-          }
-        });
+        toastr.warning('数值范围异常，最大值必须大于最小值');
       });
       $('#exception-unfilter').on('click', function (e) {
-        e.stopPropagation();
+        e.stopImmediatePropagation();
         let exceptionItem = {
-          mfid: mfids.id
+          mfid: currentPara.attr('data-id')
+        };
+        $(this).attr('disabled', 'disabled');
+        setTimeout(() => {
+          $('#exception-unfilter').removeAttr('disabled')
+        }, 1000);
+        toastr.options = {
+          closeButton: false,
+          debug: false,
+          progressBar: false,
+          positionClass: "toast-top-center",
+          onclick: null,
+          showDuration: "300",
+          hideDuration: "1000",
+          timeOut: "1000",
+          extendedTimeOut: "1000",
+          showEasing: "swing",
+          hideEasing: "linear",
+          showMethod: "fadeIn",
+          hideMethod: "fadeOut"
         };
         let time = $('#exception-daycontainer').val();
         let timeArray = time.split(' -- ');
@@ -2879,8 +5009,8 @@ $(function () {
   });
 
   $('#min-val-input').on('input', function (e) {
-    e.stopPropagation();
-    let minVal = e.target.value.replace(/[^\d]/g, '');
+    e.stopImmediatePropagation();
+    let minVal = e.target.value.replace(/[^\d.]/g, '');
     $('#min-val-input').val(minVal);
     if (minVal === '') {
       minVal = '--';
@@ -2889,8 +5019,8 @@ $(function () {
   });
 
   $('#max-val-input').on('input', function (e) {
-    e.stopPropagation();
-    let maxVal = e.target.value.replace(/[^\d]/g, '');
+    e.stopImmediatePropagation();
+    let maxVal = e.target.value.replace(/[^\d.]/g, '');
     $('#max-val-input').val(maxVal);
     if (maxVal === '') {
       maxVal = '--';
@@ -2902,10 +5032,10 @@ $(function () {
     e.stopPropagation();
     $('.parameter-overlay').addClass('hidden');
     let current = e.target;
-    if($(current).hasClass('dialogModal open')) {
+    if ($(current).hasClass('dialogModal open')) {
       $('.dialogModal.open').remove();
       areaSubscribeModule = _.cloneDeep(areaSubscribeModuleClone);
-        areaConfigureMeters = _.cloneDeep(areaConfigureMetersClone);
+      areaConfigureMeters = _.cloneDeep(areaConfigureMetersClone);
     }
   });
 
@@ -2923,330 +5053,572 @@ $(function () {
         let truthValue = value.split('--');
         $('#datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
         searchMeterData();
-      }
+      },
     });
-    laydate.render({
-      elem: '#monthcontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy-MM',
-      type: 'month',
-      value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        let dayInMonth = new moment(truthValue[1]).daysInMonth();
-        $('#datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
-        searchMeterData();
-      }
-    });
-    laydate.render({
-      elem: '#yearcontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy',
-      type: 'year',
-      value: new Date().format('yyyy') + ' -- ' + new Date().format('yyyy'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        $('#datevalue').val(_.trim(truthValue[0]) + '-01-01 -- ' + truthValue[1] + '-12-31');
-        searchMeterData();
-      }
-    });
-  });
 
-  layui.use('laydate', function () {
-    let laydate = layui.laydate;
-    laydate.render({
-      elem: '#area-daycontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy-MM-dd',
-      type: 'date',
-      value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        $('#area-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
-        searchAreaData();
-      }
-    });
-    laydate.render({
-      elem: '#area-monthcontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy-MM',
-      type: 'month',
-      value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        let dayInMonth = new moment(truthValue[1]).daysInMonth();
-        $('#area-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
-        searchAreaData();
-      }
-    });
-    laydate.render({
-      elem: '#area-yearcontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy',
-      type: 'year',
-      value: new Date().format('yyyy') + ' -- ' + new Date().format('yyyy'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        $('#area-datevalue').val(_.trim(truthValue[0]) + '-01-01 -- ' + truthValue[1] + '-12-31');
-        searchAreaData();
-      }
-    });
-  });
+    // $('.area-grp').on('mouseleave', function(e){
+    //   console.log(1)
+    //  })
+    lay('.area-grp').on('mouseleave', function (e) {
+      // console.log(1)
 
-  layui.use('laydate', function () {
-    let laydate = layui.laydate;
-    laydate.render({
-      elem: '#area-fgp-daycontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy-MM-dd',
-      type: 'date',
-      value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        $('#area-fgp-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
-        setTimeout(() => generateAreaFgp(), 300);
-      }
-    });
-    laydate.render({
-      elem: '#area-fgp-monthcontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy-MM',
-      type: 'month',
-      value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        let dayInMonth = new moment(truthValue[1]).daysInMonth();
-        $('#area-fgp-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
-        setTimeout(() => generateAreaFgp(), 300);
-      }
-    });
-  });
+      lay('.area-grp').on('mouseleave', function (e) {
 
-  layui.use('laydate', function () {
-    let laydate = layui.laydate;
-    laydate.render({
-      elem: '#meter-fgp-daycontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy-MM-dd',
-      type: 'date',
-      value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        $('#meter-fgp-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
-        setTimeout(() => generateFgpData(), 300);
-      }
-    });
-    laydate.render({
-      elem: '#meter-fgp-monthcontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy-MM',
-      type: 'month',
-      value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        let dayInMonth = new moment(truthValue[1]).daysInMonth();
-        $('#meter-fgp-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
-        setTimeout(() => generateFgpData(), 300);
-      }
-    });
-  });
-
-  layui.use('laydate', function () {
-    let laydate = layui.laydate;
-    laydate.render({
-      elem: '#exception-daycontainer',
-      btns: ['confirm'],
-      range: '--',
-      format: 'yyyy-MM-dd',
-      type: 'date',
-      value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
-      done: (value, date) => {
-        let truthValue = value.split('--');
-        $('#exception-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
-      }
-    });
-  });
-
-  esdpec.framework.core.getJsonResult('common/gettree', function (response) {
-    if (response.IsSuccess) {
-      meterDataList = _.map(response.Content, a => {
-        a.icon = esdpec.framework.core.Config.AssertSite + a.icon;
-        return a;
+        laydate.render({
+          elem: '#daycontainer',
+          show: false,
+          closeStop: '.area-grp'
+        });
       });
-      $('#metertree').jstree({
-        "core": {
-          "multiple": false,
-          "themes": {
-            "responsive": false
+      laydate.render({
+        elem: '#monthcontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy-MM',
+        type: 'month',
+        value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          let dayInMonth = new moment(truthValue[1]).daysInMonth();
+          $('#datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
+          searchMeterData();
+        }
+      });
+      laydate.render({
+        elem: '#yearcontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy',
+        type: 'year',
+        value: new Date().format('yyyy') + ' -- ' + new Date().format('yyyy'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          $('#datevalue').val(_.trim(truthValue[0]) + '-01-01 -- ' + truthValue[1] + '-12-31');
+          searchMeterData();
+        }
+      });
+    });
+
+    layui.use('laydate', function () {
+      let laydate = layui.laydate;
+      laydate.render({
+        elem: '#area-daycontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy-MM-dd',
+        type: 'date',
+        value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          $('#area-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+          searchAreaData();
+        }
+      });
+      laydate.render({
+        elem: '#area-monthcontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy-MM',
+        type: 'month',
+        value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          let dayInMonth = new moment(truthValue[1]).daysInMonth();
+          $('#area-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
+          searchAreaData();
+        }
+      });
+      laydate.render({
+        elem: '#area-yearcontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy',
+        type: 'year',
+        value: new Date().format('yyyy') + ' -- ' + new Date().format('yyyy'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          $('#area-datevalue').val(_.trim(truthValue[0]) + '-01-01 -- ' + truthValue[1] + '-12-31');
+          searchAreaData();
+        }
+      });
+    });
+
+    layui.use('laydate', function () {
+      let laydate = layui.laydate;
+      laydate.render({
+        elem: '#area-fgp-daycontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy-MM-dd',
+        type: 'date',
+        value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          $('#area-fgp-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+          setTimeout(() => generateAreaFgp(), 300);
+        }
+      });
+      laydate.render({
+        elem: '#area-fgp-monthcontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy-MM',
+        type: 'month',
+        value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          let dayInMonth = new moment(truthValue[1]).daysInMonth();
+          $('#area-fgp-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
+          setTimeout(() => generateAreaFgp(), 300);
+        }
+      });
+    });
+
+    layui.use('laydate', function () {
+      let laydate = layui.laydate;
+      laydate.render({
+        elem: '#meter-fgp-daycontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy-MM-dd',
+        type: 'date',
+        value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          $('#meter-fgp-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+          setTimeout(() => generateFgpData(), 300);
+        }
+      });
+      laydate.render({
+        elem: '#meter-fgp-monthcontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy-MM',
+        type: 'month',
+        value: new Date().format('yyyy-MM') + ' -- ' + new Date().format('yyyy-MM'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          let dayInMonth = new moment(truthValue[1]).daysInMonth();
+          $('#meter-fgp-datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
+          setTimeout(() => generateFgpData(), 300);
+        }
+      });
+    });
+
+    layui.use('laydate', function () {
+      let laydate = layui.laydate;
+      laydate.render({
+        elem: '#exception-daycontainer',
+        btns: ['confirm'],
+        range: '--',
+        format: 'yyyy-MM-dd',
+        type: 'date',
+        value: new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'),
+        done: (value, date) => {
+          let truthValue = value.split('--');
+          $('#exception-datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+        }
+      });
+    });
+
+    esdpec.framework.core.getJsonResult('common/gettree', function (response) {
+      if (response.IsSuccess) {
+        meterDataList = _.map(response.Content, a => {
+          a.icon = esdpec.framework.core.Config.AssertSite + a.icon;
+          return a;
+        });
+        //树形初始
+        $('#metertree').jstree({
+          "core": {
+            "multiple": false,
+            "themes": {
+              "responsive": false
+            },
+            // so that create works
+            "check_callback": true,
+            'data': meterDataList
           },
-          // so that create works
-          "check_callback": true,
-          'data': meterDataList
-        },
-        "types": {
-          "default": {
-            "icon": "fa fa-folder icon-state-warning icon-lg"
-          },
-          "file": {
-            "icon": "fa fa-file icon-state-warning icon-lg"
-          }
-        },
-        "plugins": ["types", "search", "crrm"]
-      }).on('loaded.jstree', function (e, data) {
-        let instance = data.instance;
-        let target = instance.get_node(e.target.firstChild.firstChild.lastChild);
-        instance.open_node(target);
-        instance.select_node(target);
-      }).on("select_node.jstree", function (e, data) {
-        let node = data.node;
-        let nodeId = node.original.id;
-        currentSelectedNode = node.original;
-        $('.meterName').text(node.original.text);
-        $('.content__header--title').text(node.original.text + ' - 仪表数据详情');
-        if (node.original.modeltype === 'area') {
-          currentMeterParameters = [];
-          areaWindowInteractive();
-          esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + nodeId, function (response) {
-            if (response.IsSuccess) {
-              areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
-              areaSubscribeModuleClone = _.cloneDeep(areaSubscribeModule);
-              let meterAndMfidMapStr = response.Content.meterid_mfid_map || '';
-              let meterAndMfidMap = meterAndMfidMapStr.split(';');
-              let meterIds = [];
-              let mfIds = [];
-              _.each(meterAndMfidMap, m => {
-                if (m === '') return true;
-                let meterMfid = m.split(',');
-                meterIds.push(meterMfid[0]);
-                mfIds.push(meterMfid[1]);
-              });
-              areaConfigureMeters = meterIds.length > 0 ? _.filter(meterDataList, a => _.includes(meterIds, a.id)) : [];
-              areaConfigureMetersClone = _.cloneDeep(areaConfigureMeters);
-              areaConfigure = response.Content;
-              areaConfigure.mfIds = mfIds;
-              areaConfigure.meterIds = meterIds;
-              loadAreaDetailPage();
+          "types": {
+            "default": {
+              "icon": "fa fa-folder icon-state-warning icon-lg"
+            },
+            "file": {
+              "icon": "fa fa-file icon-state-warning icon-lg"
             }
-          });
-        } else {
-          meterWindowInteractive();
-          esdpec.framework.core.getJsonResult('dataanalysis/getparasbymeterid?meterId=' + nodeId, function (response) {
-            if (response.IsSuccess) {
-              currentMeterParameters = response.Content;
-              let firstAggreate = _.find(currentMeterParameters, a => a.type === 0);
-              firstAggreate.isChecked = true;
-              if (currentMeterParameters.length > 6) {
-                $('#onshowmoreparameter').removeClass('hidden');
-              } else $('#onshowmoreparameter').addClass('hidden');
-              _.each(currentMeterParameters, a => {
-                if (a.name.length > 8)
-                  a.displayName = a.name.substring(0, 3) + '...' + a.name.substring(a.name.length - 3);
-                else
-                  a.displayName = a.name;
+          },
+          "plugins": ["types", "search", "crrm"]
+        }).on('loaded.jstree', function (e, data) {
+          let instance = data.instance;
+          let target = instance.get_node(e.target.firstChild.firstChild.lastChild);
+          instance.open_node(target);
+          setTimeout(() => instance.select_node(target), 300);
+        }).on("select_node.jstree", function (e, data) {
+          let node = data.node;
+          let nodeId = node.original.id;
+          currentSelectedNode = node.original;
+          comparsionSelectedMeters = [];
+          $('.comparsion-right').html("");
+          backSource = '';
+          $('.meterName').text(node.original.text);
+          $('.content__header--title span:first').text(node.original.text);
+          if (globalCurrentPage === 'analysis') {
+            if (node.original.modeltype === 'area') {
+              currentMeterParameters = [];
+              areaWindowInteractive();
+              esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + nodeId, function (response) {
+                if (response.IsSuccess) {
+                  areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
+                  areaSubscribeModuleClone = _.cloneDeep(areaSubscribeModule);
+                  let meterAndMfidMapStr = response.Content.meterid_mfid_map || '';
+                  let meterAndMfidMap = meterAndMfidMapStr.split(';');
+                  let meterIds = [];
+                  let mfIds = [];
+                  _.each(meterAndMfidMap, m => {
+                    if (m === '') return true;
+                    let meterMfid = m.split(',');
+                    meterIds.push(meterMfid[0]);
+                    mfIds.push(meterMfid[1]);
+                  });
+                  areaConfigureMeters = meterIds.length > 0 ? _.filter(meterDataList, a => _.includes(meterIds, a.id)) : [];
+                  areaConfigureMetersClone = _.cloneDeep(areaConfigureMeters);
+                  areaConfigure = response.Content;
+                  areaConfigure.mfIds = mfIds;
+                  areaConfigure.meterIds = meterIds;
+                  loadAreaDetailPage();
+                }
               });
-              let parameters = {
-                parameterList: _.slice(currentMeterParameters, 0, 5)
-              };
-              let templateHtml = template('parameter-list-template', parameters);
-              $('.parameter-right').html(templateHtml);
-              searchMeterData();
-              setTimeout(() => {
-                $('.parameter-right>div.para-item').on('click', function (e) {
-                  e.stopPropagation();
-                  let currentDom = e.currentTarget;
-                  let unit = $(currentDom).attr('data-unit');
-                  let type = parseInt($(currentDom).attr('data-type'));
-                  if (type === 0 && getSearchDateType() !== -1) {
-                    $('.exception-manager').attr('data-toggle', 'close').hide();
-                    $('.exception-box').hide();
-                  } else {
-                    $('.exception-manager').show();
-                  }
-                  let id = $(currentDom).attr('data-id');
-                  if (comparsionSelectedMeters.length > 0) {
-                    $('.parameter-right>.para-active').removeClass('para-active');
-                    $(currentDom).addClass('para-active');
-                    _.each(currentMeterParameters, a=>{
-                      if(a.id === id) a.isChecked = true;
-                      else a.isChecked = false;
+              $('.detail').html(' - 区域数据详情');
+              $('.content__header--title span:last').text(' - 区域数据详情')
+            } else {
+              $('.detail').html(' - 仪表数据详情');
+              $('.content__header--title span:last').text(' - 仪表数据详情')
+              meterWindowInteractive();
+              esdpec.framework.core.getJsonResult('dataanalysis/getparasbymeterid?meterId=' + nodeId, function (response) {
+                if (response.IsSuccess) {
+                  let selectedItem = _.filter(currentMeterParameters, a => a.isChecked);
+                  currentMeterParameters = response.Content;
+                  if (selectedItem && selectedItem.length > 0) {
+                    _.each(selectedItem, item => {
+                      let select = _.find(currentMeterParameters, a => a.name === item.name);
+                      if (select) {
+                        select.isChecked = true;
+                      }
                     });
-                    // if (type !== 0) {
-                    //   $('.operate-grp>i.should-uniq').removeClass('btn-active');
-                    //   $('.operate-grp>i.should-uniq').first().addClass('btn-active');
-                    // }
                   } else {
-                    let hasChooseParameter = _.find(currentMeterParameters, a => a.isChecked && a.id !== id);
-                    if (hasChooseParameter && hasChooseParameter.unit !== unit) {
-                      _.each(currentMeterParameters, a => {
-                        a.isChecked = false;
-                      });
-                      $('.parameter-right>.para-active').removeClass('para-active');
-                    }
-                    let chooseNode = _.find(currentMeterParameters, a => a.id === id);
-                    let checkedNodes = _.filter(currentMeterParameters, a => a.isChecked);
-                    if (chooseNode.isChecked && checkedNodes.length <= 1) {
-                      toastr.warning('至少需要选择一个参数');
-                      return;
-                    }
-                    chooseNode.isChecked = !chooseNode.isChecked;
-                    $(currentDom).toggleClass('para-active');
+                    let firstAggreate = _.find(currentMeterParameters, a => a.type === 0);
+                    if (!firstAggreate) firstAggreate = _.head(currentMeterParameters);
+                    firstAggreate.isChecked = true;
                   }
-                  if(type === 1){
-                    $('.operate-grp>i.should-uniq').removeClass('btn-active');
-                    $('#meter-zone .icon-line-chart_icon').addClass('btn-active');
-                  }else{
-                    $('.operate-grp>i.should-uniq').removeClass('btn-active');
-                    $('.operate-grp>i.should-uniq').first().addClass('btn-active');
+                  if (_.filter(currentMeterParameters, a => a.isChecked).length <= 0) {
+                    _.head(currentMeterParameters).isChecked = true;
                   }
+                  if (currentMeterParameters.length > 6) {
+                    $('#onshowmoreparameter').removeClass('hidden');
+                  } else $('#onshowmoreparameter').addClass('hidden');
+                  _.each(currentMeterParameters, a => {
+                    if (a.name.length > 8)
+                      a.displayName = a.name.substring(0, 3) + '...' + a.name.substring(a.name.length - 3);
+                    else
+                      a.displayName = a.name;
+                  });
+                  let parameters = {
+                    parameterList: _.slice(currentMeterParameters, 0, 5)
+                  };
+                  let templateHtml = template('parameter-list-template', parameters);
+                  $('.parameter-right').html(templateHtml);
+                  // reset exception box
+                  if ($('.exception-manager').is(':visible')) {
+                    $('.exception-box').hide();
+                    $('.exception-manager').attr('data-toggle', 'close');
+                    $('.exception-manager').children(0).children(0).removeClass('icon-xiaotuziCduan_1').addClass('icon-xiaotuziCduan_');
+                    $('.exception-manager').hide();
+                  }
+                  // end reset exception box
                   searchMeterData();
+                  setTimeout(() => {
+                    //表参数选择
+                    if ($('.parameter-right>div.para-active').attr("data-type") === '1') {
+                      $('.btn-grp>div.btn:nth-child(n+2)').hide();
+                      $('.btn-grp>div.btn:first-child').addClass('date-active borderRight');
+                    } else {
+                      $('.btn-grp>div.btn:nth-child(n+2)').show();
+                      $('.btn-grp>div.btn:first-child').removeClass('borderRight');
+                    }
+                    $('.parameter').on('click', 'div.para-item', function (e) {
+                      e.stopImmediatePropagation();
+                      $("div[id*='layui-laydate']").remove();
+                      let currentDom = e.currentTarget;
+                      let type = parseInt($(currentDom).attr('data-type'));
+                      let unit = $(currentDom).attr('data-unit');
+                      if (type === 1) {
+                        $('.btn-grp>div.btn:nth-child(n+2)').hide();
+                        $('.btn-grp>div.btn:first-child').addClass('date-active borderRight');
+                        $('.operate-grp>i.should-uniq').removeClass('btn-active');
+                        $('#meter-zone .icon-line-chart_icon').addClass('btn-active');
+                        $("#day").removeClass('hidden').siblings().addClass('hidden');
+                        $('#datevalue').val(resetSTimeAndETime(parseInt($(currentDom).attr('data-value'))));
+                      } else {
+                        $('.btn-grp>div.btn:nth-child(n+2)').show();
+                        $('.btn-grp>div.btn:first-child').removeClass('borderRight').siblings().removeClass('date-active');
+                        $('.operate-grp>i.should-uniq').removeClass('btn-active');
+                        $('.operate-grp>i.should-uniq').first().addClass('btn-active');
+                      }
+                      if (type === 0 && getSearchDateType() !== -1) {
+                        $('.exception-manager').attr('data-toggle', 'close').hide();
+                        $('.exception-box').hide();
+                      } else {
+                        $('.exception-manager').show();
+                      }
+                      let id = $(currentDom).attr('data-id');
+                      if (comparsionSelectedMeters.length > 0) {
+                        $('.parameter-right>.para-active').removeClass('para-active');
+                        $(currentDom).addClass('para-active');
+                        _.each(currentMeterParameters, a => {
+                          if (a.id === id) a.isChecked = true;
+                          else a.isChecked = false;
+                        });
+                      } else {
+                        let hasChooseParameter = _.find(currentMeterParameters, a => a.isChecked && a.id !== id);
+                        if (hasChooseParameter && hasChooseParameter.unit !== unit) {
+                          _.each(currentMeterParameters, a => {
+                            a.isChecked = false;
+                          });
+                          $('.parameter-right>.para-active').removeClass('para-active');
+                        }
+                        let chooseNode = _.find(currentMeterParameters, a => a.id === id);
+                        let checkedNodes = _.filter(currentMeterParameters, a => a.isChecked);
+                        if (chooseNode.isChecked && checkedNodes.length < 1) {
+                          toastr.warning('至少需要选择一个参数');
+                          return;
+                        }
+                        chooseNode.isChecked = !chooseNode.isChecked;
+                        $(currentDom).toggleClass('para-active');
+                      }
+                      searchMeterData();
+                    });
+                  }, 100);
+                }
+              });
+              esdpec.framework.core.getJsonResult('dataanalysis/getmeterinfobymeterid?meterId=' + nodeId, function (response) {
+                if (response.IsSuccess) {
+                  let meterInfo = response.Content;
+                  meterInfo.area = getMeterBelongArea(nodeId);
+                  // meterInfo.status = getMeterStatus(meterInfo.state);
+                  let templateData = {
+                    data: meterInfo
+                  }
+                  let templateHtml = template('meter-info-template', templateData);
+                  $('.info-table').html(templateHtml);
+                }
+              });
+            }
+          } else {
+            $('#item-name').text(currentSelectedNode.text);
+            alarmPageChange();
+            if ($('.alarm-content>.alarm-content-right').prop('scrollHeight') >
+              $('.alarm-content>.alarm-content-right').prop('clientHeight')) {
+              $('.alarm-content>.alarm-footer').show();
+            } else {
+              $('.alarm-content>.alarm-footer').hide();
+            }
+          }
+        });
+        let searchTimeout = false;
+        $('#searchbox').keyup(function () {
+          if (searchTimeout) {
+            clearTimeout(searchTimeout);
+          }
+          searchTimeout = setTimeout(function () {
+            let keyword = $('#searchbox').val();
+            $('#metertree').jstree(true).search(keyword);
+          }, 1000);
+        });
+      }
+    });
+
+    toastr.options = _.merge(toastr.options, {
+      positionClass: "toast-top-center",
+      closeButton: true,
+      closeDuration: 100,
+      closeMethod: 'fadeOut',
+      closeEasing: 'swing',
+      progressBar: false,
+      onclick: null,
+      showDuration: "300",
+      hideDuration: "1000",
+      timeOut: "1000",
+      extendedTimeOut: "1000",
+      showEasing: "swing",
+      hideEasing: "linear",
+      showMethod: "fadeIn",
+      hideMethod: "fadeOut"
+    });
+    //new code
+    $('.tab__nav li').on('click', function () {
+      $(this).attr("class", "tab_active").siblings().removeClass("tab_active");
+    })
+    let templateHtmlAbnormal = template('abnormal-data-template');
+    $('.abnormal-data').html(templateHtmlAbnormal);
+    let createInput = document.createElement('input');
+    createInput.type = 'number';
+    createInput.name = 'apportionNum';
+    $('.share-datas td').append(createInput);
+    setTimeout(() => {
+      $('#button').off('click').on('click', function (e) {
+        e.stopPropagation();
+        layui.use(['layer', 'laydate'], function () {
+          let lay = layui.layer;
+          // let laydate = layui.laydate;
+          let setTop = function () {
+            let inputs = $('.share-datas td input');
+            $('.apportion').html($('.abnormal-total').html());
+            //可分摊数据
+            let apportionValue = parseInt($('.apportion').html());
+            // 每日分配数量
+            let apportionNum = $('.abnormal-data .apportion-num:input');
+            lay.open({
+              type: 1,
+              area: ['90%', '80%'],
+              shade: 0.6,
+              id: 'abnormal-data-out',
+              content: $('#abnormal-data-model'),
+              zIndex: lay.zIndex,
+              btn: ['保存', '取消'],
+              success: function (layero) {
+                $('.layui-layer-title').remove();
+                // console.log(this)
+                let blankNum = inputs.length;
+                // console.log(inputs);
+                inputs[0].value = 123;
+                for (let i = 0; i < inputs.length; i++) {
+                  if (inputs[i].value) {
+                    blankNum--;
+                  }
+                }
+                // console.log(blankNum);
+                let dayTotal = 0;
+                let hourTotal = 0;
+                $('.abnormal-data :input').on('input propertychange', function () {
+                  for (let i = 0; i < apportionNum.length; i++) {
+                    dayTotal += Number(apportionNum[i].value);
+                  }
+                  for (let i = 0; i < inputs.length; i++) {
+                    if (inputs[i].value - 0) {
+                      continue;
+                    }
+                    hourTotal += Number(inputs[i].value);
+                  }
+                  // console.log(dayTotal)
+                  apportionValue = /*$('.abnormal-total').html() */ 5000 - dayTotal;
+                  if (apportionValue < 0) {
+                    // alert('当前分摊总数已超过可分摊数据，请重新输入')
+                    layer.open({
+                      title: 0,
+                      content: '当前分摊总数已超过可分摊数据，请重新输入',
+                      skin: 'warning-class',
+                      time: 2500,
+                      shadeClose: true,
+                      success: () => {
+                        document.onkeydown = function (e) {
+                          e = e || window.event;
+                          if ((e.keyCode || e.which) == 13) {
+                            layer.close(layer.index) //关闭最新弹出框          
+                          }
+                        }
+                      }
+                    });
+                    $('.apportion').html(apportionValue + (this.value - 0))
+                    this.value = '';
+                    return;
+                  }
+                  $('.apportion').html(apportionValue);
+                })
+                $('.abnormal-data :input').on('focus', function () {
+                  this.value = parseFloat(this.value - 0);
+                  if (this.value == 0) {
+                    this.value = '';
+                  }
                 });
-              }, 100);
-            }
-          });
-          esdpec.framework.core.getJsonResult('dataanalysis/getmeterinfobymeterid?meterId=' + nodeId, function (response) {
-            if (response.IsSuccess) {
-              let meterInfo = response.Content;
-              meterInfo.area = getMeterBelongArea(nodeId);
-              meterInfo.status = getMeterStatus(meterInfo.state);
-              let templateData = {
-                data: meterInfo
+                $('.abnormal-data :input').on('blur', function () {
+                  this.value = Number(this.value).toFixed(2);
+                });
+                $('.abnormal-data .share-datas :input').on('blur', function () {
+                  // if(!(this.value - 0)){
+                  //   this.className = 'zero';
+                  // }else(
+                  //   this.className = ''
+                  // )
+                });
+                $('.abnormal-total-data .to-everyday').on('click', function () {
+                  for (let i = 0; i < apportionNum.length; i++) {
+                    apportionNum[i].value = (($('.apportion').html() - 0) / apportionNum.length).toFixed(2);
+                  }
+
+                });
+                $('.abnormal-total-data .to-everyhour').on('click', function () {
+                  // console.log(apportionValue)
+                  for (let i = 0; i < inputs.length; i++) {
+                    if (inputs[i].value) continue;
+                    inputs[i].value = (apportionValue / blankNum).toFixed(2);
+                  }
+                  if (!apportionValue) {
+                    // layer.msg("<div class='abnormal-msg'>无可分配数据</div>")
+                    layer.style(layer.msg("<div class='abnormal-msg'>无可分配数据</div>", {
+                      time: 1500,
+                      id: 'layui-msg'
+                    }), {
+                      width: '300px',
+                      height: '50px',
+                      bgcolor: '#adb3bb',
+                      color: '#ffffff'
+                    });
+                    return;
+                  }
+                  $('.apportion').html(0)
+                  apportionValue = 0;
+                });
+              },
+              yes: function (index, layero) {
+                // alert("点击保存触发")
+                let apportionData = parseInt($('.apportion').html());
+                // console.log(apportionData);
+                if (apportionData) {
+                  // toastr.warning('分摊方案不合理，无法保存');
+                  layer.open({
+                    title: 0,
+                    content: ' 还存在异常数据未分摊完，无法保存',
+                    skin: 'warning-class',
+                    time: 2500,
+                    shadeClose: true,
+                    success: () => {
+                      document.onkeydown = function (e) {
+                        e = e || window.event;
+                        if ((e.keyCode || e.which) == 13) {
+                          layer.close(layer.index) //关闭最新弹出框          
+                        }
+                      }
+                    }
+                  });
+                  return;
+                } else {
+                  $('.abnormal-total').html(0)
+                }
+                toastr.info('保存成功!');
+                layer.close(index);
+              },
+              end: (index, layero) => {
+                toastr.info('关闭触发');
               }
-              let templateHtml = template('meter-info-template', templateData);
-              $('.info-table').html(templateHtml);
+            });
+          };
+          setTop();
+          $('.layui-layer-btn1').on('click', function (param) {
+            if ($('.abnormal-total').html() - 0) {
+              $('#abnormal-data-model form')[0].reset();
             }
-          });
-        }
-        if(currentPage === 'alarm'){
-
-        }
+          })
+        });
       });
-      let searchTimeout = false;
-      $('#searchbox').keyup(function () {
-        if (searchTimeout) {
-          clearTimeout(searchTimeout);
-        }
-        searchTimeout = setTimeout(function () {
-          let keyword = $('#searchbox').val();
-          $('#metertree').jstree(true).search(keyword);
-        }, 100);
-      });
-    }
-  });  
-
-  toastr.options = _.merge(toastr.options, {
-    positionClass: "toast-top-center",
-    closeButton: true,
-    closeDuration: 100,
-    closeMethod: 'fadeOut',
-    closeEasing: 'swing'
+    }, 300);
   });
-});
+})

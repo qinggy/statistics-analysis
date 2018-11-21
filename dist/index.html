@@ -24,6 +24,8 @@
 
 </html>
 <script type="text/javascript">
+  //TODO get token data from cookie
+  sessionStorage.setItem('user_token', '3de826eb-1d62-4786-9321-92aec16fe09d');
   function initIframeHeight() {
     var iframe = document.getElementById('contentIframe');
     var clientHeight = $('#content').height(); //iframe.contentDocument.body.clientHeight;
@@ -32,8 +34,6 @@
 
   window.onload = function () {
     initIframeHeight();
-    //TODO get token data from cookie
-    sessionStorage.setItem('user_token', '178904f0-859e-4e37-bc00-142767cb0e9e');
   }
 
   window.onresize = function () {

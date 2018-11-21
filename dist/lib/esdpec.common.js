@@ -245,7 +245,6 @@ if ($.blockUI) {
         backgroundColor: 'transparent'
       }
     })
-
   ).ajaxStop(
     $.unblockUI()
   );

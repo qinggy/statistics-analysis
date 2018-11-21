@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="../../dist/lib/magic-check/magic-check.css">
   <link rel="stylesheet" href="../../dist/lib/jstree/dist/themes/default/style.min.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../asserts/newStatistics.css">
+  <link rel="stylesheet" href="../../asserts/font_ALi/iconfont.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70.0-2014.11.23/jquery.blockUI.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0.rc2/echarts.min.js"></script>
@@ -24,13 +26,22 @@
   <script src="../../dist/lib/arttemplate-3.0/lib/template-web.js"></script>
   <script src="../../dist/lib/jquery.popmodal/popModal.min.js"></script>
   <script src="../../dist/lib/layui-v2.4.3/layui.js"></script>
+  <!-- <script src="../../dist/newStatistic.js"></script> -->
   <title>Statistics</title>
 </head>
 
 <body class="statistics">
-  <div class="statistics__nav">
-    <div class="statistics__nav--content"><span>统计分析&gt;</span><span class="meterName"></span><span class="detail">-仪表数据详情</span><span
-        class="hidden" id="nav-alarm"><span style="color:#708195;">&gt;</span>报警中心</span></div>
+  <div class="nav">
+    <div class="tab__nav">
+      <ul>
+        <li class="tab_active"><a>区域仪表架构</a></li>
+        <li><a>仪表属性架构</a></li>
+      </ul>
+    </div>
+    <div class="statistics__nav">
+      <div class="statistics__nav--content"><span>数聚 &gt;</span><span class="meterName"></span><span class="detail"></span><span
+          class="hidden" id="nav-alarm"><span style="color:#708195;">&gt;</span>报警中心</span></div>
+    </div>
   </div>
   <div class="main">
     <div class="structtree">
@@ -39,60 +50,77 @@
         <input type="button" class="layui-btn layui-btn-normal search__btn" value="查询">
       </div>
       <div class="tree-container">
-        <div id="metertree"></div>
+        <div id="metertree">
+          仪表结构数据加载中...
+        </div>
       </div>
     </div>
     <div class="main-content">
       <div class="content-right">
+        <!-- <div class="content-header-space"></div> -->
         <div class="content">
           <div class="content__header">
-            <div class="content__header--title"><span>仪表数据详情</span></div>
-            <div class="content__header--info" id="onshowmeterinfo"><span>展开表计详情<i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
-            <div class="content__header--btngrp">
-              <div class="module-container">区域模块管理</div>
-              <div class="alarm-container"><i class="icon iconfont icon-warning1 title-margin"></i>报警中心</div>
-              <div class="subscribe">+关注</div>
+            <div class="content__header--title"><span></span><span></span></div>
+            <div class="content__header--right">
+              <div class="content__header--info" id="onshowmeterinfo"><span>展开表计详情 <i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
+              <div class="content__header--btngrp">
+                <div class="module-container">区域模块管理</div>
+                <div class="alarm-container"><i class="icon iconfont icon-warning1 title-margin"></i>报警中心</div>
+                <div class="subscribe">+关注</div>
+              </div>
             </div>
           </div>
           <div id="area-zone">
             <div class="area-no-data hidden"><span>当前区域未配置模块数据，请点击<a class="stress-info operate-hander">&nbsp;区域模块管理&nbsp;</a>进行配置</span></span></div>
             <div class="area-detail-container">
-              <div class="condition">
-                <div class="search-container">
-                  <div class="area-btn-grp">
-                    <div class="btn date-active" data-value="2">日</div>
-                    <div class="btn" data-value="3">周</div>
-                    <div class="btn" data-value="4">月</div>
-                    <div class="btn" data-value="5">年</div>
+              <div class="out-condition">
+
+                <div class="condition">
+                  <div class="search-container">
+                    <div class="time">时间</div>
+                    <div class="area-grp">
+                      <div class="area-btn-grp">
+                        <div class="btn date-active" data-value="2">日</div>
+                        <div class="btn" data-value="3">周</div>
+                        <div class="btn" data-value="4">月</div>
+                        <div class="btn" data-value="5">年</div>
+                      </div>
+                      <div class="area-date-grp">
+                        <input type="hidden" id="area-datevalue">
+                        <div class="date-component icon iconfont icon-rili" id="area-day">
+                          <input type="text" id="area-daycontainer" class="date-input">
+                        </div>
+                        <div class="date-component icon iconfont icon-rili hidden" id="area-month">
+                          <input type="text" id="area-monthcontainer" class="date-input">
+                        </div>
+                        <div class="date-component icon iconfont icon-rili hidden" id="area-year">
+                          <input type="text" id="area-yearcontainer" class="date-input">
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="area-date-grp">
-                    <input type="hidden" id="area-datevalue">
-                    <div class="date-component icon iconfont icon-rili" id="area-day">
-                      <input type="text" id="area-daycontainer" class="date-input">
+                </div>
+                <div class="chart-container">
+                  <div class="bottom-chart1">
+                    <div class="area-operate-grp">
+                      <i class="icon iconfont icon-RMB-area icon-btn-RMB" data-value="rmb"></i>
+                      <i class="icon iconfont should-uniq icon-icon- btn-active" data-value="bar"></i>
+                      <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
+                      <i class="icon iconfont icon-Group- icon-btn-xiazai" data-value="download"></i>
+                      <i class="icon iconfont icon-tooltip-outline show-tip-area icon-btn-tishi" data-value="tip"></i>
                     </div>
-                    <div class="date-component icon iconfont icon-rili hidden" id="area-month">
-                      <input type="text" id="area-monthcontainer" class="date-input">
+                    <div id="area-chart-instance" class="chart">
+                      图表数据加载中...
                     </div>
-                    <div class="date-component icon iconfont icon-rili hidden" id="area-year">
-                      <input type="text" id="area-yearcontainer" class="date-input">
-                    </div>
-                  </div>
-                  <div class="area-operate-grp">
-                    <i class="icon iconfont icon-RMB-area" data-value="rmb"></i>
-                    <i class="icon iconfont should-uniq icon-icon- btn-active" data-value="bar"></i>
-                    <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
-                    <i class="icon iconfont icon-Group-" data-value="download"></i>
-                    <i class="icon iconfont icon-tooltip-outline show-tip-area" data-value="tip"></i>
                   </div>
                 </div>
               </div>
-              <div class="chart-container">
-                <div id="area-chart-instance" class="chart"></div>
-              </div>
+
               <div class="area-comparison">
                 <div class="comparison-sort">
                   <div>
-                    <i class="icon iconfont icon-heguipaiming"></i><span>分项排名</span>
+                    <!-- <i class="icon iconfont icon-heguipaiming"></i> -->
+                    <span>分项排名</span>
                     <div class="op-grp">
                       <input type="button" class="btn op-btn-active" data-id="usage" value="用量">
                       <input type="button" class="btn" data-id="cost" value="费用">
@@ -102,7 +130,8 @@
                 </div>
                 <div class="comparison-proportion">
                   <div>
-                    <i class="icon iconfont icon-tongji"></i><span>分项占比</span>
+                    <!-- <i class="icon iconfont icon-tongji"></i> -->
+                    <span>分项占比</span>
                     <div class="proportion-grp">
                       <div>
                         <div class="op-btn">操作<i class="icon iconfont icon-xiaotuziCduan_"></i></div>
@@ -132,60 +161,86 @@
             <div class="meter-info-container hidden close">
               <table class="info-table"></table>
             </div>
-            <div class="condition">
-              <div class="parameter-overlay hidden close">
-                <div class="triangle-overlay-border"></div>
-                <div class="triangle-overlay"></div>
-              </div>
-              <div class="parameter-container">
-                <div class="parameter">
-                  <div class="parameter-left">
-                    <div class="param-title">当前表参数</div>
-                    <div id="onshowmoreparameter" class="param-choose hidden close">更多参数<i class="icon iconfont icon-xiaotuziCduan_"></i></div>
-                  </div>
-                  <div class="parameter-right"></div>
+            <div class="detail-container">
+              <div class="condition condition-detail">
+                <div class="parameter-overlay hidden close">
+                  <div class="triangle-overlay-border"></div>
+                  <div class="triangle-overlay"></div>
                 </div>
-                <div class="comparsion">
-                  <div class="comparsion-left">
-                    <div class="meter-title">当前对比表</div>
-                    <div class="meter-choose">+增加对比</div>
+                <div class="out-parameter">
+                  <!-- 左半部分 -->
+                  <div class="parameter-container">
+                    <div class="top-chart">
+                      <!-- 时间 -->
+                      <div class="search-container-detail">
+                        <div class="time">时间</div>
+                        <div class="area-grp">
+                          <div class="btn-grp">
+                            <div class="btn date-active" data-value="2">日</div>
+                            <div class="btn" data-value="3">周</div>
+                            <div class="btn" data-value="4">月</div>
+                            <div class="btn" data-value="5">年</div>
+                          </div>
+                          <div class="date-grp">
+                            <input type="hidden" id="datevalue">
+                            <div class="date-component icon iconfont icon-rili" id="day">
+                              <input type="text" id="daycontainer" class="date-input">
+                            </div>
+                            <div class="date-component icon iconfont icon-rili hidden" id="month">
+                              <input type="text" id="monthcontainer" class="date-input">
+                            </div>
+                            <div class="date-component icon iconfont icon-rili hidden" id="year">
+                              <input type="text" id="yearcontainer" class="date-input">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- 表参数 -->
+                      <div class="parameter">
+                        <div class="parameter-left">
+                          <div class="param-title">当前表参数</div>
+                          <div id="onshowmoreparameter" class="param-choose hidden close">更多参数<i class="icon iconfont icon-xiaotuziCduan_"></i></div>
+                        </div>
+                        <div class="parameter-right"></div>
+                      </div>
+                    </div>
+
+                    <!-- echart和图标 -->
+                    <div class="bottom-chart">
+                      <div class="operate-grp">
+                        <div class="on-off-button">
+                          <input type="checkbox" name="button" id="button">
+                          <label for="button" class="blue"></label>
+                        </div>
+                        <i class="icon iconfont icon-RMB icon-btn-RMB" data-value="rmb"></i>
+                        <i class="icon iconfont should-uniq icon-icon- btn-active" id="bar" data-value="bar"></i>
+                        <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
+                        <i class="icon iconfont should-uniq icon-tubiao-bingtu icon-btn-bingtu hidden" id="pie" data-value="pie"></i>
+                        <i class="icon iconfont icon-Group- icon-btn-xiazai" data-value="download"></i>
+                        <i class="icon iconfont icon-tooltip-outline show-tip icon-btn-tishi" data-value="tip"></i>
+                      </div>
+                      <div id="chart-instance" class="chart"></div>
+                    </div>
                   </div>
-                  <div class="comparsion-right"></div>
-                </div>
-              </div>
-              <div class="search-container">
-                <div class="btn-grp">
-                  <div class="btn date-active" data-value="2">日</div>
-                  <div class="btn" data-value="3">周</div>
-                  <div class="btn" data-value="4">月</div>
-                  <div class="btn" data-value="5">年</div>
-                </div>
-                <div class="date-grp">
-                  <input type="hidden" id="datevalue">
-                  <div class="date-component icon iconfont icon-rili" id="day">
-                    <input type="text" id="daycontainer" class="date-input">
+                  <!-- 右半部分 -->
+                  <div class="chart-container1">
+                    <!-- 对比表 -->
+                    <div class="comparsion">
+                      <div class="comparsion-left">
+                        <div class="meter-title">当前对比表</div>
+                        <div class="meter-choose">+增加对比</div>
+                      </div>
+                      <div class="comparsion-right"></div>
+                    </div>
+                    <!-- 同期对比数据 -->
+                    <div class="summary-container" id="summary-container"></div>
+                    <div class="vmeter-summary hidden" id="vmeter-summary">
+                      <div class="vmeter" id="vmeter-content"></div>
+                    </div>
                   </div>
-                  <div class="date-component icon iconfont icon-rili hidden" id="month">
-                    <input type="text" id="monthcontainer" class="date-input">
-                  </div>
-                  <div class="date-component icon iconfont icon-rili hidden" id="year">
-                    <input type="text" id="yearcontainer" class="date-input">
-                  </div>
-                </div>
-                <div class="operate-grp">
-                  <i class="icon iconfont icon-RMB" data-value="rmb"></i>
-                  <i class="icon iconfont should-uniq icon-icon- btn-active" id="bar" data-value="bar"></i>
-                  <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
-                  <i class="icon iconfont should-uniq icon-tubiao-bingtu hidden" id="pie" data-value="pie"></i>
-                  <i class="icon iconfont icon-Group-" data-value="download"></i>
-                  <i class="icon iconfont icon-tooltip-outline show-tip" data-value="tip"></i>
                 </div>
               </div>
             </div>
-            <div class="chart-container">
-              <div id="chart-instance" class="chart"></div>
-            </div>
-            <div class="summary-container" id="summary-container"></div>
           </div>
         </div>
         <div class="func-tab hidden">
@@ -197,6 +252,9 @@
             </ul>
             <div class="layui-tab-content">
               <div id="graph-data" class="graph-data">
+                <!-- <div class="total_Num">
+                  <span>总用量</span><span class="total_Num"></span><span class="total_Unit"></span>
+                </div> -->
                 <div class="exception-manager" data-toggle='close' style="display: none"><span>异常数据管理<i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
                 <div class="exception-box" style="display: none">
                   <div class="exception-condition">
@@ -206,9 +264,9 @@
                       <div class="date-component icon iconfont icon-rili exception-date" id="exception-day">
                         <input type="text" id="exception-daycontainer" class="date-input">
                       </div>
-                      <span>小于数值</span>
-                      <input type="text" class="exception-input" id="min-val-input">
                       <span>大于数值</span>
+                      <input type="text" class="exception-input" id="min-val-input">
+                      <span>小于数值</span>
                       <input type="text" class="exception-input" id="max-val-input">
                     </div>
                     <div class="exception-rule"><span>过滤规则：</span>
@@ -279,8 +337,8 @@
                         <div class="chart-instance" id="meter-fgp-usage-chart"></div>
                       </div>
                       <div class="fgp-item-pie">
-                        <div class="fgp-usage-piechart-now-instance" id="meter-fgp-usage-piechart-now"></div>
                         <div class="fgp-usage-piechart-yes-instance" id="meter-fgp-usage-piechart-yes"></div>
+                        <div class="fgp-usage-piechart-now-instance" id="meter-fgp-usage-piechart-now"></div>
                       </div>
                     </div>
                   </div>
@@ -293,8 +351,8 @@
                         <div class="chart-instance" id="meter-fgp-cost-chart"></div>
                       </div>
                       <div class="fgp-item-pie">
-                        <div class="fgp-cost-piechart-now-instance" id="meter-fgp-cost-piechart-now"></div>
                         <div class="fgp-cost-piechart-yes-instance" id="meter-fgp-cost-piechart-yes"></div>
+                        <div class="fgp-cost-piechart-now-instance" id="meter-fgp-cost-piechart-now"></div>
                       </div>
                     </div>
                   </div>
@@ -359,8 +417,8 @@
                         <div class="chart-instance" id="fgp-usage-chart-instance"></div>
                       </div>
                       <div class="fgp-item-pie">
-                        <div class="fgp-usage-piechart-now-instance" id="fgp-usage-piechart-now-instance"></div>
                         <div class="fgp-usage-piechart-yes-instance" id="fgp-usage-piechart-yes-instance"></div>
+                        <div class="fgp-usage-piechart-now-instance" id="fgp-usage-piechart-now-instance"></div>
                       </div>
                     </div>
                   </div>
@@ -373,8 +431,8 @@
                         <div class="chart-instance" id="fgp-cost-chart-instance"></div>
                       </div>
                       <div class="fgp-item-pie">
-                        <div class="fgp-cost-piechart-now-instance" id="fgp-cost-piechart-now-instance"></div>
                         <div class="fgp-cost-piechart-yes-instance" id="fgp-cost-piechart-yes-instance"></div>
+                        <div class="fgp-cost-piechart-now-instance" id="fgp-cost-piechart-now-instance"></div>
                       </div>
                     </div>
                   </div>
@@ -384,79 +442,185 @@
           </div>
         </div>
       </div>
-      <div class="content-footer hidden"></div>
+      <!-- <div class="content-footer hidden"></div> -->
     </div>
     <div class="alarm-content hidden">
       <div class="alarm-content-right">
         <div class="alarm-header">
           <div class="icon iconfont icon-back navigate-back">
             <span>返回</span>
-            <div class="alarm-titile"><span id="item-name"></span><span>-仪表报警中心</span></div>
+            <div class="alarm-titile"><span id="item-name"></span><span id="alarm-title-name"></span><span class="area__meter"></span></div>
           </div>
         </div>
         <div class="alarm-info">
           <div class="meter-alarm-info hidden"></div>
-          <div class="area-alarm-info">
-            <table>
-              <tbody>
-                <tr>
-                  <td>总表数：45502 个</td>
-                  <td>离线仪表：<span class="exception-title">550</span>&nbsp;个</td>
-                  <td>超限仪表：<span class="exception-title">440</span>&nbsp;个</td>
-                </tr>
-                <tr>
-                  <td>正常仪表：550 个</td>
-                  <td>已屏蔽仪表：0 个</td>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div class="area-alarm-info"></div>
           <div class="exception-operate-box">
-            <input type="button" class="btn exception-operate-btn" value="解除报警">
-            <input type="button" class="btn exception-operate-btn" value="屏蔽设备">
+            <input type="button" id="area-alarm" class="btn exception-operate-btn" value="解除报警">
+            <input type="button" id="shield-device" class="btn exception-operate-btn" value="屏蔽设备">
+          </div>
+          <div class="meter-operate-box hidden">
+            <input type="button" id="meter-alarm" class="btn exception-operate-btn change-gray" value="解除报警">
+            <input type="button" id="meter-shield-device" class="btn exception-operate-btn" value="屏蔽设备">
+            <input type="button" id="meter-stop-alarm" class="btn exception-operate-btn" value="解除屏蔽">
+            <input type="button" id="shutdown-power" class="btn exception-operate-btn" value="关闭电源">
           </div>
           <div class="clear"></div>
         </div>
-        <div class="alarm-setter">
-
+        <div class="alarm-setter hidden">
+          <div class="setter-header"><span id="alarm-setting" class="header-title icon iconfont">报警设置</span></div>
+          <div class="setter-content">
+            <div class="left-blank"></div>
+            <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+              <ul class="layui-tab-title">
+                <li class="layui-this" data-id="alarm-condition-list" style="font-size: 14px !important; font-weight: normal; padding-left: 0">报警条件列表</li>
+                <li data-id="alarm-condition-tpl" style="font-size: 14px !important; font-weight: normal">报警条件模板</li>
+              </ul>
+              <div class="layui-tab-content">
+                <div id="alarm-condition-list" class="alarm-condition-list">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>报警名称</th>
+                        <th>参数类型</th>
+                        <th>报警类型</th>
+                        <th>预警值</th>
+                        <th>报警值</th>
+                        <th>生效时间</th>
+                        <th>重复</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody class="alarm-condition">
+                      <tr class="alaram-condition-norecord">
+                        <td colspan="8" class="norecord-cell">未设置报警条件，点击右上方按钮添加</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="paging-device" id="paging-alarm-condition"></div>
+                  <div class="clear"></div>
+                </div>
+                <div id="alarm-condition-tpl" class="alarm-condition-tpl hidden">
+                  <div class="tpl-list"></div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>报警名称</th>
+                        <th>参数类型</th>
+                        <th>报警类型</th>
+                        <th>预警值</th>
+                        <th>报警值</th>
+                        <th>生效时间</th>
+                        <th>重复</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody class="alarm-tpl">
+                      <tr class="alarm-tpl-norecord">
+                        <td colspan="8" class="norecord-cell">未设置报警条件模板，请在报警条件列表中添加模板</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="paging-device" id="paging-alarm-tpl"></div>
+                  <div class="clear"></div>
+                </div>
+              </div>
+            </div>
+            <div class="right-blank"></div>
+            <div class="alarm-btn-grp">
+              <input type="button" class="btn btn-alarm-condition" value="+ 添加报警条件">
+            </div>
+          </div>
         </div>
         <div class="alarm-list">
           <div class="meter-alarm-event hidden">
-            <div class="event-header"></div>
-            <div class="event-list"></div>
-          </div>
-          <div class="area-alarm-device-list">
-            <div class="device-header">
-              <div>当前报警设备<span class="exception-title alarm-device-count">15</span></div>
-              <div class="alarm-device-filter">
-                <div class="opt chk">
-                  <input class="magic-checkbox" type="checkbox" checked>
+            <div class="event-header">
+              <div>当前报警事件<span class="exception-title alarm-meter-count" id="meter-alarm-count">0</span></div>
+              <div class="meter-alarm-filter">
+                <div class="opt chk" data-id="sa">
+                  <input class="magic-checkbox" id="meter-alarm-all" type="checkbox" value='4'>
                   <label class="check-box all-checkbox"></label>
-                  <span class="all-span">全选</span>                
+                  <span class="all-span">全部</span>
                 </div>
-                <div class="opt chk">
-                  <input class="magic-checkbox" type="checkbox">
+                <div class="opt chk" data-id="ofl">
+                  <input class="magic-checkbox" type="checkbox" value='2'>
                   <label class="check-box offline-checkbox"></label>
                   <span class="offline-span">离线</span>
                 </div>
-                <div class="opt chk">
-                  <input class="magic-checkbox" type="checkbox">
+                <div class="opt chk" data-id="yj">
+                  <input class="magic-checkbox" type="checkbox" value='0'>
                   <label class="check-box warn-checkbox"></label>
                   <span class="warn-span">预警</span>
                 </div>
-                <div class="opt chk">
-                  <input class="magic-checkbox" type="checkbox">
+                <div class="opt chk" data-id="bj">
+                  <input class="magic-checkbox" type="checkbox" value='1'>
                   <label class="check-box alarm-checkbox"></label>
                   <span class="alarm-span">报警</span>
-                </div>        
+                </div>
+              </div>
+              <div class="meter-alarm-history">
+                <input type="button" class="btn btn-history" value="历史报警">
+              </div>
+            </div>
+            <div class="event-list">
+              <table>
+                <thead>
+                  <tr>
+                    <th>报警名称</th>
+                    <th>发生时间</th>
+                    <th>采集值</th>
+                    <th>超限量</th>
+                    <th>报警类型</th>
+                    <th>预警值</th>
+                    <th>报警值</th>
+                  </tr>
+                </thead>
+                <tbody id="meter-alarm-list">
+                  <tr class="">
+                    <td colspan="8" class="norecord-cell">设备当前运行正常，无报警</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="paging-meter" id="paging-meter"></div>
+            <div class="clear"></div>
+          </div>
+          <div class="area-alarm-device-list">
+            <div class="device-header">
+              <div>当前报警设备<span class="exception-title alarm-device-count">0</span></div>
+              <div class="alarm-device-filter">
+                <div class="opt chk" data-id="sa">
+                  <input class="magic-checkbox" id="alarm-all" type="checkbox" value='4'>
+                  <label class="check-box all-checkbox"></label>
+                  <span class="all-span">全部</span>
+                </div>
+                <div class="opt chk" data-id="ofl">
+                  <input class="magic-checkbox" type="checkbox" value='2'>
+                  <label class="check-box offline-checkbox"></label>
+                  <span class="offline-span">离线</span>
+                </div>
+                <div class="opt chk" data-id="yj">
+                  <input class="magic-checkbox" type="checkbox" value='0'>
+                  <label class="check-box warn-checkbox"></label>
+                  <span class="warn-span">预警</span>
+                </div>
+                <div class="opt chk" data-id="bj">
+                  <input class="magic-checkbox" type="checkbox" value='1'>
+                  <label class="check-box alarm-checkbox"></label>
+                  <span class="alarm-span">报警</span>
+                </div>
               </div>
             </div>
             <div class="device-list">
               <table>
                 <thead>
                   <tr>
-                    <th style="width: 50px">选择</th>
+                    <th style="width: 50px">
+                      <div class="opt">
+                        <input class="magic-checkbox" type="checkbox" id="select-all">
+                        <label for="select-all" class="select-all"></label>
+                      </div>
+                    </th>
                     <th>设备名称</th>
                     <th>报警数</th>
                     <th>最后报警发生时间</th>
@@ -470,44 +634,9 @@
                     <th>操作</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody id="device-alarm-list">
                   <tr>
-                    <td>
-                      <div class="opt device-chk">
-                        <input class="magic-checkbox" type="checkbox" checked>
-                        <label class="check-box"></label> 
-                      </div>
-                    </td>
-                    <td>ADO-Device-COM</td>
-                    <td>98</td>
-                    <td>08-16 12:20</td>
-                    <td>离线报警</td>
-                    <td>A相电流</td>
-                    <td>150</td>
-                    <td>46%</td>
-                    <td>上限</td>
-                    <td>90</td>
-                    <td>100</td>
-                    <td><span class="link">查看详情</span></td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="opt device-chk">
-                        <input class="magic-checkbox" type="checkbox">
-                        <label class="check-box"></label> 
-                      </div>
-                    </td>
-                    <td>ADO-Device-COM01</td>
-                    <td>198</td>
-                    <td>08-16 12:20</td>
-                    <td>离线报警</td>
-                    <td>B相电流</td>
-                    <td>350</td>
-                    <td>66%</td>
-                    <td>上限</td>
-                    <td>190</td>
-                    <td>780</td>
-                    <td><span class="link">查看详情</span></td>
+                    <td colspan="12" class="norecord-cell">设备当前运行正常，无报警</td>
                   </tr>
                 </tbody>
               </table>
@@ -577,6 +706,8 @@
   </div>
   <div id="choose-meter-for-comparison" class="comparison-body" style="display: none;">
     <div class="dialogModal_header modal_header">选择对比仪表</div>
+    <div class='hint-info'>[注]在选择对比仪表时，被对比的仪表颜色为灰色为不可选状态，请与离线仪表区别</div>
+    <div class="clear"></div>
     <div class="dialogModal_content meter-comparison-content">
       <div class="choose-meter-list"></div>
     </div>
@@ -623,10 +754,149 @@
       </div>
     </div>
   </div>
+  <div id="area-alarm-modal" style="display: none;">
+    <div class="dialogModal_header modal_header">解除报警</div>
+    <div class="dialogModal_content area-alarm-content">
+      <div class="">
+        <div class="radio-grp">
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="r1" value="0">
+            <label for="r1">常规设置报警</label>
+          </div>
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="r2" value="1">
+            <label for="r2">设备故障</label>
+          </div>
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="r3" value="2">
+            <label for="r3">人为原因</label>
+          </div>
+        </div>
+        <div>
+          <div class="opt other-reason">
+            <input class="magic-radio" type="radio" id="other-reason" value="3">
+            <label for="other-reason">其他原因（选填）</label>
+          </div>
+          <div style="position: relative">
+            <textarea class="area-alarm-modal-textarea" readonly></textarea>
+            <span class="len-limit">0/30</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialogModal_footer">
+      <button type="button" class="save-btn" data-dialogModalBut="ok">确定</button>
+      <button type="button" class="cancel-btn" data-dialogModalBut="cancel">取消</button>
+    </div>
+  </div>
+  <div id="rmove-shield-modal" style="display:none">
+    <div class="dialogModal_content device-shield-content">
+      <div style='margin:50px 20px;'>
+        <div class="radio-grp" style='margin-bottom: 30px'>
+          <div class="opt">
+            <label>确定是否解除设备的屏蔽？</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="set-shield-modal" style="display: none;">
+    <div class="dialogModal_content device-shield-content">
+      <div style='margin: 30px;'>
+        <div class="radio-grp" style='margin-bottom: 30px'>
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="shield" value="1">
+            <label for="shield">屏蔽</label>
+          </div>
+        </div>
+        <div class style="position: relative">
+          <div class="opt">
+            <input class="magic-radio" type="radio" id="shield-time" value="2">
+            <label for="shield-time">时间段屏蔽</label>
+          </div>
+          <div class="date-component icon iconfont icon-rili sheild-time-container">
+            <input type="text" id="sheild-time-container" class="date-input" style="width: 320px">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="delete-confirm-modal" style="display: none;">
+    <div class="dialogModal_header modal_header">删除确认</div>
+    <div class="dialogModal_content device-shield-content">
+      确认是否删除这个报警模板？
+    </div>
+    <div class="dialogModal_footer">
+      <button type="button" class="save-btn" data-dialogModalBut="ok">确定</button>
+      <button type="button" class="cancel-btn" data-dialogModalBut="cancel">取消</button>
+    </div>
+  </div>
+  <div id="meter-alarm-history-modal" style="display: none;">
+    <div class="meter-history-header">报警历史事件<span class="exception-title alarm-meter-count" id="meterHistory">0</span>
+      <div class="history-header">
+        <div class="date-component icon iconfont icon-rili" style='background-color: #fff;font-size:14px;font-weight:normal'>
+          <input type="text" id="meter-history-daycontainer" class="date-input">
+        </div>
+        <div class="history-filter">
+          <div class="opt chk" data-id="sa">
+            <input class="magic-checkbox" type="checkbox" id="history-all" value='4'>
+            <label class="check-box all-checkbox"></label>
+            <span class="all-span" style='position: absolute;top: -5px;left: -280px;font-weight: normal'>全部</span>
+          </div>
+          <div class="opt chk" data-id="ofl">
+            <input class="magic-checkbox" type="checkbox" value='2'>
+            <label class="check-box offline-checkbox"></label>
+            <span class="offline-span" style='position: absolute;top: -5px;left: -210px;font-weight: normal'>离线</span>
+          </div>
+          <div class="opt chk" data-id="yj">
+            <input class="magic-checkbox" type="checkbox" value='0'>
+            <label class="check-box warn-checkbox"></label>
+            <span class="warn-span" style='position: absolute;top: -5px;left: -140px;font-weight: normal'>预警</span>
+          </div>
+          <div class="opt chk" data-id="bj">
+            <input class="magic-checkbox" type="checkbox" value='1'>
+            <label class="check-box alarm-checkbox"></label>
+            <span class="alarm-span" style='position: absolute;top: -5px;left: -70px; width: 50px;font-weight: normal'>报警</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialogModal_content meter-alarm-history-content">
+      <div class="meter-history-list">
+        <table>
+          <thead>
+            <tr>
+              <th>报警名称</th>
+              <th>发生时间</th>
+              <th>参数类型</th>
+              <th>采集值</th>
+              <th>超限量</th>
+              <th>报警类型</th>
+              <th>预警值</th>
+              <th>报警值</th>
+              <th>处理方式</th>
+              <th>处理时间</th>
+              <th>处理人</th>
+              <th>处理记录</th>
+            </tr>
+          </thead>
+          <tbody class="meter-history-modal">
+            <tr>
+              <td colspan="12" class="norecord-cell">当前时间段设备运行正常，没有报警记录</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="history-paging" id="history-paging"></div>
+      <div class="clear"></div>
+    </div>
+  </div>
 </body>
 <script src="../../dist/lib/jquery.namespace.js" type="text/javascript"></script>
 <script src="../../dist/lib/esdpec.common.js" type="text/javascript"></script>
 <script src="../../dist/statistics.domain.js" type="text/javascript"></script>
+
+
 <script type="text/html" id="meter-info-template">
   <tr>
     <td>区域名称：{{data.area}}</td>
@@ -648,32 +918,49 @@
 </script>
 <script type="text/html" id="contemporary-Comparison-template">
   <div class="summary-header">
-      <div class="dosage-value"><span>日用量对比昨日同期</span><span class="icon iconfont {{if data.sum_per>0}}icon-negative{{else}}icon-positive{{/if}}">{{data.sum_per}}%</span></div>
-      <div class="average-value"><span>对比同期平均</span><span class="icon iconfont {{if data.avg_per>0}}icon-negative{{else}}icon-positive{{/if}}">{{data.avg_per}}%</span></div>
-      <div class="operate-box" id="onshowdata">收起展示<i class="icon iconfont icon-xiaotuziCduan_1"></i></div>
+      <div class="dosage-value">
+        <span>{{data.title}}</span>
+        <span>对比同期平均</span>
+      </div>
+      <div class="average-value">
+        <span class="icon iconfont {{if data.sum_per>0}}icon-negative{{else}}icon-positive{{/if}}">{{data.sum_per}}%</span>
+        <span class="icon iconfont {{if data.avg_per>0}}icon-negative{{else}}icon-positive{{/if}}">{{data.avg_per}}%</span>
+      </div>
     </div>
     <div class="progress-container">
-      <div style="width:{{data.now_sum_width}}">
-        <!--remark: Set the maximum to 98%, then divide by the maximum and multiply by 98% -->
-        <div class="usage-value-progress">
-          <div class="progress-title" id="now_sum_val" style="left: calc(100% - 10px);"><span>今日用量</span><span>{{data.now_sum_val}}{{data.unit}}</span></div>
+      <div>
+        <div style="width:{{data.now_sum_width}}">
+          <!--remark: Set the maximum to 98%, then divide by the maximum and multiply by 98% -->
+          <div class="usage-value-progress">
+            <div class="progress-title" id="now_sum_val" style="left: calc(100% - 10px);"><span>{{data.firstTitle}}用量</span><span>{{data.now_sum_val}}{{data.unit}}</span></div>
+          </div>
         </div>
       </div>
-      <div style="width: {{data.last_sum_width}}">
-        <div class="usage-value-progress same-time-value">
-          <div class="progress-title" id="last_sum_val" style="left: calc(100% - 10px);"><span>昨日同期</span><span>{{data.last_sum_val}}{{data.unit}}</span></div>
+        <div>
+        <div style="width: {{data.last_sum_width}}">
+          <div class="usage-value-progress same-time-value">
+            <div class="progress-title" id="last_sum_val" style="left: calc(100% - 10px);"><span>{{data.lastTitle}}同期</span><span>{{data.last_sum_val}}{{data.unit}}</span></div>
+          </div>
         </div>
       </div>
-      <div style="width: {{data.avg_val_width}}">
-        <div class="usage-value-progress average-comparsion-value">
-          <div class="progress-title" id="avg_val" style="left: calc(100% - 10px);"><span>同期平均值</span><span>{{data.avg_val}}{{data.unit}}</span></div>
+      <div>
+        <div style="width: {{data.avg_val_width}}">
+            <div class="usage-value-progress average-comparsion-value">
+              <div class="progress-title" id="avg_val" style="left: calc(100% - 10px);"><span>同期平均值</span><span>{{data.avg_val}}{{data.unit}}</span></div>
+            </div>
         </div>
       </div>
     </div>
 </script>
 <script type="text/html" id="list-body-template">
   {{if selectedParameterList.length > 0}}{{each selectedParameterList param index}}
-    <div class="choose-param-item {{if param.isDefault}}param-item-active{{/if}}" data-id="{{param.id}}">{{param.name}}</div>
+    <div class="choose-param-item {{if param.isDefault}}param-item-active{{/if}}" data-id="{{param.id}}">
+      <span>{{param.name}}</span>
+      <!-- {{if param.type === 0}}
+      <span>总用量:</span>
+      <span class="now_Sum"></span><span>{{param.unit}}</span>
+      {{/if}} -->
+    </div>
   {{/each}}{{/if}}
 </script>
 <script type="text/html" id="graph-table-template">
@@ -719,7 +1006,7 @@
 </script>
 <script type="text/html" id="original-table-body-template">
   {{if parameterList.length > 0}}{{each parameterList param index}}
-  <tr>
+  <tr data-id='{{param.mfid}}'>
     <td>{{param.name}}</td>
     <td>{{param.unit}}</td>
     <td>{{param.interval}}S</td>
@@ -779,5 +1066,505 @@
   </tr>
   {{/each}}{{/if}}
 </script>
+<script type="text/html" id="area-exception-info-template">
+  <table>
+    <tbody>
+      <tr>
+        <td>总表数：{{data.AllMeterCount}} 个</td>
+        <td>离线仪表：<span class="exception-title">{{data.OffLineMeterCount}}</span>&nbsp;个</td>
+        <td>超限仪表：<span class="exception-title">{{data.OverRunMeterCount}}</span>&nbsp;个</td>
+      </tr>
+      <tr>
+        <td>正常仪表：{{data.NormalMeterCount}} 个</td>
+        <td>已屏蔽仪表：{{data.ShieldMeterCount}} 个</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</script>
+<script type="text/html" id="device-alarm-list-template">
+  {{if deviceAlarmList.length > 0 }}
+  {{each deviceAlarmList data index}}
+  <tr>
+    <td>
+      <div class="opt device-chk" data-id="{{data.MeterId}}">
+        {{if data.isChecked}}
+        <input class="magic-checkbox" type="checkbox" checked>
+        {{else}}
+        <input class="magic-checkbox" type="checkbox">
+        {{/if}}
+        <label class="check-box">&nbsp;&nbsp;&nbsp;&nbsp;</label> 
+      </div>
+    </td>
+    <td>{{data.MeterName}}</td>
+    <td>{{data.Count}}</td>
+    <td>{{data.LastAlarmTime}}</td>
+    <td>{{data.AlarmName}}</td>
+    <td>{{data.MfName}}</td>
+    <td>{{data.CollectValue}}</td>
+    <td>{{data.percent}}</td>
+    <td>{{data.alarmType}}</td>
+    <td>{{data.PreWarnValue}}</td>
+    <td>{{data.OnWarnValue}}</td>
+    <td><span class="link" data-id="{{data.MeterId}}" data-mfid="{{data.MfId}}">查看详情</span></td>
+  </tr>
+  {{/each}}
+  {{else}}
+  <tr><td colspan="12" class="norecord-cell">设备当前运行正常，无报警</td></tr>
+  {{/if}}
+</script>
+<script type="text/html" id="meter-alarm-info-template">
+  <table>
+    <tbody>
+      <tr>
+        <td>区域名称：{{data.areaName}}</td>
+        <td>仪表地址：{{data.MeterAddress}}</td>
+        <td>数据类型：{{data.DataType}}</td>
+      </tr>
+      <tr>
+        <td>仪表型号：{{data.MeterModelName}}</td>
+        <td>串口：{{data.SpPortName}}</td>
+        <td id='alarm-status'>仪表状态：{{data.MeterStatus}}</td>
+      </tr>
+    </tbody>
+  </table>
+</script>
+<script type="text/html" id="tpl-list-template">
+  {{if tplTypeList.length > 0}}{{each tplTypeList data index}}
+  <div class="opt">
+    <input class="magic-checkbox" type="radio" id="r_{{data.Id}}" value="{{data.Id}}">
+    <label>{{data.Name}}报警模板</label>
+  </div>
+  {{/each}}
+  {{/if}}
+</script>
+<script type="text/html" id="alarm-condition-template">
+  {{if alarmConditionList.length > 0}}
+{{each alarmConditionList data index}}
+<tr id="{{data.Id}}">
+  <td id="myAlarmName_{{data.Id}}" style="position:relative">{{data.AlarmName}}<span class="tempIcon_{{index}}"></span></td>
+  <td id="myDataType_{{data.Id}}">{{data.Name}}</td>
+  <td id="myAlarmType_{{data.Id}}">{{data.AlarmType}}</td>
+  <td id="myPreValue_{{data.Id}}">{{data.PreWarnValue}}</td>
+  <td id="myOnValue_{{data.Id}}">{{data.OnWarnValue}}</td>
+  <td id="myValidate_{{data.Id}}" style='width: 120px'>{{data.Validate}}</td>
+  <td id="myRepeatWeek_{{data.Id}}" style='width: 150px;padding: 0 20px;'>{{data.RepeatWeek}}</td>
+  <td style='width: 120px;'>
+    <div class="con-oper-grp">
+      <div class="opt con_enable" style='display: inline-block' data-id="{{data.Id}}">
+        {{if data.IsEnabled}}
+        <input class="magic-checkbox" type="checkbox" id="c_{{data.Id}}" value="{{data.Id}}" checked>
+        {{else}}
+        <input class="magic-checkbox" type="checkbox" id="c_{{data.Id}}" value="{{data.Id}}">
+        {{/if}}
+        <label style='padding-left: 25px; color:#000'>启用</label>
+      </div>
+      <button class='condition-opt con_edit' data-id="{{data.Id}}"><i class="icon iconfont icon-edit alarm-op"></i>编辑</button>
+      <button class='condition-opt con_del' data-id="{{data.Id}}"><i class="icon iconfont icon-delete1 alarm-op"></i>删除</button>
+    </div>
+  </td>
+</tr>
+{{/each}}
+{{else}}
+  <tr class="alaram-condition-norecord"><td colspan="8" class="norecord-cell">未设置报警条件，点击右上方按钮添加</td></tr>
+{{/if}}
+</script>
+<script type="text/html" id="alarm-tpl-template">
+  {{if alarmTplList.length > 0}}
+  {{each alarmTplList data index}}
+    <tr id='{{data.Id}}'>
+      <td id="myAlarmName_{{data.Id}}" style="position:relative">{{data.AlarmName}}<span class="tempIcon_{{index}}"></td>
+      <td id="myDataType_{{data.Id}}">{{data.Name}}</td>
+      <td id="myAlarmType_{{data.Id}}">{{data.alarmType}}</td>
+      <td id="myPreValue_{{data.Id}}">{{data.PreWarnValue}}</td>
+      <td id="myOnValue_{{data.Id}}">{{data.OnWarnValue}}</td>
+      <td id="myValidate_{{data.Id}}">{{data.validate}}</td>
+      <td id="myRepeatWeek_{{data.Id}}" style='width: 200px; padding: 0 20px'>{{data.repeatChn}}</td>
+      <td style="width: 150px;">
+        <div class="alarm-tpl-operate">
+          <div class="opt enable_" data-id="{{data.Id}}">
+            {{if data.IsEnabled}}
+            <input class="magic-checkbox" type="checkbox" id="c_{{data.Id}}" value="{{data.Id}}" checked>
+            {{else}}
+            <input class="magic-checkbox" type="checkbox" id="c_{{data.Id}}" value="{{data.Id}}">
+            {{/if}}
+            <label style='padding-left: 25px; color:#000'>启用</label>
+          </div>
+          <div class="edit_" data-id="{{data.Id}}"><i class="icon iconfont icon-edit alarm-op"></i>编辑</div>
+          <div class="del_" data-id="{{data.Id}}"><i class="icon iconfont icon-delete1 alarm-op"></i>删除</div>
+          <div class="rel_" data-id="{{data.Id}}"><i class="icon iconfont icon-tubiao11 alarm-op"></i>关联仪表</div>
+        </div>
+      </td>
+    </tr>
+  {{/each}}
+  {{else}}
+    <tr><td colspan="8" class="norecord-cell">未设置报警条件模板，请在报警条件列表中添加模板</td></tr>
+  {{/if}}
+</script>
+<script type="text/html" id="meter-alarm-list-template">
+  {{if meterAlarmList.length > 0}}
+  {{each meterAlarmList data index}}
+  <tr>
+    <td>{{data.AlarmName}}</td>
+    <td>{{data.AlarmTime}}</td>
+    <td>{{data.CollectValue}}</td>
+    <td>{{data.percent}}%</td>
+    <td>{{data.AlarmType}}</td>
+    <td>{{data.PreWarnValue}}</td>
+    <td>{{data.OnWarnValue}}</td>
+  </tr>
+  {{/each}}
+  {{else}}
+  <tr>
+    <td colspan="8" class="norecord-cell">设备当前运行正常，无报警</td>
+  </tr>
+  {{/if}}
+</script>
+<script type="text/html" id="new-rule-template">
+  <tr id="{{ruleId}}">
+  <td><input type='text' class="editable" id="name_{{ruleId}}" value="{{AlarmName}}"></td>
+  <td class="fieldTd">
+    {{each meterFieldTypes data index}}
+    <div class="opt" >
+      <input class="magic-radio" type="radio" value="{{data.Id}}" data-unit='{{data.Unit}}' data-type="{{data.MType}}">
+      <label style='padding-left: 25px; color:#000'>{{data.Name}}</label>
+    </div>
+    {{/each}}
+  </td>
+  <td class="alarmTypetd">
+    {{each alarmTypeValueList data index}}
+    <div class="opt">
+      <input class="magic-radio" type="radio" value="{{data.id}}" id="{{ruleId}}_{{data.id}}">
+      <label style='padding-left: 25px; color:#000'>{{data.val}}</label>
+    </div>
+    {{/each}}
+  </td>
+  <td>
+    <input type="text" class="editable" id="prewarn_{{ruleId}}" value="{{PreWarnValue}}">
+  </td>
+  <td>
+    <input type="text" class="editable" id="warn_{{ruleId}}" value="{{OnWarnValue}}">
+  </td>
+  <td style='width: 120px;'>
+    <input type="text" class="validate-container editable" id="validate_{{ruleId}}">
+  </td>
+  <td class="weektd">
+    {{each weekList week index}}
+    <div class="opt">
+      <input class="magic-checkbox" type="checkbox" value="{{week.val}}">
+      <label style='padding-left: 25px; color:#000'>{{week.name}}</label>
+    </div>
+    {{/each}}
+  </td>
+  <td style="width: 120px">
+    <div class="alarm-tpl-operate">
+      <div class="opt" id="tpl_{{ruleId}}">
+        <input class="magic-checkbox" type="checkbox" value="">
+        <label style='padding-left: 25px; color:#000'>保存为模板</label>
+      </div>
+      <div class="opt" id="enable_{{ruleId}}">
+        <input class="magic-checkbox" type="checkbox" value="">
+        <label style='padding-left: 25px; color:#000'>启用</label>
+      </div>
+      <div style="margin-top: 15px"><input type="button" class="btn saverule" value='保存' id="ok_{{ruleId}}"></div>
+      <div><input type="button" class="btn cancelrule" value='取消' id="cancel_{{ruleId}}"></div>
+    </div>
+  </td>
+</tr>
+</script>
+<script type="text/html" id="meter-history-modal-template">
+  {{if meterHistroyList.length > 0}}
+  {{each meterHistroyList data index}}
+  <tr>
+    <td>{{data.AlarmName}}</td>
+    <td>{{data.AlarmTime}}</td>
+    <td>{{data.MfName}}</td>
+    <td>{{data.CollectValue}}</td>
+    <td>{{data.percent}}%</td>
+    <td>{{data.AlarmType}}</td>
+    <td>{{data.PreWarnValue}}</td>
+    <td>{{data.OnWarnValue}}</td>
+    <td>{{data.DealType}}</td>
+    <td>{{data.AlarmDealTime}}</td>
+    <td>{{data.AlarmDealAccount}}</td>
+    <td>{{data.AlarmDealReasonDetail}}</td>
+  </tr>
+  {{/each}}
+  {{else}}
+    <tr><td colspan="12" class="norecord-cell">当前时间段设备运行正常，没有报警记录</td></tr>
+  {{/if}}
+</script>
+<script type="text/html" id="vmeter-data-comparison">
+  {{if vMeterFeatureData.length > 0}}
+  {{each vMeterFeatureData feature index}}
+  <div class='vmeter-item'>
+    <div class='vmeter-pie' style='background-color: {{feature.bgcolor}}'>{{feature.name}}</div>
+    <span class='vmeter-data'>{{feature.val}}{{feature.unit}}</span>
+  </div>
+  {{/each}}
+  {{/if}}
+</script>
 
+<div class="hidden" id="abnormal-data-model">
+  <div class='abnormal-header'>异常数据分摊</div>
+  <div class='abnormal-total-data'>
+    <ul>
+      <li>异常数据量: <span class="abnormal-total">5000</span></li>
+      <li>可分摊数据量: <span class="apportion"></span></li>
+      <li>数据中断区间：<span class="abnormal-start-time">2018-11-19 07:00</span> 至 <span class="abnormal-end-time">2018-11-22 18:00</span> </li>
+      <li><button class="to-everyday">平均到每天</button></li>
+      <li><button class="to-everyhour">平均到小时</button></li>
+    </ul>
+  </div>
+  <form action="" method="get">
+    <table class="abnormal-data"></table>  
+  </form>
+  <!-- <div class="abnormal_footer">
+    <button type="button" class="save-btn layui-layer-btn0" data-dialogModalBut="ok">保存</button>
+    <button type="button" class="cancel-btn layui-layer-btn1" data-dialogModalBut="cancel">取消</button>
+  </div> -->
+</div>
+<script type="text/html" id="abnormal-data-template">
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>分配数量</th>
+        <th colspan="12">时间</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class='time-hour1'>
+        <td rowspan='4'>2018-11-19{{}}</td>
+        <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
+        <td>1时</td>
+        <td>2时</td>
+        <td>3时</td>
+        <td>4时</td>
+        <td>5时</td>
+        <td>6时</td>
+        <td>7时</td>
+        <td>8时</td>
+        <td>9时</td>
+        <td>10时</td>
+        <td>11时</td>
+        <td>12时</td>
+      </tr>
+      <tr class='share-datas'>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr class='time-hour2'>
+        <td>13时</td>
+        <td>14时</td>
+        <td>15时</td>
+        <td>16时</td>
+        <td>17时</td>
+        <td>18时</td>
+        <td>19时</td>
+        <td>20时</td>
+        <td>21时</td>
+        <td>22时</td>
+        <td>23时</td>
+        <td>24时</td>
+      </tr>
+      <tr class='share-datas'>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr class='time-hour1'>
+        <td rowspan='4'>2018-11-20{{}}</td>
+        <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
+        <td>1时</td>
+        <td>2时</td>
+        <td>3时</td>
+        <td>4时</td>
+        <td>5时</td>
+        <td>6时</td>
+        <td>7时</td>
+        <td>8时</td>
+        <td>9时</td>
+        <td>10时</td>
+        <td>11时</td>
+        <td>12时</td>
+      </tr>
+      <tr class='share-datas'>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr class='time-hour2'>
+        <td>13时</td>
+        <td>14时</td>
+        <td>15时</td>
+        <td>16时</td>
+        <td>17时</td>
+        <td>18时</td>
+        <td>19时</td>
+        <td>20时</td>
+        <td>21时</td>
+        <td>22时</td>
+        <td>23时</td>
+        <td>24时</td>
+      </tr>
+      <tr class='share-datas'>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr class='time-hour1'>
+        <td rowspan='4'>2018-11-21{{}}</td>
+        <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
+        <td>1时</td>
+        <td>2时</td>
+        <td>3时</td>
+        <td>4时</td>
+        <td>5时</td>
+        <td>6时</td>
+        <td>7时</td>
+        <td>8时</td>
+        <td>9时</td>
+        <td>10时</td>
+        <td>11时</td>
+        <td>12时</td>
+      </tr>
+      <tr class='share-datas'>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr class='time-hour2'>
+        <td>13时</td>
+        <td>14时</td>
+        <td>15时</td>
+        <td>16时</td>
+        <td>17时</td>
+        <td>18时</td>
+        <td>19时</td>
+        <td>20时</td>
+        <td>21时</td>
+        <td>22时</td>
+        <td>23时</td>
+        <td>24时</td>
+      </tr>
+      <tr class='share-datas'>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr class='time-hour1'>
+        <td rowspan='4'>2018-11-22{{}}</td>
+        <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
+        <td>1时</td>
+        <td>2时</td>
+        <td>3时</td>
+        <td>4时</td>
+        <td>5时</td>
+        <td>6时</td>
+        <td>7时</td>
+        <td>8时</td>
+        <td>9时</td>
+        <td>10时</td>
+        <td>11时</td>
+        <td>12时</td>
+      </tr>
+      <tr class='share-datas'>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr class='time-hour2'>
+        <td>13时</td>
+        <td>14时</td>
+        <td>15时</td>
+        <td>16时</td>
+        <td>17时</td>
+        <td>18时</td>
+        <td>19时</td>
+        <td>20时</td>
+        <td>21时</td>
+        <td>22时</td>
+        <td>23时</td>
+        <td>24时</td>
+      </tr>
+      <tr class='share-datas'>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+</script>
 </html>
