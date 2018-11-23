@@ -148,13 +148,6 @@ $(function () {
   let backSource = '';
   //end alarm field
   //#endregion
-  let hasScrolled = function (element, direction) {
-    if (direction === 'vertical') {
-      return element.scrollHeight > element.clentHeight;
-    } else if (direction === 'horizontal') {
-      return element.scrollWidth > element.clientWidth;
-    }
-  };
   let numberFormat = function (num) {
     let parts = _.toString(num).split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -168,31 +161,19 @@ $(function () {
     });
     return flag;
   };
-  let getMeterStatus = function (state) {
-    switch (state) {
-      case 0:
-        return '正常';
-      case 1:
-        return '关电闸';
-      case 2:
-        return '报警中';
-      case 3:
-        return '屏蔽直到某个时间点开启'
-    }
-  };
-  let getChartCostLine = function (selector) {
+  let getChartCostLine = function (selector, flag = false) {
     if ($(selector + ' .icon-btn-RMB').hasClass('btn-active')) {
       let costSeries = [];
       if (comparsionSelectedMeters.length > 0) {
         costSeries = getChartSeriesForCost(searchResult.datas, searchResult.meterAndParaMap,
-          searchResult.chartXaxisData, $(selector + ' .icon-btn-tishi').hasClass('btn-active') ? true : false);
+          searchResult.chartXaxisData, $(selector + ' .icon-btn-tishi').hasClass('btn-active') ? true : false, flag);
       } else {
         costSeries = getChartSeriesForCost(searchResult.datas, _.map((searchResult.checkedParameters || searchResult.meterAndParaMap), a => {
           return {
             id: a.id,
             name: a.name
           };
-        }), searchResult.chartXaxisData, $(selector + ' .icon-btn-tishi').hasClass('btn-active') ? true : false);
+        }), searchResult.chartXaxisData, $(selector + ' .icon-btn-tishi').hasClass('btn-active') ? true : false, flag);
       }
       return costSeries;
     }
@@ -359,16 +340,22 @@ $(function () {
     });
     return _.sortedUniq(xDatas);
   };
-  let getChartSeries = function (datas, mfIdAndNameMap, xAxisData, type = 'bar', showLabel = false) {
+  let getChartSeries = function (datas, mfIdAndNameMap, xAxisData, type = 'bar', exceptionData, showLabel = false) {
+    // console.log(datas)
+    // console.log(mfIdAndNameMap)
+    // console.log(xAxisData)
     let seriesArray = [];
-    // console.log(showLabel)
-    let showLabel_1 = $('.show-tip').hasClass('btn-active') ? true : false;
+    let showLabel_1 = false;
+    if ($("#area-zone").is(":hidden")) {
+      showLabel_1 = $('.show-tip').hasClass('btn-active') ? true : false;
+    } else {
+      showLabel_1 = $('.show-tip-area').hasClass('btn-active') ? true : false;
+    }
     _.each(datas, data => {
       let mfMap = _.find(mfIdAndNameMap, a => a.id === data.mfid);
       let series = {
         name: mfMap ? mfMap.name : '',
         type: type,
-
       };
       series.itemStyle = {
         normal: {
@@ -377,11 +364,6 @@ $(function () {
           }
         }
       };
-      xAxisData = _.uniq(_.orderBy(xAxisData, a => a, "asc"));
-      series.data = _.map(xAxisData, a => {
-        var valueItem = _.find(data.now_data_list || data.data_list, b => b.date === a);
-        if (!!valueItem) return valueItem.val;
-      });
       series.markPoint = {
         data: [{
             type: 'max',
@@ -408,6 +390,27 @@ $(function () {
           }
         }]
       };
+      xAxisData = _.uniq(_.orderBy(xAxisData, a => a, "asc"));
+      series.data = _.map(xAxisData, a => {
+        var valueItem = _.find(data.now_data_list || data.data_list, b => b.date === a);
+        if (!!valueItem) return valueItem.val;
+      });
+      let newSeries = [];
+      let exceptionSeries = [];
+      if (exceptionData) {
+        exceptionSeries = {
+          name: series.name,
+          stack: "堆积",
+          data: function () {
+            return exceptionData.val
+          },
+          type:'bar'
+        }
+        console.log(exceptionSeries)
+      }
+      newSeries.push(series)
+      newSeries.push(exceptionSeries);
+      console.log(newSeries);
       let rule = data.rule;
       if (rule != null) {
         if (rule.LowerLimit != null) {
@@ -450,7 +453,7 @@ $(function () {
             name: '上限报警',
             itemStyle: {
               normal: {
-                color: '#dc143c'
+                color: '#dc143c',
               }
             },
             tooltip: {
@@ -485,9 +488,12 @@ $(function () {
     });
     return seriesArray;
   };
-  let getChartSeriesForCost = function (datas, mfIdAndNameMap, xAxisData, showLabel = false) {
+  let getChartSeriesForCost = function (datas, mfIdAndNameMap, xAxisData, showLabel = false, shouldFilter = false) {
     let seriesArray = [];
-    _.each(datas, data => {
+    let costDatas = [];
+    if (shouldFilter) costDatas = _.filter(datas, a => a.ischecked);
+    else costDatas = datas;
+    _.each(costDatas, data => {
       let series = {
         name: _.find(mfIdAndNameMap, a => a.id === data.mfid).name + '_费用',
         type: 'line'
@@ -620,10 +626,6 @@ $(function () {
         mfid: mmArray[1]
       });
     });
-    // console.log(datas);
-    // console.log(legends);
-    // console.log(meterAndMfIdMap);
-    // console.log(meterAndMfIdArray);
     _.each(searchResult.datas, data => {
       let mmp = _.find(meterAndMfIdMap, a => a.mfid === data.mfid);
       let meter = _.find(areaConfigureMeters, a => a.id === mmp.mId);
@@ -631,10 +633,14 @@ $(function () {
         name: meter.text,
         value: numberFormat((data.sum_val || data.now_sum_val || 0).toFixed(2))
       };
+      let legend = {isChecked: false};
+      if (data['ischecked']) {
+        legend.isChecked = true;
+      }
       datas.push(sumVal);
-      legends.push(meter.text);
+      legend.name = meter.text;
+      legends.push(legend);
     });
-    // console.log(searchResult);
     // 区域分项占比实例化
     let option = generatePieForAggregateData(legends, datas, searchResult.unit);
     let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
@@ -644,10 +650,7 @@ $(function () {
     window.addEventListener('resize', function () {
       areaChart.resize();
     });
-    // window.onresize = areaChart.resize;
-
   };
-
   let generateAreaCostPie = function () {
     let datas = [];
     let legends = [];
@@ -668,21 +671,21 @@ $(function () {
         name: meter.text,
         value: numberFormat((_.sum(_.map((data.data_list || data.now_data_list), a => a.cost))).toFixed(2))
       };
+      let legend = {isChecked: false};
+      if (data['ischecked']) {
+        legend.isChecked = true;
+      }
       datas.push(sumVal);
-      legends.push(meter.text);
+      legend.name = meter.text;
+      legends.push(legend);
     });
     let option = generatePieForAggregateData(legends, datas, '元', '费用对比');
     let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
     areaChart.setOption(option, true);
     areaChart.resize();
-    // $(window).resize(function () {
-    //   //重置容器高宽
-    //   areaChart.resize();
-    // });
     window.addEventListener('resize', function () {
       areaChart.resize();
     });
-    // window.onresize = areaChart.resize;
   };
   let searchMeterData = function () {
     if (currentMeterParameters.length <= 0) {
@@ -700,13 +703,14 @@ $(function () {
     let sTime = timeArray[0];
     let eTime = timeArray[1];
     $(window).resize();
+    // console.log(123)
     $('#vmeter-summary').hide();
     if (comparsionSelectedMeters.length > 0) {
       $('.comparison-tab').show();
       $('.func-tab').hide();
       $('.parameter-container .bottom-chart').width('142%');
-      $('.parameter-container').css('border-right','none');
-      $('.top-chart').css('border-right','1px solid #dce3e6');
+      $('.parameter-container').css('border-right', 'none');
+      $('.top-chart').css('border-right', '1px solid #dce3e6');
       $('#summary-container').hide();
       if (searchParaType === 0) {
         $('#pie').show();
@@ -755,7 +759,7 @@ $(function () {
               };
               generateComparisonData(meterAndParaMap, response.Content, searchParaType);
               if (ifShowPieChart()) {
-                generatePieChart();
+                generatePieChart(true);
               } else {
                 assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, response.Content, meterAndParaMap, 'chart-instance', getChartType());
               }
@@ -768,8 +772,8 @@ $(function () {
       $('.func-tab').show();
       $('#summary-container').show();
       $('.parameter-container .bottom-chart').width('96%');
-      $('.parameter-container').css('border-right','1px solid #dce3e6');
-      $('.top-chart').css('border-right','none');
+      $('.parameter-container').css('border-right', '1px solid #dce3e6');
+      $('.top-chart').css('border-right', 'none');
       checkElementInVisiable();
       let mfids = _.map(currentSelectedParameters, a => a.id);
       let uriparam = `mfids=${_.join(mfids, ',')}&paraType=${searchParaType}&dateType=${searchDateType}&sTime=${sTime}&eTime=${eTime}`;
@@ -778,9 +782,9 @@ $(function () {
           let chartLegend = [];
           let chartXaxisData = [];
           let checkedParameters = _.filter(currentMeterParameters, p => _.includes(mfids, p.id));
-          if(!response.Content.now_sum_val || response.Content.now_sum_val === ''){
+          if (!response.Content.now_sum_val || response.Content.now_sum_val === '') {
             now_Sum = 0;
-          }else{
+          } else {
             now_Sum = numberFormat((response.Content.now_sum_val).toFixed(2))
           }
           chartLegend = _.map(checkedParameters, a => a.name);
@@ -792,9 +796,10 @@ $(function () {
             chartLegend,
             chartXaxisData,
             datas,
-            checkedParameters
+            checkedParameters,
           };
           assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, datas, checkedParameters, 'chart-instance', getChartType());
+          // 当前数据的值
           if (currentSelectedNode.modeltype === 'meter') {
             $('#summary-container').show();
             $('.func-tab').show();
@@ -823,7 +828,7 @@ $(function () {
               generateContemporaryComparison(response.Content.avg_per, response.Content.avg_val, response.Content.last_sum_val, response.Content.now_sum_val, response.Content.sum_per, parameter.unit, firstTitle, lastTitle, title);
             } else if (searchParaType !== 0) {
               $('.summary-container').hide();
-              $('.func-tab').hide();
+              $('.func-tab').show();
               $('#vmeter-summary').show();
               let vals = _.map(datas[0].now_data_list, a => a.val);
               let max = _.max(vals);
@@ -890,7 +895,6 @@ $(function () {
             let templateHtml = template('vmeter-data-comparison', summaryData);
             $('#vmeter-content').html(templateHtml);
           } else {
-
             $('#summary-container').hide();
             $('.func-tab').hide();
           }
@@ -955,7 +959,6 @@ $(function () {
       let uriparams = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
       esdpec.framework.core.getJsonResult('dataanalysis/getcomparedata?' + uriparams, function (response) {
         if (response.IsSuccess) {
-          console.log(response);
           let chartLegend = [];
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
@@ -979,20 +982,22 @@ $(function () {
       });
     }
   };
-  let assembleChartComponent = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartDom, chartType = 'bar') {
+  let assembleChartComponent = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartDom, chartType = 'bar', exceptionData) {
     let chartSeries = getChartSeries(datas, _.map(checkedParameters, a => {
       return {
         id: a.id,
         name: a.name
       };
-    }), chartXaxisData, chartType);
+    }), chartXaxisData, chartType, exceptionData);
     let costSeries = getChartCostLine('.operate-grp');
     if (costSeries !== null) chartSeries = _.concat(chartSeries, costSeries);
     generateChart(unit, chartLegend, chartXaxisData, chartSeries, chartDom);
   };
   //点击后触发改变第一张图表
-  let generateChart = function (unit, chartLegend, chartXaxisData, chartSeries, chartDom) {
+  let generateChart = function (unit, chartLegend, chartXaxisData, chartSeries, chartDom, selected = undefined) {
+    let orderLegend = _.orderBy(chartLegend, a => a, 'asc');
     let option = {
+      color: sortColor,
       title: {
         subtext: '单位：' + unit,
         padding: [-6, 0, 0, 0],
@@ -1015,10 +1020,8 @@ $(function () {
         top: 120
       },
       legend: {
-        data: chartLegend,
+        data: orderLegend,
         padding: [0, 50, 50, 80],
-        // 新增
-        // orient: 'vertical',
         width: '70%',
         height: 80,
         left: -85
@@ -1037,33 +1040,29 @@ $(function () {
       }],
       series: chartSeries
     };
+    if (selected) {
+      option.legend.selected = selected;
+    }
     analysisChart = echarts.init(document.getElementById(chartDom), e_macarons);
     analysisChart.setOption(option, true);
-    // window.onresize = analysisChart.resize; // 多个表格自适应屏幕大小
     analysisChart.resize();
-    // $(window).resize(function () {
-    //   //重置容器高宽
-    //   analysisChart.resize();
-    // });
     window.addEventListener('resize', function () {
       analysisChart.resize();
     });
   };
-  //创建echart表格,第一张
+  //创建区域echart表格,第一张
   let generateAreaChart = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartDom, chartType = 'bar') {
-    // console.log(unit)
-    // console.log(chartLegend)
-    // console.log(chartXaxisData)
-    // console.log(datas)
+    let orderLegend = _.orderBy(chartLegend, a => a, 'asc');
     let chartSeries = getChartSeries(datas, _.map(checkedParameters, a => {
       return {
         id: a.id,
         name: a.name,
       };
     }), chartXaxisData, chartType);
-    let costSeries = getChartCostLine('.area-operate-grp');
+    let costSeries = getChartCostLine('.area-operate-grp', true);
     if (costSeries !== null) chartSeries = _.concat(chartSeries, costSeries);
     let option = {
+      color: sortColor,
       title: {
         subtext: '单位：' + unit,
         padding: [-6, 0, 0, 0],
@@ -1080,12 +1079,11 @@ $(function () {
         top: 120
       },
       legend: {
-        data: chartLegend,
-        // orient: 'vertical',
+        data: orderLegend,
         padding: [0, 50, 80, 80],
         width: '70%',
         height: 80,
-        left: -85
+        left: -80
       },
       calculable: true,
       xAxis: [{
@@ -1105,44 +1103,43 @@ $(function () {
     areaChart.off('legendselectchanged');
     areaChart.setOption(option, true);
     areaChart.resize();
-    // $(window).resize(function () {
-    //   //重置容器高宽
-    //   areaChart.resize();
-    // });
     window.addEventListener('resize', function () {
       areaChart.resize();
     });
-    let datasArr = [];
+    _.each(datas, a => a.ischecked = true);
     areaChart.on('legendselectchanged', function (params) {
-      // params.preventDefault();
-      console.log(params);
-      console.log(datas);
-      console.log(chartLegend);
-      datasArr.length = chartLegend.length;
-      for(let i = 0;i < datas.length;i++){
-        if(params.name === chartLegend[i] && !params.selected[params.name]){
-          datasArr.splice(i,1,datas[i])
-          datas.splice(i,1);
-          console.log(datasArr);
-          console.log(datas);
-        }else if(params.name === chartLegend[i] && params.selected[params.name]){
-          datas.splice(i,0,datasArr[i]);
-        }
+      let entity = _.find(searchResult.meterAndParaMap, a => a.name === params.name);
+      let data = _.find(datas, b => b.mfid === entity.mfid);
+      data.ischecked = params.selected[params.name];
+      if ($('.proportion-grp i.comparison-rmb').hasClass('btn-active')) {
+        generateAreaCostPie();
+      } else {
+        generateAreaPie(datas);
       }
-      generateAreaPie(datas)
+      if ($('.area-operate-grp i.icon-btn-RMB').hasClass('btn-active')) {
+        let series = getChartSeries(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
+          return {
+            id: a.id,
+            name: a.name
+          };
+        }), searchResult.chartXaxisData, getAreaChartType(), $('.show-tip-area').hasClass('btn-active') ? true : false);
+        let cSeries = getChartSeriesForCost(searchResult.datas, _.map(searchResult.meterAndParaMap, a => {
+          return {
+            id: a.id,
+            name: a.name
+          };
+        }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false, true);
+        series = _.concat(chartSeries, cSeries);
+        let selectedLegend = {};
+        _.each(searchResult.datas, data => {
+          if (!data.ischecked) {
+            let meter = _.find(searchResult.meterAndParaMap, a => a.mfid === data.mfid);
+            if (meter) selectedLegend[meter.name] = false;
+          }
+        });
+        generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, series, 'area-chart-instance', selectedLegend);
+      }
     });
-    // areaChart.on('click', function (params) {
-    //   // console.log(params);
-    //   areaChart.dispatchAction({
-    //     type: 'legendunselected',
-    //     // 切换的图例名称
-    //     name: '产品单耗',
-    //     // 所有图例的选中状态表
-    //     selected: {
-    //       '产品单耗': false,
-    //     }
-    //   })
-    // });
   };
   let generateContemporaryComparison = function (avg_per, avg_val, last_sum_val, now_sum_val, sum_per, unit, firstTitle, lastTitle, title) {
     let maxVal = _.max([last_sum_val, now_sum_val, avg_val]);
@@ -1523,7 +1520,10 @@ $(function () {
     }
     return 0.0;
   };
+  // 获取堆叠图数据
   let getStackSeries = (branchs, datas, flag, chartType) => {
+    // console.log(branchs)
+    // console.log(datas)
     let usageSeries = [];
     if (flag === 0) {
       _.each(branchs, (b, index) => {
@@ -1556,6 +1556,7 @@ $(function () {
         });
       });
     }
+    console.log(usageSeries)
     return usageSeries;
   };
   let generateStackChart = function (chartDom, datas, dateArray, dateType, chartType) {
@@ -1738,8 +1739,6 @@ $(function () {
         seriesColor.push(chartType === 0 ? usageColor[index] : costColor[index]);
       }
     });
-
-    //new code    区域最下面两个饼图
     let option = {
       title: {
         subtext: title,
@@ -1785,25 +1784,27 @@ $(function () {
     let pieChart = echarts.init(document.getElementById(chartDom), e_macarons);
     pieChart.setOption(option, true);
     pieChart.resize();
-    // $(window).resize(function () {
-    //   //重置容器高宽
-    // });
     window.addEventListener('resize', function () {
       pieChart.resize();
     });
   };
+  // 仪表详情  峰谷平 用量对比柱状图
   let generateMeterStackChart = function (chartDom, datas, dateArray, dateType, chartType) {
     let xAxisData = [];
     let series = [];
     let nowbranchs = _.map(datas.now_data_list, a => a.name);
     let lastbranchs = _.map(datas.last_data_list, a => a.name);
     let branchs = _.orderBy(_.merge(nowbranchs, lastbranchs), a => a, 'asc');
+    // console.log(datas)
+    // console.log(dateArray)
+    // console.log(dateArray[0].substring(0, 10))
     switch (dateType) {
       case '2':
         let flag = 0;
         if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) && dateArray[1].substring(0, 10) === new Date().format('yyyy-MM-dd')) {
           xAxisData = [new Date(dateArray[1]).addDays(-1).format('yyyy-MM-dd'), new Date(dateArray[0]).format('yyyy-MM-dd')];
           flag = 0;
+          // console.log(xAxisData)
           $('#meter-usage-title').hide();
           $('#meter-cost-title').hide();
           let nowUsageSum = 0,
@@ -1842,6 +1843,7 @@ $(function () {
           flag = 1;
         }
         series = getStackSeries(branchs, datas, flag, chartType);
+        // console.log(series)
         break;
       case '3':
         $('#meter-usage-title').hide();
@@ -1907,6 +1909,7 @@ $(function () {
         series = getStackSeries(branchs, datas, flaga, chartType);
         break;
     }
+    // 峰谷平柱状图
     let option = {
       tooltip: {
         trigger: "axis",
@@ -1948,15 +1951,12 @@ $(function () {
     let meterFgpChart = echarts.init(document.getElementById(chartDom), e_macarons);
     meterFgpChart.setOption(option, true);
     meterFgpChart.resize();
-    // $(window).resize(function () {
-    //   //重置容器高宽
-    //   meterFgpChart.resize();
-    // });
     window.addEventListener('resize', function () {
       meterFgpChart.resize();
     });
   };
   let generateMeterFgpPieChart = function (chartDom, fgpDatas, dateArray, dateType, chartType, title) {
+    // console.log(chartDom)
     let datas = [];
     let seriesColor = [];
     let branchs = _.orderBy(_.map(fgpDatas, a => a.name), a => a, 'asc');
@@ -2023,31 +2023,29 @@ $(function () {
     let meterPieChart = echarts.init(document.getElementById(chartDom), e_macarons);
     meterPieChart.setOption(option, true);
     meterPieChart.resize();
-    // $(window).resize(function () {
-    //   //重置容器高宽
-    //   meterPieChart.resize();
-    // });
     window.addEventListener('resize', function () {
       meterPieChart.resize();
     });
   };
-  let generatePieChart = function () {
+  let generatePieChart = function (showColor = false) {
     let datas = [];
     let legends = [];
-    _.each(searchResult.datas, data => {
+    _.each(searchResult.datas, (data, index) => {
       let sumVal = {
         name: data.meter_name,
-        value: data.sum_val ? data.sum_val : 0
+        value: data.sum_val ? data.sum_val : 0,
       };
+      if (showColor) {
+        sumVal.pieColor = sortColor[index];
+      }
       datas.push(sumVal);
-      legends.push(data.meter_name);
+      legends.push({name: data.meter_name, isChecked: true});
     });
-    let option = generatePieForAggregateData(legends, datas, searchResult.unit);
+    let option = generatePieForAggregateData(legends, datas, searchResult.unit, '能耗对比', showColor);
     if (analysisChart) analysisChart.clear();
     // 仪表详情 增加对比表饼图 实例化
     analysisChart = echarts.init(document.getElementById('chart-instance'), e_macarons);
     analysisChart.setOption(option, true);
-    // window.onresize = analysisChart.resize;
     analysisChart.resize();
     window.addEventListener('resize', function () {
       analysisChart.resize();
@@ -2335,8 +2333,14 @@ $(function () {
     });
   };
   //分项占比&能耗对比 option数据
-  let generatePieForAggregateData = (xAxisData, seriesData, unit, tooltip = '能耗对比') => {
+  let generatePieForAggregateData = (xAxisData, seriesData, unit, tooltip = '能耗对比', showLegend = false) => {
+    let orderLegend = _.orderBy(xAxisData, a => a.name, 'asc');
+    let selected = {};
+    _.each(xAxisData, a => {
+      selected[a.name] = a.isChecked;
+    });
     let option = {
+      color: sortColor,
       title: {
         show: true,
         subtext: '单位：' + unit,
@@ -2349,19 +2353,19 @@ $(function () {
         }
       },
       legend: {
-        // orient: 'vertical',
+        show: showLegend,
         left: '5%',
         bottom: '-5',
         height: '100%',
         width: '100%',
-        data: xAxisData,
-        // padding: [0, 50, 50, 100]
+        data: orderLegend,
+        selected: selected
       },
       series: [{
         name: tooltip,
         type: 'pie',
-        center: ['50%', '35%'],
-        radius: '50%',
+        center: ['50%', '55%'],
+        radius: '60%',
         padding: [10, 10, 100, 10],
         label: {
           normal: {
@@ -2403,6 +2407,7 @@ $(function () {
     let uriparam = `mfids=${_.join(mfids, ',')}&paraType=${searchParaType}&dateType=${searchDateType}&sTime=${sTime}&eTime=${eTime}`;
     esdpec.framework.core.getJsonResult('dataanalysis/getdata?' + uriparam, function (response) {
       if (response.IsSuccess) {
+        // console.log(response)
         let chartLegend = [];
         let chartXaxisData = [];
         let checkedParameters = _.filter(currentMeterParameters, p => _.includes(mfids, p.id));
@@ -2556,10 +2561,6 @@ $(function () {
     isParentNode(parentId, parent);
   };
   let checkElementInVisiable = () => {
-
-    // console.log($(window).scrollTop())
-
-
     if ($(window).scrollTop() > ($('#list-body').offset().top + $('#list-body').outerHeight() - 50)) {
       $('.param-position>.list-body').removeClass('hidden');
       $('.param-position').addClass('mTop');
@@ -4372,7 +4373,7 @@ $(function () {
         break;
         //#endregion
       case 'pie':
-        generatePieChart();
+        generatePieChart(true);
         return;
       case 'download':
 
@@ -4441,7 +4442,7 @@ $(function () {
               id: a.id,
               name: a.name
             };
-          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
+          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false, true);
           chartSeries = _.concat(chartSeries, costSeries);
         }
         break;
@@ -4460,7 +4461,7 @@ $(function () {
               id: a.id,
               name: a.name
             };
-          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
+          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false, true);
           chartSeries = _.concat(chartSeries, costSeries);
         }
         break;
@@ -4479,7 +4480,7 @@ $(function () {
               id: a.id,
               name: a.name
             };
-          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false);
+          }), searchResult.chartXaxisData, $('.show-tip-area').hasClass('btn-active') ? true : false, true);
           chartSeries = _.concat(chartSeries, costSeries);
         }
         break;
@@ -4501,13 +4502,20 @@ $(function () {
               id: a.id,
               name: a.name
             };
-          }), searchResult.chartXaxisData, $(currentDom).hasClass('btn-active') ? true : false);
+          }), searchResult.chartXaxisData, $(currentDom).hasClass('btn-active') ? true : false, true);
           chartSeries = _.concat(chartSeries, costSeries);
         }
         break;
         //#endregion
     }
-    generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, chartSeries, 'area-chart-instance');
+    let selectedLegend = {};
+    _.each(searchResult.datas, data => {
+      if (!data.ischecked) {
+        let meter = _.find(searchResult.meterAndParaMap, a => a.mfid === data.mfid);
+        if (meter) selectedLegend[meter.name] = false;
+      }
+    });
+    generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, chartSeries, 'area-chart-instance', selectedLegend);
   });
 
   $('.func-tab .layui-tab-title>li').on('click', function (e) {
@@ -4623,7 +4631,7 @@ $(function () {
                 generateComparisonData(searchResult.meterAndParaMap, searchResult.datas, searchResult.type);
                 //generateComparisonChartData();
                 if (ifShowPieChart()) {
-                  generatePieChart();
+                  generatePieChart(true);
                 } else {
                   let chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, getChartType(),
                     $('.show-tip').hasClass('btn-active') ? true : false);
@@ -5056,14 +5064,8 @@ $(function () {
       },
     });
 
-    // $('.area-grp').on('mouseleave', function(e){
-    //   console.log(1)
-    //  })
     lay('.area-grp').on('mouseleave', function (e) {
-      // console.log(1)
-
       lay('.area-grp').on('mouseleave', function (e) {
-
         laydate.render({
           elem: '#daycontainer',
           show: false,
@@ -5265,6 +5267,10 @@ $(function () {
             if (node.original.modeltype === 'area') {
               currentMeterParameters = [];
               areaWindowInteractive();
+              if ($('.icon-tubiao-bingtu').hasClass('btn-active')) {
+                $('.area-operate-grp .icon-icon-').addClass('btn-active');
+                $('.icon-tubiao-bingtu').removeClass('btn-active').hide();
+              }
               esdpec.framework.core.getJsonResult('dataanalysis/getareafun?areaId=' + nodeId, function (response) {
                 if (response.IsSuccess) {
                   areaSubscribeModule = response.Content.fun_code ? JSON.parse(response.Content.fun_code) : [];
@@ -5288,7 +5294,7 @@ $(function () {
                 }
               });
               $('.detail').html(' - 区域数据详情');
-              $('.content__header--title span:last').text(' - 区域数据详情')
+              $('.content__header--title span:last').text(' - 区域数据详情');
             } else {
               $('.detail').html(' - 仪表数据详情');
               $('.content__header--title span:last').text(' - 仪表数据详情')
@@ -5326,6 +5332,15 @@ $(function () {
                   };
                   let templateHtml = template('parameter-list-template', parameters);
                   $('.parameter-right').html(templateHtml);
+                  if ($('.icon-tubiao-bingtu').hasClass('btn-active')) {
+                    let checkedParam = _.find(currentMeterParameters, a => a.isChecked);
+                    if (checkedParam.type === 0) {
+                      $('.operate-grp .icon-icon-').addClass('btn-active');
+                    } else {
+                      $('.operate-grp .icon-line-chart_icon').addClass('btn-active');
+                    }
+                    $('.icon-tubiao-bingtu').removeClass('btn-active').hide();
+                  }
                   // reset exception box
                   if ($('.exception-manager').is(':visible')) {
                     $('.exception-box').hide();
@@ -5465,6 +5480,7 @@ $(function () {
     $('.share-datas td').append(createInput);
     setTimeout(() => {
       $('#button').off('click').on('click', function (e) {
+        e.stopImmediatePropagation();
         e.stopPropagation();
         layui.use(['layer', 'laydate'], function () {
           let lay = layui.layer;
@@ -5475,7 +5491,7 @@ $(function () {
             //可分摊数据
             let apportionValue = parseInt($('.apportion').html());
             // 每日分配数量
-            let apportionNum = $('.abnormal-data .apportion-num:input');
+            let apportionNum = $('.abnormal-data:input');
             lay.open({
               type: 1,
               area: ['90%', '80%'],

@@ -696,7 +696,9 @@ html body {
 
 .choose-param-item {
   text-align: center;
+  width: 350px;
   height: 50px;
+  margin: 0 auto;
   line-height: 50px;
   font-size: 14px;
   color: #28323d;
@@ -704,6 +706,7 @@ html body {
   border-left: 1px solid #dce3e6;
   border-right: 1px solid #dce3e6;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .list-body>.choose-param-item:last-of-type {
@@ -1146,7 +1149,7 @@ html body {
 
 .comparison-sort {
   flex: 1;
-  min-width: 300px;
+  min-width: 220px;
 }
 
 .comparison-sort>div:first-of-type {
@@ -1161,7 +1164,7 @@ html body {
 
 .comparison-proportion {
   flex: 1;
-  /* min-width: 300px; */
+  min-width: 220px;
 }
 
 .comparison-proportion>div:first-of-type {
@@ -1713,7 +1716,7 @@ html body {
 .param-position {
   position: fixed;
   top: 67px;
-  width: 300px;
+  width: 350px;
   transition: all .5s;
 }
 

@@ -486,7 +486,7 @@ canvas,
   width: calc(50% - 20px);
   padding: 20px 0 0 20px;
   margin: 0;
-  height: 547px;
+  height: calc(100% - 20px);
 }
 
 .fgp-item:first-child {
