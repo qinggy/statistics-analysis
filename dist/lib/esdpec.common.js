@@ -242,8 +242,10 @@ if ($.blockUI) {
       message: '<img src="../../asserts/loadinganimation.gif" />',
       css: {
         border: 'transparent',
-        backgroundColor: 'transparent'
-      }
+        backgroundColor: 'transparent',
+        // zIndex: 200000000
+        // baseZ: 200000000, 
+      },
     })
   ).ajaxStop(
     $.unblockUI()

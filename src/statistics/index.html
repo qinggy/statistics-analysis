@@ -26,25 +26,19 @@
   <script src="../../dist/lib/arttemplate-3.0/lib/template-web.js"></script>
   <script src="../../dist/lib/jquery.popmodal/popModal.min.js"></script>
   <script src="../../dist/lib/layui-v2.4.3/layui.js"></script>
-  <!-- <script src="../../dist/newStatistic.js"></script> -->
   <title>Statistics</title>
 </head>
 
 <body class="statistics">
   <div class="nav">
-    <div class="tab__nav">
-      <ul>
-        <li class="tab_active"><a>区域仪表架构</a></li>
-        <li><a>仪表属性架构</a></li>
-      </ul>
-    </div>
     <div class="statistics__nav">
-      <div class="statistics__nav--content"><span>数聚 &gt;</span><span class="meterName"></span><span class="detail"></span><span
+      <div class="statistics__nav--content"><span>用量分析 &gt; 区域仪表架构 &gt; </span><span class="meterName"></span><span class="detail"></span><span
           class="hidden" id="nav-alarm"><span style="color:#708195;">&gt;</span>报警中心</span></div>
     </div>
   </div>
   <div class="main">
     <div class="structtree">
+      <div class="treeTitle">基础仪表架构</div>
       <div class="search">
         <input type="text" class="search__input" placeholder="输入仪表关键词" id="searchbox">
         <input type="button" class="layui-btn layui-btn-normal search__btn" value="查询">
@@ -65,7 +59,7 @@
               <div class="content__header--info" id="onshowmeterinfo"><span>展开表计详情 <i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
               <div class="content__header--btngrp">
                 <div class="module-container">区域模块管理</div>
-                <div class="alarm-container"><i class="icon iconfont icon-warning1 title-margin"></i>报警中心</div>
+                <div class="alarm-container"><i class="icon iconfont icon-jinggao"></i>  报警中心</div>
                 <div class="subscribe">+关注</div>
               </div>
             </div>
@@ -215,7 +209,8 @@
                         <i class="icon iconfont icon-RMB icon-btn-RMB" data-value="rmb"></i>
                         <i class="icon iconfont should-uniq icon-icon- btn-active" id="bar" data-value="bar"></i>
                         <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
-                        <i class="icon iconfont should-uniq icon-tubiao-bingtu icon-btn-bingtu hidden" id="pie" data-value="pie"></i>
+                        <i class="icon iconfont should-uniq icon-tubiao-bingtu icon-btn-bingtu hidden" id="pie"
+                          data-value="pie"></i>
                         <i class="icon iconfont icon-Group- icon-btn-xiazai" data-value="download"></i>
                         <i class="icon iconfont icon-tooltip-outline show-tip icon-btn-tishi" data-value="tip"></i>
                       </div>
@@ -248,7 +243,7 @@
             <ul class="layui-tab-title">
               <li class="layui-this" data-id="graph-data">图形数据</li>
               <li data-id="original-data">表底数</li>
-              <li data-id="peak-data">峰谷平统计</li>
+              <li data-id="peak-data" id="fgp-tab">峰谷平统计</li>
             </ul>
             <div class="layui-tab-content">
               <div id="graph-data" class="graph-data">
@@ -891,6 +886,23 @@
       <div class="clear"></div>
     </div>
   </div>
+  <div class="hidden" id="abnormal-data-model"  style="display: none;">
+    <div class='abnormal-header'>异常数据分摊</div>
+    <div class='abnormal-total-data'>
+      <ul>
+        <li>异常数据量: <span class="abnormal-total"></span></li>
+        <li>可分摊数据量: <span class="apportion"></span></li>
+        <li>数据中断区间：<span class="abnormal-start-time"></span> 至 <span class="abnormal-end-time"></span> </li>
+        <li><button class="to-everyday">平均到每天</button></li>
+        <li><button class="to-everyhour">平均到小时</button></li>
+      </ul>
+    </div>
+    <form action="" method="get" class="expForm">
+      <table class="abnormal-data"></table>  
+    </form>
+    <div class="exception-paging" id="exception-paging"></div>
+    <div class="clear"></div>
+  </div>
 </body>
 <script src="../../dist/lib/jquery.namespace.js" type="text/javascript"></script>
 <script src="../../dist/lib/esdpec.common.js" type="text/javascript"></script>
@@ -956,10 +968,10 @@
   {{if selectedParameterList.length > 0}}{{each selectedParameterList param index}}
     <div class="choose-param-item {{if param.isDefault}}param-item-active{{/if}}" data-id="{{param.id}}">
       <span>{{param.name}}</span>
-      <!-- {{if param.type === 0}}
+      {{if param.type === 0}}
       <span>总用量:</span>
       <span class="now_Sum"></span><span>{{param.unit}}</span>
-      {{/if}} -->
+      {{/if}}
     </div>
   {{/each}}{{/if}}
 </script>
@@ -967,21 +979,22 @@
   <thead>
       <th>采集时间</th>
       <th>{{data.type === 0 ? '用量': '读数'}}({{data.unit}})</th>
-      <th class="inException hidden" style="text-align: center;">是否显示</th>
+      <th class="inException" style="text-align: center;">是否显示</th>
     </thead>
     <tbody>
-      {{if data.graphDataList.length > 0}}{{each data.graphDataList graphData index}}
+      {{if data.graphDataList.length > 0}}
+      {{each data.graphDataList graphData index}}
       <tr class="{{graphData.isChecked?'':'shouldremove'}}">
         <td>{{graphData.date}}</td>
         <td>{{graphData.val}}</td>
-        <td class="inException hidden" style="text-align: center;">
+        <td class="inException" style="text-align: center;">
           <div class="switch-box" data-control="BOX" id="Box_points_switch">
             <label>
-              {{if graphData.isChecked}}
+              <!-- {{if graphData.isChecked}} -->
               <input class="mui-switch mui-switch-anim exception-switch" checked type="checkbox" data-date="{{graphData.date}}" data-id="{{data.mfid}}">
-              {{else}}
-              <input class="mui-switch mui-switch-anim exception-switch" type="checkbox" data-date="{{graphData.date}}" data-id="{{data.mfid}}">
-              {{/if}}
+              <!-- {{else}}
+              <input class="mui-switch mui-switch-anim exception-switch" type="checkbox" data-date="{{graphData.date}}" data-id="{{data.mfid}}"> -->
+              <!-- {{/if}} -->
             </label>
           </div>
         </td>
@@ -1247,6 +1260,7 @@
   </td>
   <td style='width: 120px;'>
     <input type="text" class="validate-container editable" id="validate_{{ruleId}}">
+    <div class="editable hidden enable_box"></div>
   </td>
   <td class="weektd">
     {{each weekList week index}}
@@ -1305,49 +1319,34 @@
   {{/if}}
 </script>
 
-<div class="hidden" id="abnormal-data-model">
-  <div class='abnormal-header'>异常数据分摊</div>
-  <div class='abnormal-total-data'>
-    <ul>
-      <li>异常数据量: <span class="abnormal-total">5000</span></li>
-      <li>可分摊数据量: <span class="apportion"></span></li>
-      <li>数据中断区间：<span class="abnormal-start-time">2018-11-19 07:00</span> 至 <span class="abnormal-end-time">2018-11-22 18:00</span> </li>
-      <li><button class="to-everyday">平均到每天</button></li>
-      <li><button class="to-everyhour">平均到小时</button></li>
-    </ul>
-  </div>
-  <form action="" method="get">
-    <table class="abnormal-data"></table>  
-  </form>
-  <!-- <div class="abnormal_footer">
-    <button type="button" class="save-btn layui-layer-btn0" data-dialogModalBut="ok">保存</button>
-    <button type="button" class="cancel-btn layui-layer-btn1" data-dialogModalBut="cancel">取消</button>
-  </div> -->
-</div>
 <script type="text/html" id="abnormal-data-template">
-    <thead>
-      <tr>
-        <th>日期</th>
-        <th>分配数量</th>
-        <th colspan="12">时间</th>
-      </tr>
-    </thead>
-    <tbody>
+  <thead>
+    <tr>
+      <th>日期</th>
+      <th>分配数量</th>
+      <th colspan="12">时间</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody id='excption-tb'>
+    {{ if dayList }}
+    <tr></tr>
+      {{each dayList value}}
       <tr class='time-hour1'>
-        <td rowspan='4'>2018-11-19{{}}</td>
-        <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
-        <td>1时</td>
-        <td>2时</td>
-        <td>3时</td>
-        <td>4时</td>
-        <td>5时</td>
-        <td>6时</td>
-        <td>7时</td>
-        <td>8时</td>
-        <td>9时</td>
-        <td>10时</td>
-        <td>11时</td>
-        <td>12时</td>
+        <td rowspan='4'>{{value}}</td>
+        <td rowspan='4'><input type="number" class='apportion-num' name="" id="" onmousewheel="return false;"></td>
+        <td class='hour'>1时</td>
+        <td class='hour'>2时</td>
+        <td class='hour'>3时</td>
+        <td class='hour'>4时</td>
+        <td class='hour'>5时</td>
+        <td class='hour'>6时</td>
+        <td class='hour'>7时</td>
+        <td class='hour'>8时</td>
+        <td class='hour'>9时   </td>
+        <td class='hour'>10时  </td>
+        <td class='hour'>11时</td>
+        <td class='hour'>12时</td>
       </tr>
       <tr class='share-datas'>
         <td></td>
@@ -1364,18 +1363,18 @@
         <td></td>
       </tr>
       <tr class='time-hour2'>
-        <td>13时</td>
-        <td>14时</td>
-        <td>15时</td>
-        <td>16时</td>
-        <td>17时</td>
-        <td>18时</td>
-        <td>19时</td>
-        <td>20时</td>
-        <td>21时</td>
-        <td>22时</td>
-        <td>23时</td>
-        <td>24时</td>
+        <td class='hour'>13时</td>
+        <td class='hour'>14时</td>
+        <td class='hour'>15时</td>
+        <td class='hour'>16时</td>
+        <td class='hour'>17时</td>
+        <td class='hour'>18时</td>
+        <td class='hour'>19时</td>
+        <td class='hour'>20时</td>
+        <td class='hour'>21时</td>
+        <td class='hour'>22时</td>
+        <td class='hour'>23时</td>
+        <td class='hour'>24时</td>
       </tr>
       <tr class='share-datas'>
         <td></td>
@@ -1391,6 +1390,9 @@
         <td></td>
         <td></td>
       </tr>
+      {{/each}}
+      {{/if}}
+      <!--
       <tr class='time-hour1'>
         <td rowspan='4'>2018-11-20{{}}</td>
         <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
@@ -1564,7 +1566,8 @@
         <td></td>
         <td></td>
         <td></td>
-      </tr>
+      </tr> -->
     </tbody>
 </script>
+
 </html>

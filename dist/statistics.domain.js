@@ -16,11 +16,13 @@ $(function () {
     areaConfigureMetersClone = [];
   let areaConfigure = {};
   let now_Sum = 0;
-  let sortColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#4B0082', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F',
-    '#808000', '#FFE4C4', '#F5DEB3', '#40E0D0', '#7FFFAA', '#008B8B', '#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
+  let sortColor = ['#2782e0','#e8dd23','#94c629','#039b46','#1ebd95','#1fb6ff','#5e74f8','#3949ab','#7e57c2','#c753e0','#f3c325','#ef6100','#e82239',
+  '#7d4538','#e89014','#ec4310','#ec407a','#ef5350','#8d6e63','#5f96b2', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
   ];
-  let usageColor = ['#F36349', '#F6BC41', '#35BDA5', '#39B0DB', '#00FA9A', '#4B0082', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
-  let costColor = ['#2F4F4F', '#5F9EA0', '#4682B4', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
+  let usageColor = ['#e8dd23', '#94c629', '#039b46', '#39B0DB', '#00FA9A', '#4B0082', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
+  let costColor = ['#f3c325', '#e89014', '#ef6100', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
+  let usageColor_yestoday = ['#1fb6ff','#1479e1','#3949ab'];
+  let costColor_yestoday = ['#ec4310','#fb7013','#7d4538'];
   //alarm field
   let areaTotalRecord = 0;
   let areaAlarmList = [];
@@ -341,9 +343,6 @@ $(function () {
     return _.sortedUniq(xDatas);
   };
   let getChartSeries = function (datas, mfIdAndNameMap, xAxisData, type = 'bar', exceptionData, showLabel = false) {
-    // console.log(datas)
-    // console.log(mfIdAndNameMap)
-    // console.log(xAxisData)
     let seriesArray = [];
     let showLabel_1 = false;
     if ($("#area-zone").is(":hidden")) {
@@ -395,22 +394,6 @@ $(function () {
         var valueItem = _.find(data.now_data_list || data.data_list, b => b.date === a);
         if (!!valueItem) return valueItem.val;
       });
-      let newSeries = [];
-      let exceptionSeries = [];
-      if (exceptionData) {
-        exceptionSeries = {
-          name: series.name,
-          stack: "堆积",
-          data: function () {
-            return exceptionData.val
-          },
-          type:'bar'
-        }
-        console.log(exceptionSeries)
-      }
-      newSeries.push(series)
-      newSeries.push(exceptionSeries);
-      console.log(newSeries);
       let rule = data.rule;
       if (rule != null) {
         if (rule.LowerLimit != null) {
@@ -484,8 +467,68 @@ $(function () {
           }
         }
       }
-      seriesArray.push(series);
+      if ($("#button").is(':checked') && exceptionData) {
+        let newSeries = [],
+         exceptionSeries = [],
+         expDate = [],  
+         startTime = [],
+         endTime = [],
+         val = [];
+        _.each(exceptionData,data =>{
+          expDate.push(data.date);
+          startTime.push( data.original_time.substring(0,xAxisData[0].length) );
+          endTime.push( data.original_time.substring(20,xAxisData[0].length + 20));
+          val.push(data.val);
+        })
+        series.stack = '堆积',
+        exceptionSeries = {
+          data: [],
+          name: '异常数据',
+          type:'bar',
+          stack: "堆积",
+          itemStyle: {
+            normal: {
+              color: '#f6bb43'
+            }
+          },
+          tooltip: {
+            formatter: function(params){
+              // return _exceptionData.dataList.length > 0?
+              // _exceptionData.dataList[0].val + chartSeries
+            // }
+            // console.log(params)
+            return params.seriesName + ': ' + params.value;
+            }
+          }
+        }
+        exceptionSeries.length = xAxisData.length;
+        for(let k in endTime){
+          for(let i in xAxisData){
+            if(endTime[k] == xAxisData[i]){
+              for(let j in data.now_data_list){
+                if(endTime[k] == data.now_data_list[j].date){
+                  series.data[i] = Number(data.now_data_list[j].val - val[k]).toFixed(3);
+                  exceptionSeries.data[i] = Number(val[k]).toFixed(3);
+                }
+              }
+            }else{
+              if(exceptionSeries.data[i]){
+                continue;
+              }
+              exceptionSeries.data[i] = 0;
+            }
+          }
+        }
+        newSeries.push(series)
+        newSeries.push(exceptionSeries);
+        for(let i = 0 ;i < newSeries.length;i++){
+          seriesArray.push(newSeries[i])
+        }
+      }else{
+        seriesArray.push(series);
+      }
     });
+    // console.log(seriesArray)
     return seriesArray;
   };
   let getChartSeriesForCost = function (datas, mfIdAndNameMap, xAxisData, showLabel = false, shouldFilter = false) {
@@ -687,10 +730,14 @@ $(function () {
       areaChart.resize();
     });
   };
-  let searchMeterData = function () {
+  let searchMeterData = function (exceptionData) {
+    
     if (currentMeterParameters.length <= 0) {
       toastr.warning('请先选择查询仪表');
       return;
+    }
+    if($('.btn-grp div.date-active').attr('data-value') != 5){
+      $('.on-off-button').show();
     }
     let currentSelectedParameters = _.filter(currentMeterParameters, a => a.isChecked);
     if (currentSelectedParameters.length <= 0) currentSelectedParameters = currentMeterParameters;
@@ -703,7 +750,6 @@ $(function () {
     let sTime = timeArray[0];
     let eTime = timeArray[1];
     $(window).resize();
-    // console.log(123)
     $('#vmeter-summary').hide();
     if (comparsionSelectedMeters.length > 0) {
       $('.comparison-tab').show();
@@ -798,7 +844,7 @@ $(function () {
             datas,
             checkedParameters,
           };
-          assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, datas, checkedParameters, 'chart-instance', getChartType());
+          assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, datas, checkedParameters, 'chart-instance', getChartType(),exceptionData);
           // 当前数据的值
           if (currentSelectedNode.modeltype === 'meter') {
             $('#summary-container').show();
@@ -858,6 +904,7 @@ $(function () {
               };
               let templateHtml = template('vmeter-data-comparison', summaryData);
               $('#vmeter-content').html(templateHtml);
+              now_Sum = (summaryData.vMeterFeatureData[0].val.replace(/,/g,'')-summaryData.vMeterFeatureData[2].val.replace(/,/g,'')).toFixed(2);
             }
             generateGraphData(parameter.unit, searchParaType);
             generateOriginalData();
@@ -933,7 +980,6 @@ $(function () {
       let uriparam = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
       esdpec.framework.core.getJsonResult('dataanalysis/getdata?' + uriparam, function (response) {
         if (response.IsSuccess) {
-          // console.log(response)
           let chartLegend = [];
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
@@ -959,6 +1005,7 @@ $(function () {
       let uriparams = `mfids=${_.join(mfids, ',')}&paraType=0&dateType=${dateType}&sTime=${sTime}&eTime=${eTime}`;
       esdpec.framework.core.getJsonResult('dataanalysis/getcomparedata?' + uriparams, function (response) {
         if (response.IsSuccess) {
+          // console.log(response)
           let chartLegend = [];
           let chartXaxisData = [];
           chartLegend = _.map(meterAndParaMap, a => a.name);
@@ -993,6 +1040,17 @@ $(function () {
     if (costSeries !== null) chartSeries = _.concat(chartSeries, costSeries);
     generateChart(unit, chartLegend, chartXaxisData, chartSeries, chartDom);
   };
+  let _exceptionData = {
+    dataList : [],
+    mfid : ''
+  };
+  let getExceptionData = function(dataList,mfid){
+    _exceptionData.dataList.length = 0;
+    _.each(dataList,a => {
+      _exceptionData.dataList.push(a)
+    });
+    _exceptionData.mfid = mfid;
+  }
   //点击后触发改变第一张图表
   let generateChart = function (unit, chartLegend, chartXaxisData, chartSeries, chartDom, selected = undefined) {
     let orderLegend = _.orderBy(chartLegend, a => a, 'asc');
@@ -1001,30 +1059,33 @@ $(function () {
       title: {
         subtext: '单位：' + unit,
         padding: [-6, 0, 0, 0],
-        //  新增
         right: '40',
         top: '80'
       },
       tooltip: {
-        trigger: 'axis'
+        trigger: 'axis',
       },
       grid: {
-        // left: 15,
-        // right: 100,
-        // bottom: 20
-
-        //  改动
         left: 70,
         right: 50,
         bottom: 20,
-        top: 120
+        top: 130
       },
       legend: {
+        orient: 'vertical',
         data: orderLegend,
         padding: [0, 50, 50, 80],
-        width: '70%',
-        height: 80,
-        left: -85
+        width: 'auto',
+        height: '25%',
+        left: -80,
+        itemWidth: 15,
+        itemHeight: 13,
+        formatter: function (name) {
+          return (name.length > 8 ? (name.slice(0,8)+"...") : name ); 
+        },
+        tooltip: {
+          show: true
+        }
       },
       calculable: true,
       xAxis: [{
@@ -1040,16 +1101,431 @@ $(function () {
       }],
       series: chartSeries
     };
+    if($('#button')[0].checked){
+      option.tooltip.formatter = function (params){
+        return params.length > 1 ? (params[0].name + '<br/>'
+                + "<div class='white space'></div>" + '总用量：'+ Number(params[0].value) + Number(params[1].value) + '<br/>'
+                +"<div class='yellow space'></div>" + params[1].seriesName + ' : ' + params[1].value + '<br/>'
+                +"<div class='blue space'></div>" + params[0].seriesName + ' : ' + params[0].value):
+                 params[0].name + '<br/>' + "<div class='blue space'></div>" + params[0].seriesName + ' : ' + params[0].value;
+     }
+    }
     if (selected) {
       option.legend.selected = selected;
     }
     analysisChart = echarts.init(document.getElementById(chartDom), e_macarons);
     analysisChart.setOption(option, true);
     analysisChart.resize();
+    if ($("#button").is(':checked')) {
+      analysisChart.off('click');
+      analysisChart.on('click', function (params) {
+        // e.stopPropagation();
+        if(params.seriesName != '异常数据'){
+          return;
+        }
+        setTimeout(() => {
+          layui.use(['layer','laydate','table'], function () {
+            // let table = layui.table;
+            let exceptionVal = Number(params.value).toFixed(2)
+            let lay = layui.layer;
+            let setTop = function () {
+              let expDate = [],  
+              startTime = [],
+              endTime = [],
+              val = [],
+              dayTotal = 0,
+              data = {};
+             _.each(_exceptionData.dataList,eData =>{
+               expDate.push(eData.date);
+               startTime.push(eData.original_time.substring(0,19));
+               endTime.push(eData.original_time.substring(20));
+               val.push(eData.val);
+             })
+             $('.abnormal-total').html(exceptionVal);
+             $('.apportion').html($('.abnormal-total').html());
+             let dayList = [];
+             let exceptionItem = {};
+              let dateLength = params.name.length;
+             for(let i = 0;i < endTime.length;i++){
+                if(endTime[i].substring(0,dateLength) == params.name){
+                  $('.abnormal-start-time').html(startTime[i]);
+                  $('.abnormal-end-time').html(endTime[i]);
+                  dayTotal = (endTime[i].substring(5,7) - startTime[i].substring(5,7))*30 + 
+                  endTime[i].substring(8,10) - startTime[i].substring(8,10) + 1;
+                  for(let j = 0;j < dayTotal;j++){
+                    let num = parseInt(startTime[i].substring(8,10))+j
+                    dayList.push(startTime[i].substring(0,8) + (num < 10? ('0'+num) : num))
+                  }
+                  data = {
+                    dayList,
+                    startTm: startTime[i].substring(0,13),
+                    endTm: endTime[i].substring(0,13)
+                  }
+                  exceptionItem.mfid = _exceptionData.mfid;
+                  exceptionItem.data_list = []
+                }
+              }
+              if(dayTotal > 30){
+                layer.open({
+                  title: 0,
+                  content: '异常数据区间不可超过30天，请确认',
+                  skin: 'warning-class',
+                  time: 2500,
+                  shadeClose: true,
+                  success: (params) => {
+                    params[0].style.zIndex = $('.layui-layer')[0].style.zIndex -0+1;
+                    document.onkeydown = function (e) {
+                      e = e || window.event;
+                      if ((e.keyCode || e.which) == 13) {
+                        layer.close(layer.index) //关闭最新弹出框          
+                      }
+                    }
+                  }
+                });
+                return;
+              }
+              let templateHtmlAbnormal = template('abnormal-data-template',data);
+              $('.abnormal-data').html(templateHtmlAbnormal);
+              let createInput = document.createElement('input');
+              createInput.type = 'number';
+              createInput.name = 'apportionNum';
+              //可分摊数据
+              let apportionValue = Number($('.apportion').html());
+              // 每日分配数量
+              let dayInputs = $('.apportion-num'); 
+              let remaining = 0;  //分配天后剩余数
+              let dayTotalValue = 0;
+              let remainingHour = 0; //分配小时后剩余数
+              $('.share-datas td').append('<input type="number" class="every-hour" name="" id="" onmousewheel="return false;">');
+             
+              lay.open({
+                type: 1,
+                area: ['90%', '80%'],
+                shade: 0.6,
+                id: 'abnormal-data-out',
+                content: $('#abnormal-data-model'),
+                zIndex: lay.zIndex,
+                shadeClose: true,
+                btn: ['保存', '取消'],
+                success: function (layero) {
+                  $('.layui-layer-title').remove();
+                     
+                  for(let i = 0;i < $('td.hour').length-1;i++){
+                    let sStr = $('td.hour')[i].innerText.replace(/\s+/g,"");
+                    $('.share-datas td')[i].innerHTML = '<i class="icon iconfont icon-Ankerwebicon-"></i>'
+                    if(data.startTm.substring(11) - 1 == sStr.substring(0,sStr.length-1) ){
+                      break;
+                    }
+                  }
+                  for(let j = $('td.hour').length - 1;j > 0;j--){
+                    let eStr = $('td.hour')[j].innerText.replace(/\s+/g,"");
+                    $('.share-datas td')[j].innerHTML = '<i class="icon iconfont icon-Ankerwebicon-"></i>'
+                    if(data.endTm.substring(11) - 0 == eStr.substring(0,eStr.length-1) - 1){
+                      break;
+                    }
+                  }
+                  let getDayTotalValue = function(){
+                    dayTotalValue = 0;
+                    for(let i = 0; i < dayTotal; i++){
+                      dayTotalValue += Number((dayInputs)[i].value);
+                    }
+                    return dayTotalValue;
+                  }
+                  remaining = apportionValue - dayTotalValue;
+                  $('.abnormal-total-data .to-everyday').off('click').on('click', function (e) {
+
+                    e.stopPropagation();
+                    getDayTotalValue();
+                    if (apportionValue - dayTotalValue <= 0) {
+                      layer.style(layer.msg("<div class='abnormal-msg'>无可分配数据</div>", {
+                        time: 1500,
+                        id: 'layui-msg'
+                      }), {
+                        width: '300px',
+                        height: '50px',
+                        bgcolor: '#adb3bb',
+                        color: '#ffffff'
+                      });
+                      return;
+                    }
+                    let tempDay = 0;
+                    for (let i = 0; i < dayTotal; i++) {
+                      if(dayInputs[i].value){
+                        tempDay++;
+                      }
+                    }
+                    for (let j = 0; j < dayTotal; j++) {
+                      if(dayInputs[j].value){
+                        continue;
+                      }else{
+                        dayInputs[j].value = ((apportionValue - dayTotalValue)/(dayTotal - tempDay)).toFixed(2);
+                      }
+                    }
+                    getDayTotalValue();
+                    remaining = apportionValue - dayTotalValue;
+                    if(Math.abs(remaining) <= 0.3){
+                      $('.apportion').html(0);
+                    }
+                  });
+                  let shareDatas = $('.share-datas td')
+                  let hourInputs = $('.share-datas td input');
+                  
+                  let firstDayHours = 0,lastDayHours = 0 , onlyOneDayHours = 0;
+
+                  if(dayTotal > 1){
+                    firstDayHours = 24 - (data.startTm.substring(11) - 1);
+                    lastDayHours = data.endTm.substring(11) - 0;
+                  }else{
+                    onlyOneDayHours = 24 - (data.startTm.substring(11) - 0) - (data.endTm.substring(11) - 0);
+                  }
+                  $('.abnormal-total-data .to-everyhour').off('click').on('click', function (e) {
+                    e.stopPropagation();
+                    // getDayTotalValue();
+                    exceptionItem.data_list.length = 0;
+                    if($('.apportion').html() != 0){
+                      layer.open({
+                        title: 0,
+                        content: '操作无效',
+                        skin: 'warning-class',
+                        time: 2500,
+                        shadeClose: true,
+                        success: (params) => {
+                          params[0].style.zIndex = $('.layui-layer')[0].style.zIndex -0+1;
+                          document.onkeydown = function (e) {
+                            e = e || window.event;
+                            if ((e.keyCode || e.which) == 13) {
+                              layer.close(layer.index)          
+                            }
+                          }
+                        }
+                      });
+                      return;
+                    }
+                    let thisDayValue = [];
+                    let hourTotalValue = [];
+                    let hourInputsValue = 0;
+                    let getThisDayValue = ()=>{
+                      for (let i = 0; i < dayTotal; i++) {
+                        thisDayValue.push(Number($('.apportion-num')[i].value));
+                        hourTotalValue.push(0);
+                      }
+                    }
+                    let getHourTotalValue = () =>{
+                      for (let i = 0; i < dayTotal; i++) {
+                        if(i == 0){
+                          for(let j = 0; j <  firstDayHours; j++){
+                            hourInputsValue = hourInputs[j].value == ''? 0 : hourInputs[j].value
+                            hourTotalValue[i] += Number(hourInputsValue);
+                          }
+                        }else if(i == dayTotal-1){
+                          for(let k = hourInputs.length-1; k > hourInputs.length-lastDayHours-1; k--){
+                            hourInputsValue = hourInputs[k].value == ''? 0 : hourInputs[k].value
+                            hourTotalValue[i] += Number(hourInputsValue);
+                          }
+                        }else{
+                          for(let l = (i-1)*24+firstDayHours;l < 24 + (i-1)*24+firstDayHours;l++){
+                            hourInputsValue = hourInputs[l].value == ''? 0 : hourInputs[l].value
+                            hourTotalValue[i] += Number(hourInputsValue);
+                          }
+                        }
+                      }
+                    }
+                    getThisDayValue();
+                    getHourTotalValue();
+                    for(let i = 0; i < hourInputs.length; i++){
+                        let day = 0,hour = 0;
+                        hour = data.startTm.substring(11)-0+i;
+                        day = data.startTm.substring(9,10)-0
+                        if(i >= firstDayHours){
+                          day = day + parseInt((i-firstDayHours+24)/24);
+                        }
+                        hour = hour%24;
+                        if(hour == 0){
+                          day = day + 1;
+                        }
+                        exceptionItem.data_list.push({
+                          val: 0,
+                          cost: 0,
+                          date: data.startTm.substring(0,8) + (day<10?'0'+day:day) + ' '+ ( hour < 10?'0'+hour:hour ) + ':00:00',
+                          datetype: 1,
+                          original_time: '',
+                          deal_time: ''
+                        })
+                     
+                    }
+                    let tempHour = 0;
+                    for (let i = 0; i < dayTotal; i++) {
+                      if(i == 0){
+                        tempHour = 0;
+                        for(let j = 0; j < firstDayHours; j++){
+                          if(hourInputs[j].value){
+                            tempHour++;
+                          }
+                        }
+                        for(let j = 0; j < firstDayHours; j++){
+                          if(hourInputs[j].value){
+                            exceptionItem.data_list[j].val = (hourInputs[j].value).toFixed(5);
+                            continue;
+                          }
+                          hourInputs[j].value = ((thisDayValue[i] - hourTotalValue[i])/(firstDayHours - tempHour)).toFixed(2);
+                          // exceptionItem.data_list[j].val = hourInputs[j].value;
+                          exceptionItem.data_list[j].val = ((thisDayValue[i] - hourTotalValue[i])/(firstDayHours - tempHour)).toFixed(5);
+                        }
+                      }else if(i == dayTotal-1){
+                        tempHour = 0;
+                        for(let k = hourInputs.length-1; k > hourInputs.length-lastDayHours-1; k--){
+                          if(hourInputs[k].value){
+                            tempHour++;
+                          }
+                        }
+                        for(let k = hourInputs.length-1; k > hourInputs.length-lastDayHours-1; k--){
+                          if(hourInputs[k].value){
+                            exceptionItem.data_list[k].val = hourInputs[k].value.toFixed(5);
+                            continue;
+                          }
+                          hourInputs[k].value = ((thisDayValue[i] - hourTotalValue[i])/(lastDayHours-tempHour)).toFixed(2);
+                          // exceptionItem.data_list[k].val = hourInputs[k].value;
+                          exceptionItem.data_list[k].val = ((thisDayValue[i] - hourTotalValue[i])/(lastDayHours - tempHour)).toFixed(5);
+                        }
+                      }else{
+                        tempHour = 0;
+                        for(let l = (i-1)*24+firstDayHours;l < 24 + (i-1)*24 + firstDayHours;l++){
+                          if(hourInputs[l].value){
+                            tempHour++;
+                          }
+                        }
+                        for(let l = (i-1)*24+firstDayHours;l < 24 + (i-1)*24 + firstDayHours;l++){
+                          if(hourInputs[l].value){
+                            exceptionItem.data_list[l].val = hourInputs[l].value.toFixed(5);
+                            continue;
+                          }
+                          hourInputs[l].value = ((thisDayValue[i] - hourTotalValue[i])/(24-tempHour)).toFixed(2);
+                          // exceptionItem.data_list[l].val = hourInputs[l].value;
+                          exceptionItem.data_list[l].val = ((thisDayValue[i] - hourTotalValue[i])/(24-tempHour)).toFixed(5);
+                        }
+                      }
+                    }
+                    // console.log(exceptionItem)
+                  });
+                  $('.apportion-num:input').on('input propertychange', function () {
+                   dayTotalValue = 0;
+                    for (let i = 0; i < dayInputs.length; i++) {
+                      dayTotalValue += Number(dayInputs[i].value);
+                    }
+                    $('.apportion').html(apportionValue - dayTotalValue);
+                  })
+                },
+                yes: function (index,layero) {
+                  let apportionData = parseInt($('.apportion').html());
+                  if (apportionData) {
+                    layer.open({
+                      title: 0,
+                      content: '还存在异常数据未分摊完，无法保存',
+                      skin: 'warning-class',
+                      time: 2500,
+                      shadeClose: true,
+                      success: (params) => {
+                        params[0].style.zIndex = $('.layui-layer')[0].style.zIndex -0+1;
+                        document.onkeydown = function (e) {
+                          e = e || window.event;
+                          if ((e.keyCode || e.which) == 13) {
+                            layer.close(layer.index) //关闭最新弹出框          
+                          }
+                        }
+                      }
+                    });
+                    return;
+                  }else{
+                    let hourInputs = $('.share-datas td input');
+                    let sumDay = 0,
+                    sumHour = 0;
+                    hourTotalValue = [];
+                    for (let i = 0; i < dayTotal; i++) {
+                      sumDay += Number(dayInputs[i].value);
+                    }
+                    for (let i = 0; i < hourInputs.length; i++) {
+                      sumHour += Number(exceptionItem.data_list[i].val = hourInputs[i].value);
+                    }
+                    // console.log(sumDay)
+                    // console.log(sumHour)
+                    if(Math.abs(sumDay - sumHour) > 0.5){ 
+                      layer.open({
+                        title: 0,
+                        content: "分摊不合理，请检查",
+                        skin: 'warning-class',
+                        time: 2500,
+                        shadeClose: true,
+                        success: (params) => {
+                          params[0].style.zIndex = $('.layui-layer')[0].style.zIndex -0+1;
+                          document.onkeydown = function (e) {
+                            e = e || window.event;
+                            if ((e.keyCode || e.which) == 13) {
+                              layer.close(layer.index) //关闭最新弹出框          
+                            }
+                          }
+                        }
+                      });
+                      return;
+                    }
+                  }
+                  esdpec.framework.core.doPostOperation('exceptionData/savedata', exceptionItem, function (response) {
+                    if (response.IsSuccess) {
+                      setTimeout(function(){
+                        reloadMeterChartData();
+                      }, 300);
+                      // window.location.reload();//修改成功后刷新页面
+                      $("#button")[0].checked = false;
+                      layer.close(index);
+                      setTimeout(function(){
+                        toastr.info('保存成功!');
+                      },3000);
+                      return false;
+                    }
+                  });
+                },
+                end: (index, layero) => {
+                  // toastr.info('关闭触发');
+                }
+              });
+            };
+            setTop();
+            $('.layui-layer-btn1').on('click', function (param) {
+              if ($('.abnormal-total').html() - 0) {
+                $('#abnormal-data-model form')[0].reset();
+              }
+            })
+          });
+        },300);
+      })
+    }
     window.addEventListener('resize', function () {
       analysisChart.resize();
     });
   };
+  let getException = (sTime, eTime, level, pageIndex,dayTotal) => {
+    let selectedItem = _.filter(currentMeterParameters, a => a.isChecked);
+    let mIds = _.map(selectedItem, a => a.id);
+    let expObj = `mfid=${_.join(mIds, ',')}&dateType=${searchDateType}&sTime=${sTime}&eTime=${eTime}`;
+    reloadMeterChartData();
+    esdpec.framework.core.getJsonResult('exceptionData/getexceptiondata?' + expObj, function (response) {
+      if (response.IsSuccess) {
+        let templateHtml = template('abnormal-data-template', data);
+        $('.abnormal-data').html(templateHtml);
+        layui.use('laypage', function () {
+          let laypage = layui.laypage;
+          laypage.render({
+            elem: 'exception-paging',
+            count: dayTotal,
+            curr: pageIndex,
+            layout: ['count', 'prev', 'page', 'next', 'skip'],
+            jump: function (page, first) {
+              if (!first) getException(sTime, eTime, level, page.curr,page.count);
+            }
+          });
+        });
+      }
+    });
+  }
   //创建区域echart表格,第一张
   let generateAreaChart = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartDom, chartType = 'bar') {
     let orderLegend = _.orderBy(chartLegend, a => a, 'asc');
@@ -1070,20 +1546,32 @@ $(function () {
         top: '80'
       },
       tooltip: {
-        trigger: 'axis'
+        trigger: 'axis',
       },
       grid: {
         left: 70,
         right: 50,
         bottom: 20,
-        top: 120
+        top: 130
       },
       legend: {
+        orient: 'vertical',
         data: orderLegend,
         padding: [0, 50, 80, 80],
-        width: '70%',
-        height: 80,
-        left: -80
+        width: 'auto',
+        height: '25%',
+        left: -80,
+        itemWidth: 15,
+        itemHeight: 13,
+        // textStyle: {
+        //   width: '30%',
+        // },
+        formatter: function (name) {
+          return (name.length > 8 ? (name.slice(0,8)+"...") : name ); 
+        },
+        tooltip: {
+            show: true,
+        }
       },
       calculable: true,
       xAxis: [{
@@ -1099,6 +1587,7 @@ $(function () {
       }],
       series: chartSeries,
     };
+    //console.log(option)
     areaChart = echarts.init(document.getElementById(chartDom), e_macarons);
     areaChart.off('legendselectchanged');
     areaChart.setOption(option, true);
@@ -1223,8 +1712,8 @@ $(function () {
         }
       });
       let exception = $('.graph-data .exception-manager');
-      if (exception.attr('data-toggle') === 'open') $('.inException').show();
-      else $('.inException').hide();
+      // if (exception.attr('data-toggle') === 'open') $('.inException').show();
+      // else $('.inException').hide();
     }, 300);
   }
   let generateGraphData = function (unit, type) {
@@ -1520,11 +2009,10 @@ $(function () {
     }
     return 0.0;
   };
-  // 获取堆叠图数据
+  // 获取堆叠图数据 峰谷平
   let getStackSeries = (branchs, datas, flag, chartType) => {
-    // console.log(branchs)
-    // console.log(datas)
     let usageSeries = [];
+    // console.log(datas)
     if (flag === 0) {
       _.each(branchs, (b, index) => {
         usageSeries.push({
@@ -1540,6 +2028,7 @@ $(function () {
           }
         });
       });
+      // console.log(usageSeries)
     } else {
       _.each(branchs, (b, index) => {
         usageSeries.push({
@@ -1550,13 +2039,12 @@ $(function () {
           data: getStackSeriesData(datas.now_data_list, b, chartType, 'm'),
           itemStyle: {
             normal: {
-              color: chartType === 0 ? usageColor[index] : costColor[index]
+              color: chartType === 0 ? usageColor_yestoday[index] : costColor_yestoday[index]
             },
           }
         });
       });
     }
-    console.log(usageSeries)
     return usageSeries;
   };
   let generateStackChart = function (chartDom, datas, dateArray, dateType, chartType) {
@@ -1795,16 +2283,12 @@ $(function () {
     let nowbranchs = _.map(datas.now_data_list, a => a.name);
     let lastbranchs = _.map(datas.last_data_list, a => a.name);
     let branchs = _.orderBy(_.merge(nowbranchs, lastbranchs), a => a, 'asc');
-    // console.log(datas)
-    // console.log(dateArray)
-    // console.log(dateArray[0].substring(0, 10))
     switch (dateType) {
       case '2':
         let flag = 0;
         if (dateArray[0].substring(0, 10) === dateArray[1].substring(0, 10) && dateArray[1].substring(0, 10) === new Date().format('yyyy-MM-dd')) {
           xAxisData = [new Date(dateArray[1]).addDays(-1).format('yyyy-MM-dd'), new Date(dateArray[0]).format('yyyy-MM-dd')];
           flag = 0;
-          // console.log(xAxisData)
           $('#meter-usage-title').hide();
           $('#meter-cost-title').hide();
           let nowUsageSum = 0,
@@ -1843,7 +2327,6 @@ $(function () {
           flag = 1;
         }
         series = getStackSeries(branchs, datas, flag, chartType);
-        // console.log(series)
         break;
       case '3':
         $('#meter-usage-title').hide();
@@ -1954,9 +2437,11 @@ $(function () {
     window.addEventListener('resize', function () {
       meterFgpChart.resize();
     });
+    $('#fgp-tab').on('click',function(){
+      meterFgpChart.resize();
+    });
   };
   let generateMeterFgpPieChart = function (chartDom, fgpDatas, dateArray, dateType, chartType, title) {
-    // console.log(chartDom)
     let datas = [];
     let seriesColor = [];
     let branchs = _.orderBy(_.map(fgpDatas, a => a.name), a => a, 'asc');
@@ -1996,7 +2481,9 @@ $(function () {
         left: '5%',
         top: '65%',
         width: '90%',
-        data: legend
+        data: legend,
+        itemHeight: 13,
+        itemWidth: 15
       },
       calculable: true,
       series: [{
@@ -2407,7 +2894,6 @@ $(function () {
     let uriparam = `mfids=${_.join(mfids, ',')}&paraType=${searchParaType}&dateType=${searchDateType}&sTime=${sTime}&eTime=${eTime}`;
     esdpec.framework.core.getJsonResult('dataanalysis/getdata?' + uriparam, function (response) {
       if (response.IsSuccess) {
-        // console.log(response)
         let chartLegend = [];
         let chartXaxisData = [];
         let checkedParameters = _.filter(currentMeterParameters, p => _.includes(mfids, p.id));
@@ -2884,6 +3370,7 @@ $(function () {
               }
             });
           });
+          //编辑
           $('.alarm-condition .con-oper-grp .con_edit').off('click').on('click', function (e) {
             e.stopPropagation();
             let ruleId = _.replace(Math.random(), '.', '');
@@ -2891,7 +3378,6 @@ $(function () {
             let alarmName = $('#myAlarmName_' + id).text();
             let preWarnValue = $('#myPreValue_' + id).text();
             let onWarnValue = $('#myOnValue_' + id).text();
-
             function getItem(element) {
               return element.Id == id
             }
@@ -2924,28 +3410,64 @@ $(function () {
                   $(alarmTypeText[i]).prop('checked', 'checked');
                 }
               }
+              // $('.fieldTd>.opt').off('click').on('click', function (e) {
+              //   e.stopPropagation();
+              //   $('.fieldTd>.opt>input').prop('checked', false);
+              //   let inputDom = $(e.currentTarget).children().first();
+              //   let type = inputDom.attr('data-type');
+              //   inputDom.prop('checked', true);
+              //   if (type === '0') {
+              //     $('#' + ruleId + '_1').removeAttr('disabled');
+              //     $('#' + ruleId + '_2').removeAttr('disabled');
+              //     $('#' + ruleId + '_3').removeAttr('disabled');
+              //     $('#' + ruleId + '_4').removeAttr('disabled');
+              //   } else {
+              //     $('#' + ruleId + '_1').attr('disabled', 'disabled');
+              //     $('#' + ruleId + '_2').attr('disabled', 'disabled');
+              //     $('#' + ruleId + '_3').attr('disabled', 'disabled');
+              //     $('#' + ruleId + '_4').attr('disabled', 'disabled');
+              //     let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
+              //     if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4')
+              //       $('.alarmTypetd>.opt>input').prop('checked', false);
+              //   }
+              // });
+
+              // $('.alarmTypetd>.opt').off('click').on('click', function (e) {
+              //   e.stopPropagation();
+              //   let alarmInput = $(e.currentTarget).children().first();
+              //   let alarmVal = alarmInput.val();
+              //   if (alarmVal == '0' || alarmVal == '5') {
+              //     //可选
+              //     $(this).parent('td').parent('tr').find('.validate-container').removeAttr('disabled');
+              //     $(this).parent('td').parent('tr').find('.magic-checkbox').removeAttr('disabled');
+              //   } else {
+              //     $(this).parent('td').parent('tr').find('.validate-container').attr('disabled', 'disabled').val('');
+              //     $(this).parent('td').parent('tr').find('.magic-checkbox').attr('disabled', 'disabled').prop('checked', false);
+              //   }
+              //   if (alarmInput.is(':disabled')) return;
+              //   $('.alarmTypetd>.opt>input').prop('checked', false);
+              //   alarmInput.prop('checked', true);
+              // });
+
+              // $('.weektd>.opt').off('click').on('click', function (e) {
+              //   e.stopPropagation();
+              //   let currentDom = e.currentTarget;
+              //   let currentInput = $(currentDom).children().first();
+              //   if ($(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '0' || $(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '5') {
+              //     currentInput.prop('checked', !currentInput.is(':checked'));
+              //   } else {
+              //     currentInput.prop('checked', false);
+              //   }
+              // });
+
               $('.fieldTd>.opt').off('click').on('click', function (e) {
                 e.stopPropagation();
                 $('.fieldTd>.opt>input').prop('checked', false);
                 let inputDom = $(e.currentTarget).children().first();
                 let type = inputDom.attr('data-type');
                 inputDom.prop('checked', true);
-                if (type === '0') {
-                  $('#' + ruleId + '_1').removeAttr('disabled');
-                  $('#' + ruleId + '_2').removeAttr('disabled');
-                  $('#' + ruleId + '_3').removeAttr('disabled');
-                  $('#' + ruleId + '_4').removeAttr('disabled');
-                } else {
-                  $('#' + ruleId + '_1').attr('disabled', 'disabled');
-                  $('#' + ruleId + '_2').attr('disabled', 'disabled');
-                  $('#' + ruleId + '_3').attr('disabled', 'disabled');
-                  $('#' + ruleId + '_4').attr('disabled', 'disabled');
-                  let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
-                  if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4')
-                    $('.alarmTypetd>.opt>input').prop('checked', false);
-                }
+                $('.alarmTypetd>.opt').find('input').prop('checked',false);
               });
-
               $('.alarmTypetd>.opt').off('click').on('click', function (e) {
                 e.stopPropagation();
                 let alarmInput = $(e.currentTarget).children().first();
@@ -2954,13 +3476,31 @@ $(function () {
                   //可选
                   $(this).parent('td').parent('tr').find('.validate-container').removeAttr('disabled');
                   $(this).parent('td').parent('tr').find('.magic-checkbox').removeAttr('disabled');
+                  $('.validate-container').show();
+                  $('.weektd .magic-checkbox').prop('checked','checked');
+                  $('.validate-container').val('00:00 -- 23:59')
+                  if(!$('div.enable_box').hasClass('hidden')){
+                    $('.enable_box').addClass('hidden');
+                  }
                 } else {
                   $(this).parent('td').parent('tr').find('.validate-container').attr('disabled', 'disabled').val('');
                   $(this).parent('td').parent('tr').find('.magic-checkbox').attr('disabled', 'disabled').prop('checked', false);
+                  $('.validate-container').hide();
+                  $('.enable_box').removeClass('hidden').attr('disabled',true)
                 }
                 if (alarmInput.is(':disabled')) return;
                 $('.alarmTypetd>.opt>input').prop('checked', false);
                 alarmInput.prop('checked', true);
+              });
+              $('.weektd>.opt').off('click').on('click', function (e) {
+                e.stopPropagation();
+                let currentDom = e.currentTarget;
+                let currentInput = $(currentDom).children().first();
+                
+                currentInput.prop('checked', !$(currentInput)[0].checked);
+                if(currentInput.prop('disabled')){
+                  currentInput.prop('checked', false);
+                }
               });
 
               layui.use('laydate', function () {
@@ -2989,16 +3529,7 @@ $(function () {
                 };
               }
 
-              $('.weektd>.opt').off('click').on('click', function (e) {
-                e.stopPropagation();
-                let currentDom = e.currentTarget;
-                let currentInput = $(currentDom).children().first();
-                if ($(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '0' || $(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '5') {
-                  currentInput.prop('checked', !currentInput.is(':checked'));
-                } else {
-                  currentInput.prop('checked', false);
-                }
-              });
+              
 
 
               $('#ok_' + ruleId).off('click').on('click', function (e) {
@@ -3513,7 +4044,7 @@ $(function () {
               let setTop = function () {
                 lay.open({
                   type: 1,
-                  area: ['1350px', '480px'],
+                  area: ['90%', '480px'],
                   shade: 0.6,
                   content: $('#meter-alarm-history-modal'),
                   zIndex: lay.zIndex,
@@ -3573,7 +4104,6 @@ $(function () {
       if (response.IsSuccess) {
         let rtn = response.Content;
         rtn.areaName = getMeterBelongArea(currentSelectedNode.id);
-        // console.log('qy')
         let data = {
           data: rtn
         };
@@ -3735,6 +4265,7 @@ $(function () {
         };
         let newRow = template('new-rule-template', data);
         $('.alarm-condition').prepend(newRow);
+        $('.weektd .magic-checkbox').prop('checked','checked');
         if ($('.alarm-condition>.alaram-condition-norecord').length > 0)
           $('.alarm-condition>.alaram-condition-norecord').remove();
         setTimeout(() => {
@@ -3746,7 +4277,7 @@ $(function () {
               range: '--',
               format: 'HH:mm',
               type: 'time',
-              value: '00:01 -- 23:59',
+              value: '00:00 -- 23:59',
             });
           });
           $('#cancel_' + ruleId).off('click').on('click', function (e) {
@@ -3811,38 +4342,52 @@ $(function () {
               }
             })
           });
+          //新增模板
           $('.fieldTd>.opt').off('click').on('click', function (e) {
             e.stopPropagation();
             $('.fieldTd>.opt>input').prop('checked', false);
             let inputDom = $(e.currentTarget).children().first();
             let type = inputDom.attr('data-type');
             inputDom.prop('checked', true);
-            if (type === '0') {
-              $('#' + ruleId + '_1').removeAttr('disabled');
-              $('#' + ruleId + '_2').removeAttr('disabled');
-              $('#' + ruleId + '_3').removeAttr('disabled');
-              $('#' + ruleId + '_4').removeAttr('disabled');
-            } else {
-              $('#' + ruleId + '_1').attr('disabled', 'disabled');
-              $('#' + ruleId + '_2').attr('disabled', 'disabled');
-              $('#' + ruleId + '_3').attr('disabled', 'disabled');
-              $('#' + ruleId + '_4').attr('disabled', 'disabled');
-              let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
-              if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4')
-                $('.alarmTypetd>.opt>input').prop('checked', false);
-            }
+            $('.alarmTypetd>.opt').find('input').prop('checked',false);
+
+            // if (type === '0') {
+            //   $('#' + ruleId + '_1').removeAttr('disabled');
+            //   $('#' + ruleId + '_2').removeAttr('disabled');
+            //   $('#' + ruleId + '_3').removeAttr('disabled');
+            //   $('#' + ruleId + '_4').removeAttr('disabled');
+            //   flag = true;
+            // } else {
+            //   $('#' + ruleId + '_1').attr('disabled', 'disabled');
+            //   $('#' + ruleId + '_2').attr('disabled', 'disabled');
+            //   $('#' + ruleId + '_3').attr('disabled', 'disabled');
+            //   $('#' + ruleId + '_4').attr('disabled', 'disabled');
+            //   let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
+            //   if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4'){
+            //     $('.alarmTypetd>.opt>input').prop('checked', false);
+            //   }
+            //   flag = false;
+            // }
           });
           $('.alarmTypetd>.opt').off('click').on('click', function (e) {
-            e.stopPropagation();
+            e.stopImmediatePropagation();
             let alarmInput = $(e.currentTarget).children().first();
             let alarmVal = alarmInput.val();
             if (alarmVal == '0' || alarmVal == '5') {
               //可选
               $(this).parent('td').parent('tr').find('.validate-container').removeAttr('disabled');
               $(this).parent('td').parent('tr').find('.magic-checkbox').removeAttr('disabled');
+              $('.weektd .magic-checkbox').prop('checked','checked');
+              $('.validate-container').val('00:00 -- 23:59')
+              $('.validate-container').show();
+              if(!$('div.enable_box').hasClass('hidden')){
+                $('.enable_box').addClass('hidden');
+              }
             } else {
               $(this).parent('td').parent('tr').find('.validate-container').attr('disabled', 'disabled').val('');
               $(this).parent('td').parent('tr').find('.magic-checkbox').attr('disabled', 'disabled').prop('checked', false);
+              $('.validate-container').hide();
+              $('.enable_box').removeClass('hidden').attr('disabled',true)
             }
             if (alarmInput.is(':disabled')) return;
             $('.alarmTypetd>.opt>input').prop('checked', false);
@@ -3852,11 +4397,18 @@ $(function () {
             e.stopPropagation();
             let currentDom = e.currentTarget;
             let currentInput = $(currentDom).children().first();
-            if ($(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '0' || $(e.currentTarget).parent('td').parent('tr').find('.alarmTypetd>.opt>input:checked').val() == '5') {
-              currentInput.prop('checked', !currentInput.is(':checked'));
-            } else {
+            
+            currentInput.prop('checked', !$(currentInput)[0].checked);
+            if(currentInput.prop('disabled')){
               currentInput.prop('checked', false);
             }
+            // if (flag&&flag2) {
+            //   currentInput.attr('disabled','disabled');
+            //   // currentInput.prop('checked', true);
+            // } else {
+            //   currentInput.removeAttr('disable');
+            //   // currentInput.prop('checked', false);
+            // }
           });
           $('#tpl_' + ruleId).off('click').on('click', function (e) {
             e.stopPropagation();
@@ -4169,6 +4721,7 @@ $(function () {
   //年月日切换
   $('.btn-grp .btn').on('click', function (e) {
     e.stopPropagation();
+    $('#button')[0].checked = false;
     const currentDom = e.currentTarget;
     $("div[id*='layui-laydate']").remove();
     _.each($('.btn-grp .btn'), item => {
@@ -4192,21 +4745,25 @@ $(function () {
           $('#day').removeClass('hidden');
           $('#month').addClass('hidden');
           $('#year').addClass('hidden');
+          $('.on-off-button').show();
           break;
         case '3':
           $('.date-grp').hide();
+          $('.on-off-button').show();
           break;
         case '4':
           $('.date-grp').show();
           $('#day').addClass('hidden');
           $('#month').removeClass('hidden');
           $('#year').addClass('hidden');
+          $('.on-off-button').show();
           break;
         case '5':
           $('.date-grp').show();
           $('#day').addClass('hidden');
           $('#month').addClass('hidden');
           $('#year').removeClass('hidden');
+          $('.on-off-button').hide();
           break;
       }
       $('#datevalue').val(resetSTimeAndETime(parseInt($(currentDom).attr('data-value'))));
@@ -4219,6 +4776,9 @@ $(function () {
       $('#daycontainer').val(new Date().format('yyyy-MM-dd') + ' -- ' + new Date().format('yyyy-MM-dd'));
     }
     searchMeterData();
+    if ($("#button").is(':checked')) {
+      reloadMeterChartData();
+    }
   });
 
   $('.area-btn-grp .btn').on('click', function (e) {
@@ -4268,6 +4828,7 @@ $(function () {
   });
 
   $('.operate-grp i.icon').on('click', function (e) {
+    $('#button')[0].checked = false;
     e.stopPropagation();
     const currentDom = e.currentTarget;
     let flag = $(currentDom).attr('data-value');
@@ -4381,7 +4942,6 @@ $(function () {
         //#region tip
       case 'tip':
         if (ifShowPieChart()) return;
-        // console.log(currentDom);
         //对比数据
         if (comparsionSelectedMeters.length > 0) {
           chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, getChartType(),
@@ -4593,6 +5153,7 @@ $(function () {
   //增加对比
   $('.comparsion-left>.meter-choose').on('click', function (e) {
     e.stopPropagation();
+    $('#button')[0].checked = false;
     let tempPara = "";
     $(".parameter-right div.para-item[class*='para-active']").each(function () {
       tempPara += $(this).text();
@@ -4658,6 +5219,7 @@ $(function () {
       onCancelBut: function () {},
       onLoad: function () {
         setTimeout(() => {
+          let isInit = false;
           $('.open .modal_header').text('选择对比仪表');
           if ($('.open .choose-meter-list').html() === '') {
             $('.open .choose-meter-list').jstree({
@@ -4682,37 +5244,43 @@ $(function () {
                 "keep_selected_style": false
               },
             }).on('loaded.jstree', function (e, data) {
+              isInit = true;
               let instance = data.instance;
               let target = instance.get_node(e.target.firstChild.firstChild.lastChild);
               instance.open_node(target);
+              let disableNode = instance.get_node(currentSelectedNode.id);
+              instance.select_node(disableNode);
+              instance.disable_node(disableNode);             
               _.each(comparsionSelectedMeters, meter => {
                 instance.select_node(instance.get_node(meter.id));
               });
-              let disableNode = instance.get_node(currentSelectedNode.id);
-              instance.select_node(disableNode);
-              instance.disable_node(disableNode);
+              isInit = false
             }).on('select_node.jstree', function (e, data) {
               let instance = data.instance;
               let node = data.node.original;
-              let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
-              tempNodeIds = _.filter(nodeIds, a => a !== currentSelectedNode.id);
-              let nodes = _.filter(meterDataList, a => _.includes(tempNodeIds, a.id) && a.modeltype !== 'area');
-              if (nodes) {
-                for (var i = 0; i < nodes.length; i++) {
-                  if (nodes[i].modeltype === "vmeter") {
-                    $.jstree.defaults.checkbox = {
-                      cascade_to_disabled: false
-                    }
-                    instance.deselect_node(instance.get_node(nodes[i].id));
-                    toastr.warning('该仪表无法对比');
-                    break;
-                  }
+              if (!isInit) {
+                let nodeIds = $(".open .choose-meter-list").jstree("get_checked");              
+                if (nodeIds.length > 6) {
+                  toastr.warning('对比仪表个数不能超过6个');
+                  instance.deselect_node(instance.get_node(node.id));
+                  return;
                 }
-              }
-              if (nodeIds.length > 6) {
-                toastr.warning('对比仪表个数不能超过6个');
-                instance.deselect_node(instance.get_node(node.id));
-                return;
+                esdpec.framework.core.getJsonResult('dataanalysis/getparasbymeterid?meterId=' + node.id, function(response){
+                  if(response.IsSuccess){
+                    if(response.Content && response.Content.length <= 0){
+                      toastr.warning('无法获取当前仪表的相关参数，无法进行相关对比');
+                      instance.deselect_node(instance.get_node(node.id));
+                      return;
+                    }
+                    let selectedPara = _.find(currentMeterParameters, a => a.isChecked);
+                    let exists = _.find(response.Content, a => a.name === selectedPara.name);
+                    if(!exists){
+                      toastr.warning('无法获取当前仪表的相关参数，无法进行相关对比');
+                      instance.deselect_node(instance.get_node(node.id));
+                      return;
+                    }
+                  }
+                });
               }
             }).on('deselect_node.jstree', function (e, data) {
               let instance = data.instance;
@@ -4808,6 +5376,7 @@ $(function () {
   $('.peak-data>.btn-group>div.btn').on('click', function (e) {
     e.stopPropagation();
     let currentDom = e.currentTarget;
+    $("div[id*='layui-laydate']").remove();
     $('.peak-data>.btn-group>div.btn').removeClass('date-active');
     $(currentDom).addClass('date-active');
     switch ($(currentDom).attr('data-value')) {
@@ -4897,13 +5466,13 @@ $(function () {
           hideMethod: "fadeOut"
         };
         if (minVal !== '') {
-          exceptionItem.lt_val = parseFloat(minVal);
+          exceptionItem.gt_val = parseFloat(minVal);
         }
         if (maxVal !== '') {
-          exceptionItem.gt_val = parseFloat(maxVal);
+          exceptionItem.lt_val = parseFloat(maxVal);
         }
-        if (exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val) {
-          toastr.warning('数值范围异常，最大值必须大于最小值');
+        if ((exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.gt_val >= exceptionItem.lt_val) || (!exceptionItem.lt_val && !exceptionItem.gt_val)) {
+          toastr.warning('数值范围异常，最大值和最小值必须有一个存在，并且最大值必须大于最小值');
           return;
         }
         esdpec.framework.core.doPostOperation('abnormalrule/saverule', exceptionItem, function (response) {
@@ -4949,16 +5518,16 @@ $(function () {
         if (maxVal !== '') {
           exceptionItem.lt_val = parseFloat(maxVal);
         }
-        if (exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.gt_val <= exceptionItem.lt_val) {
-          esdpec.framework.core.doPostOperation('abnormaldata/savelistdata', exceptionItem, function (response) {
-            if (response.IsSuccess) {
-              reloadMeterChartData();
-              reloadExceptionGraphData();
-            }
-          });
+        if ((exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.gt_val >= exceptionItem.lt_val) || (!exceptionItem.lt_val && !exceptionItem.gt_val)) {
+          toastr.warning('数值范围异常，最大值和最小值必须有一个存在，并且最大值必须大于最小值');
           return;
         }
-        toastr.warning('数值范围异常，最大值必须大于最小值');
+        esdpec.framework.core.doPostOperation('abnormaldata/savelistdata', exceptionItem, function (response) {
+          if (response.IsSuccess) {
+            reloadMeterChartData();
+            reloadExceptionGraphData();
+          }
+        });
       });
       $('#exception-unfilter').on('click', function (e) {
         e.stopImmediatePropagation();
@@ -4991,13 +5560,13 @@ $(function () {
         let minVal = $('#min-val-input').val();
         let maxVal = $('#max-val-input').val();
         if (minVal !== '') {
-          exceptionItem.lt_val = parseFloat(minVal);
+          exceptionItem.gt_val = parseFloat(minVal);
         }
         if (maxVal !== '') {
-          exceptionItem.gt_val = parseFloat(maxVal);
+          exceptionItem.lt_val = parseFloat(maxVal);
         }
-        if (exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.lt_val >= exceptionItem.gt_val) {
-          toastr.warning('数值范围异常，最大值必须大于最小值');
+        if ((exceptionItem.lt_val && exceptionItem.gt_val && exceptionItem.gt_val >= exceptionItem.lt_val) || (!exceptionItem.lt_val && !exceptionItem.gt_val)) {
+          toastr.warning('数值范围异常，最大值和最小值必须有一个存在，并且最大值必须大于最小值');
           return;
         }
         esdpec.framework.core.doPostOperation('abnormaldata/cancellistdata', exceptionItem, function (response) {
@@ -5060,6 +5629,7 @@ $(function () {
       done: (value, date) => {
         let truthValue = value.split('--');
         $('#datevalue').val(_.trim(truthValue[0]) + ' 00:00:00 -- ' + truthValue[1] + ' 23:59:59');
+        $("#button")[0].checked = false;
         searchMeterData();
       },
     });
@@ -5069,7 +5639,7 @@ $(function () {
         laydate.render({
           elem: '#daycontainer',
           show: false,
-          closeStop: '.area-grp'
+          closeStop: '.area-grp',
         });
       });
       laydate.render({
@@ -5083,6 +5653,7 @@ $(function () {
           let truthValue = value.split('--');
           let dayInMonth = new moment(truthValue[1]).daysInMonth();
           $('#datevalue').val(_.trim(truthValue[0]) + '-01 -- ' + truthValue[1] + '-' + dayInMonth);
+          $("#button")[0].checked = false;
           searchMeterData();
         }
       });
@@ -5096,6 +5667,7 @@ $(function () {
         done: (value, date) => {
           let truthValue = value.split('--');
           $('#datevalue').val(_.trim(truthValue[0]) + '-01-01 -- ' + truthValue[1] + '-12-31');
+          $("#button")[0].checked = false;
           searchMeterData();
         }
       });
@@ -5342,11 +5914,14 @@ $(function () {
                     $('.icon-tubiao-bingtu').removeClass('btn-active').hide();
                   }
                   // reset exception box
-                  if ($('.exception-manager').is(':visible')) {
-                    $('.exception-box').hide();
-                    $('.exception-manager').attr('data-toggle', 'close');
-                    $('.exception-manager').children(0).children(0).removeClass('icon-xiaotuziCduan_1').addClass('icon-xiaotuziCduan_');
-                    $('.exception-manager').hide();
+                  let defaultChecked = _.find(currentMeterParameters, a => a.isChecked);
+                  if(defaultChecked.type === 0){
+                    if ($('.exception-manager').is(':visible')) {
+                      $('.exception-box').hide();
+                      $('.exception-manager').attr('data-toggle', 'close');
+                      $('.exception-manager').children(0).children(0).removeClass('icon-xiaotuziCduan_1').addClass('icon-xiaotuziCduan_');
+                      $('.exception-manager').hide();
+                    }
                   }
                   // end reset exception box
                   searchMeterData();
@@ -5414,6 +5989,7 @@ $(function () {
                   }, 100);
                 }
               });
+              $("#button")[0].checked = false;
               esdpec.framework.core.getJsonResult('dataanalysis/getmeterinfobymeterid?meterId=' + nodeId, function (response) {
                 if (response.IsSuccess) {
                   let meterInfo = response.Content;
@@ -5469,172 +6045,42 @@ $(function () {
       hideMethod: "fadeOut"
     });
     //new code
-    $('.tab__nav li').on('click', function () {
-      $(this).attr("class", "tab_active").siblings().removeClass("tab_active");
-    })
-    let templateHtmlAbnormal = template('abnormal-data-template');
-    $('.abnormal-data').html(templateHtmlAbnormal);
-    let createInput = document.createElement('input');
-    createInput.type = 'number';
-    createInput.name = 'apportionNum';
-    $('.share-datas td').append(createInput);
-    setTimeout(() => {
-      $('#button').off('click').on('click', function (e) {
-        e.stopImmediatePropagation();
-        e.stopPropagation();
-        layui.use(['layer', 'laydate'], function () {
-          let lay = layui.layer;
-          // let laydate = layui.laydate;
-          let setTop = function () {
-            let inputs = $('.share-datas td input');
-            $('.apportion').html($('.abnormal-total').html());
-            //可分摊数据
-            let apportionValue = parseInt($('.apportion').html());
-            // 每日分配数量
-            let apportionNum = $('.abnormal-data:input');
-            lay.open({
-              type: 1,
-              area: ['90%', '80%'],
-              shade: 0.6,
-              id: 'abnormal-data-out',
-              content: $('#abnormal-data-model'),
-              zIndex: lay.zIndex,
-              btn: ['保存', '取消'],
-              success: function (layero) {
-                $('.layui-layer-title').remove();
-                // console.log(this)
-                let blankNum = inputs.length;
-                // console.log(inputs);
-                inputs[0].value = 123;
-                for (let i = 0; i < inputs.length; i++) {
-                  if (inputs[i].value) {
-                    blankNum--;
-                  }
-                }
-                // console.log(blankNum);
-                let dayTotal = 0;
-                let hourTotal = 0;
-                $('.abnormal-data :input').on('input propertychange', function () {
-                  for (let i = 0; i < apportionNum.length; i++) {
-                    dayTotal += Number(apportionNum[i].value);
-                  }
-                  for (let i = 0; i < inputs.length; i++) {
-                    if (inputs[i].value - 0) {
-                      continue;
-                    }
-                    hourTotal += Number(inputs[i].value);
-                  }
-                  // console.log(dayTotal)
-                  apportionValue = /*$('.abnormal-total').html() */ 5000 - dayTotal;
-                  if (apportionValue < 0) {
-                    // alert('当前分摊总数已超过可分摊数据，请重新输入')
-                    layer.open({
-                      title: 0,
-                      content: '当前分摊总数已超过可分摊数据，请重新输入',
-                      skin: 'warning-class',
-                      time: 2500,
-                      shadeClose: true,
-                      success: () => {
-                        document.onkeydown = function (e) {
-                          e = e || window.event;
-                          if ((e.keyCode || e.which) == 13) {
-                            layer.close(layer.index) //关闭最新弹出框          
-                          }
-                        }
-                      }
-                    });
-                    $('.apportion').html(apportionValue + (this.value - 0))
-                    this.value = '';
-                    return;
-                  }
-                  $('.apportion').html(apportionValue);
-                })
-                $('.abnormal-data :input').on('focus', function () {
-                  this.value = parseFloat(this.value - 0);
-                  if (this.value == 0) {
-                    this.value = '';
-                  }
-                });
-                $('.abnormal-data :input').on('blur', function () {
-                  this.value = Number(this.value).toFixed(2);
-                });
-                $('.abnormal-data .share-datas :input').on('blur', function () {
-                  // if(!(this.value - 0)){
-                  //   this.className = 'zero';
-                  // }else(
-                  //   this.className = ''
-                  // )
-                });
-                $('.abnormal-total-data .to-everyday').on('click', function () {
-                  for (let i = 0; i < apportionNum.length; i++) {
-                    apportionNum[i].value = (($('.apportion').html() - 0) / apportionNum.length).toFixed(2);
-                  }
-
-                });
-                $('.abnormal-total-data .to-everyhour').on('click', function () {
-                  // console.log(apportionValue)
-                  for (let i = 0; i < inputs.length; i++) {
-                    if (inputs[i].value) continue;
-                    inputs[i].value = (apportionValue / blankNum).toFixed(2);
-                  }
-                  if (!apportionValue) {
-                    // layer.msg("<div class='abnormal-msg'>无可分配数据</div>")
-                    layer.style(layer.msg("<div class='abnormal-msg'>无可分配数据</div>", {
-                      time: 1500,
-                      id: 'layui-msg'
-                    }), {
-                      width: '300px',
-                      height: '50px',
-                      bgcolor: '#adb3bb',
-                      color: '#ffffff'
-                    });
-                    return;
-                  }
-                  $('.apportion').html(0)
-                  apportionValue = 0;
-                });
-              },
-              yes: function (index, layero) {
-                // alert("点击保存触发")
-                let apportionData = parseInt($('.apportion').html());
-                // console.log(apportionData);
-                if (apportionData) {
-                  // toastr.warning('分摊方案不合理，无法保存');
-                  layer.open({
-                    title: 0,
-                    content: ' 还存在异常数据未分摊完，无法保存',
-                    skin: 'warning-class',
-                    time: 2500,
-                    shadeClose: true,
-                    success: () => {
-                      document.onkeydown = function (e) {
-                        e = e || window.event;
-                        if ((e.keyCode || e.which) == 13) {
-                          layer.close(layer.index) //关闭最新弹出框          
-                        }
-                      }
-                    }
-                  });
-                  return;
-                } else {
-                  $('.abnormal-total').html(0)
-                }
-                toastr.info('保存成功!');
-                layer.close(index);
-              },
-              end: (index, layero) => {
-                toastr.info('关闭触发');
-              }
-            });
-          };
-          setTop();
-          $('.layui-layer-btn1').on('click', function (param) {
-            if ($('.abnormal-total').html() - 0) {
-              $('#abnormal-data-model form')[0].reset();
-            }
-          })
+    // $('.share-datas td').append(createInput);
+    $('#button').off('click').on('click', function (e) {
+      e.stopPropagation();
+      if ($("#button").is(':checked')) {
+        let dateType = getSearchDateType();
+        let searchDateType = dateType === -1 ? 2 : dateType;
+        let defaultTimeStr = getDefaultSTimeAndETime(searchDateType);
+        let timeArray = defaultTimeStr.split(' -- ');
+        let sTime = timeArray[0];
+        let eTime = timeArray[1];
+        if($('.btn-grp div.date-active').attr('data-value') == 4){
+          sTime = sTime + ' 00:00:00';
+          eTime = eTime + ' 23:59:59';
+          searchDateType = 2;
+        }
+        let selectedItem = _.filter(currentMeterParameters, a => a.isChecked);
+        let mIds = _.map(selectedItem, a => a.id);
+        let expObj = `mfid=${_.join(mIds, ',')}&dateType=${searchDateType}&sTime=${sTime}&eTime=${eTime}`;
+        reloadMeterChartData();
+        esdpec.framework.core.getJsonResult('exceptionData/getexceptiondata?' + expObj, function (response) {
+          if (response.IsSuccess) {
+            // console.log(response)
+            searchMeterData(response.Content.data_list)
+            getExceptionData(response.Content.data_list,response.Content.mfid);
+          }
         });
-      });
-    }, 300);
+      }else{
+        reloadMeterChartData();
+      }
+    })
   });
+  $('.subscribe').on('click',function(){
+    $('.subscribe').toggleClass('isSubscribe');
+    $(this).hasClass('isSubscribe')? $(this).html('- 已关注') : $(this).html('+ 关注')
+  })
+  $('.parameter div').on('click',function(){
+    $('#button')[0].checked = false;
+  })
 })
