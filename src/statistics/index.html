@@ -32,8 +32,8 @@
 <body class="statistics">
   <div class="nav">
     <div class="statistics__nav">
-      <div class="statistics__nav--content"><span>用量分析 &gt; 区域仪表架构 &gt; </span><span class="meterName"></span><span class="detail"></span><span
-          class="hidden" id="nav-alarm"><span style="color:#708195;">&gt;</span>报警中心</span></div>
+      <div class="statistics__nav--content"><span>用量分析 &gt; 区域仪表架构 &gt; </span><span class="meterName"></span><span
+          class="detail"></span><span class="hidden" id="nav-alarm"><span style="color:#708195;">&gt;</span>报警中心</span></div>
     </div>
   </div>
   <div class="main">
@@ -59,7 +59,7 @@
               <div class="content__header--info" id="onshowmeterinfo"><span>展开表计详情 <i class="icon iconfont icon-xiaotuziCduan_"></i></span></div>
               <div class="content__header--btngrp">
                 <div class="module-container">区域模块管理</div>
-                <div class="alarm-container"><i class="icon iconfont icon-jinggao"></i>  报警中心</div>
+                <div class="alarm-container"><i class="icon iconfont icon-jinggao"></i> 报警中心</div>
                 <div class="subscribe">+关注</div>
               </div>
             </div>
@@ -886,19 +886,20 @@
       <div class="clear"></div>
     </div>
   </div>
-  <div class="hidden" id="abnormal-data-model"  style="display: none;">
+  <div class="hidden" id="abnormal-data-model" style="display: none;">
     <div class='abnormal-header'>异常数据分摊</div>
     <div class='abnormal-total-data'>
       <ul>
         <li>异常数据量: <span class="abnormal-total"></span></li>
         <li>可分摊数据量: <span class="apportion"></span></li>
         <li>数据中断区间：<span class="abnormal-start-time"></span> 至 <span class="abnormal-end-time"></span> </li>
+        <li><button class="form-reset">清空数据</button></li>
         <li><button class="to-everyday">平均到每天</button></li>
         <li><button class="to-everyhour">平均到小时</button></li>
       </ul>
     </div>
     <form action="" method="get" class="expForm">
-      <table class="abnormal-data"></table>  
+      <table class="abnormal-data"></table>
     </form>
     <div class="exception-paging" id="exception-paging"></div>
     <div class="clear"></div>
@@ -977,31 +978,31 @@
 </script>
 <script type="text/html" id="graph-table-template">
   <thead>
-      <th>采集时间</th>
-      <th>{{data.type === 0 ? '用量': '读数'}}({{data.unit}})</th>
-      <th class="inException" style="text-align: center;">是否显示</th>
-    </thead>
-    <tbody>
-      {{if data.graphDataList.length > 0}}
-      {{each data.graphDataList graphData index}}
-      <tr class="{{graphData.isChecked?'':'shouldremove'}}">
-        <td>{{graphData.date}}</td>
-        <td>{{graphData.val}}</td>
-        <td class="inException" style="text-align: center;">
-          <div class="switch-box" data-control="BOX" id="Box_points_switch">
-            <label>
-              <!-- {{if graphData.isChecked}} -->
-              <input class="mui-switch mui-switch-anim exception-switch" checked type="checkbox" data-date="{{graphData.date}}" data-id="{{data.mfid}}">
-              <!-- {{else}}
-              <input class="mui-switch mui-switch-anim exception-switch" type="checkbox" data-date="{{graphData.date}}" data-id="{{data.mfid}}"> -->
-              <!-- {{/if}} -->
-            </label>
-          </div>
-        </td>
-      </tr>
-      {{/each}}
-      {{/if}}
-    </tbody>
+    <th>采集时间</th>
+    <th class="valtd ">{{data.type === 0 ? '用量': '读数'}}({{data.unit}})</th>
+    <th class="inException" style="text-align: center;">是否显示</th>
+  </thead>
+  <tbody>
+    {{if data.graphDataList.length > 0}}
+    {{each data.graphDataList graphData index}}
+    <tr class="{{graphData.isChecked?'':'shouldremove'}}">
+      <td>{{graphData.date}}</td>
+      <td class="valtd ">{{graphData.val}}</td>
+      <td class="inException" style="text-align: center;">
+        <div class="switch-box" data-control="BOX" id="Box_points_switch">
+          <label>
+            {{if graphData.isChecked}}
+            <input class="mui-switch mui-switch-anim exception-switch" checked type="checkbox" data-date="{{graphData.date}}" data-id="{{data.mfid}}">
+            {{else}}
+            <input class="mui-switch mui-switch-anim exception-switch" type="checkbox" data-date="{{graphData.date}}" data-id="{{data.mfid}}">
+            {{/if}}
+          </label>
+        </div>
+      </td>
+    </tr>
+    {{/each}}
+    {{/if}}
+  </tbody>
 </script>
 <script type="text/html" id="selected-meter-list-template">
   {{if selectedMeterList.length > 0}}{{each selectedMeterList meter index}}
@@ -1329,12 +1330,12 @@
     </tr>
   </thead>
   <tbody id='excption-tb'>
-    {{ if dayList }}
+    {{if dayList}}
     <tr></tr>
       {{each dayList value}}
       <tr class='time-hour1'>
         <td rowspan='4'>{{value}}</td>
-        <td rowspan='4'><input type="number" class='apportion-num' name="" id="" onmousewheel="return false;"></td>
+        <td rowspan='3'><input type="number" class='apportion-num' name="" id="" onmousewheel="return false;"></td>
         <td class='hour'>1时</td>
         <td class='hour'>2时</td>
         <td class='hour'>3时</td>
@@ -1343,24 +1344,24 @@
         <td class='hour'>6时</td>
         <td class='hour'>7时</td>
         <td class='hour'>8时</td>
-        <td class='hour'>9时   </td>
-        <td class='hour'>10时  </td>
+        <td class='hour'>9时</td>
+        <td class='hour'>10时</td>
         <td class='hour'>11时</td>
         <td class='hour'>12时</td>
       </tr>
       <tr class='share-datas'>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
       </tr>
       <tr class='time-hour2'>
         <td class='hour'>13时</td>
@@ -1377,196 +1378,22 @@
         <td class='hour'>24时</td>
       </tr>
       <tr class='share-datas'>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td rowspan='1' class='remaining'>当日待分配量：<span>0</span></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
+        <td class='hour-data'></td>
       </tr>
       {{/each}}
       {{/if}}
-      <!--
-      <tr class='time-hour1'>
-        <td rowspan='4'>2018-11-20{{}}</td>
-        <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
-        <td>1时</td>
-        <td>2时</td>
-        <td>3时</td>
-        <td>4时</td>
-        <td>5时</td>
-        <td>6时</td>
-        <td>7时</td>
-        <td>8时</td>
-        <td>9时</td>
-        <td>10时</td>
-        <td>11时</td>
-        <td>12时</td>
-      </tr>
-      <tr class='share-datas'>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr class='time-hour2'>
-        <td>13时</td>
-        <td>14时</td>
-        <td>15时</td>
-        <td>16时</td>
-        <td>17时</td>
-        <td>18时</td>
-        <td>19时</td>
-        <td>20时</td>
-        <td>21时</td>
-        <td>22时</td>
-        <td>23时</td>
-        <td>24时</td>
-      </tr>
-      <tr class='share-datas'>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr class='time-hour1'>
-        <td rowspan='4'>2018-11-21{{}}</td>
-        <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
-        <td>1时</td>
-        <td>2时</td>
-        <td>3时</td>
-        <td>4时</td>
-        <td>5时</td>
-        <td>6时</td>
-        <td>7时</td>
-        <td>8时</td>
-        <td>9时</td>
-        <td>10时</td>
-        <td>11时</td>
-        <td>12时</td>
-      </tr>
-      <tr class='share-datas'>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr class='time-hour2'>
-        <td>13时</td>
-        <td>14时</td>
-        <td>15时</td>
-        <td>16时</td>
-        <td>17时</td>
-        <td>18时</td>
-        <td>19时</td>
-        <td>20时</td>
-        <td>21时</td>
-        <td>22时</td>
-        <td>23时</td>
-        <td>24时</td>
-      </tr>
-      <tr class='share-datas'>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr class='time-hour1'>
-        <td rowspan='4'>2018-11-22{{}}</td>
-        <td rowspan='4'><input type="number" class='apportion-num' name="" id=""></td>
-        <td>1时</td>
-        <td>2时</td>
-        <td>3时</td>
-        <td>4时</td>
-        <td>5时</td>
-        <td>6时</td>
-        <td>7时</td>
-        <td>8时</td>
-        <td>9时</td>
-        <td>10时</td>
-        <td>11时</td>
-        <td>12时</td>
-      </tr>
-      <tr class='share-datas'>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr class='time-hour2'>
-        <td>13时</td>
-        <td>14时</td>
-        <td>15时</td>
-        <td>16时</td>
-        <td>17时</td>
-        <td>18时</td>
-        <td>19时</td>
-        <td>20时</td>
-        <td>21时</td>
-        <td>22时</td>
-        <td>23时</td>
-        <td>24时</td>
-      </tr>
-      <tr class='share-datas'>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr> -->
     </tbody>
 </script>
 

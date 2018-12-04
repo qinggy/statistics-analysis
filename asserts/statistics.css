@@ -9,14 +9,20 @@ html body {
 .clear {
   clear: both;
 }
-.original-data{
+
+.original-data {
   min-height: 800px;
 }
+
 .statistics {
   height: 100%;
   font: 14px "Microsoft YaHei" !important;
 }
-.mTop{margin-top: 100px;}
+
+.mTop {
+  margin-top: 100px;
+}
+
 .statistics__nav {
   padding: 15px 0 30px 22px;
   color: #1479e1;
@@ -86,7 +92,7 @@ html body {
 .tree-container {
   padding-left: 20px;
   padding-bottom: 20px;
-  height: calc(100% - 100px);
+  height: calc(100% - 180px);
   overflow: auto;
 }
 
@@ -137,9 +143,6 @@ html body {
 }
 
 .content__header--info {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   color: #1479e1;
 }
 
@@ -231,6 +234,7 @@ html body {
   cursor: pointer;
   background: #1479e1;
 }
+
 .isSubscribe {
   color: #1479e1;
   background: #ffffff;
@@ -264,6 +268,7 @@ html body {
   flex: 1;
   display: flex;
   flex-wrap: wrap;
+  height: 72px;
 }
 
 
@@ -282,7 +287,7 @@ html body {
   color: #1479e1;
   border-radius: 2px;
   cursor: pointer;
-  margin-bottom: 5px;
+  margin-bottom: 12px;
 }
 
 .para-active {
@@ -293,7 +298,7 @@ html body {
 .param-title,
 .meter-title {
   color: #3e4b5b;
-  margin-bottom: 10px;
+  /* margin-top: 3px; */
   font-size: 14px;
 }
 
@@ -307,6 +312,7 @@ html body {
   line-height: 20px;
   color: #1479e1;
   cursor: pointer;
+  margin-top: 14px;
 }
 
 .comparsion {
@@ -402,6 +408,7 @@ html body {
 .operate-grp>i:before {
   color: #708195;
 }
+
 /* 
 .area-operate-grp>i:last-of-type,
 .operate-grp>i:last-of-type {
@@ -675,7 +682,7 @@ html body {
 
 .graph-data {
   padding: 0;
-  padding-bottom: 30px;
+  padding-bottom: 10px;
 }
 
 .exception-manager {
@@ -965,7 +972,8 @@ html body {
   overflow: auto;
   margin-left: 10px;
 }
-.enable_box{    
+
+.enable_box {
   display: block;
   border-width: 2px;
   border-style: groove;
@@ -973,6 +981,7 @@ html body {
   margin: 0 auto;
   background: #f0f0f0;
 }
+
 .selected-meter-list {
   flex: 1;
   border-left: 1px solid #dce3e6;
@@ -1233,6 +1242,11 @@ html body {
 
 .op-grp>input:first-of-type {
   margin-right: -5px;
+  border-radius: 4px 0 0 4px;
+}
+
+.op-grp>input:last-child {
+  border-radius: 0 4px 4px 0;
 }
 
 .comparison-rmb {
@@ -1426,14 +1440,17 @@ html body {
   flex: 1;
   width: 100%
 }
-.fgp-item-row>div:first-child{
+
+.fgp-item-row>div:first-child {
   flex: 1 1 55%;
   height: 55%;
 }
-.fgp-item-row>div:last-child{
+
+.fgp-item-row>div:last-child {
   flex: 1 1 43%;
   height: 43%;
 }
+
 .fgp-item-pie {
   display: flex;
   /* flex-direction: column; */
@@ -2456,13 +2473,14 @@ span[class*='tempIcon_']::before {
 #original-table-body tr:hover {
   background-color: #F8F8F8;
 }
+
 .vmeter-summary {
   display: block;
   height: calc(100% - 125px);
   position: relative;
 }
 
-.vmeter{
+.vmeter {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -2492,23 +2510,23 @@ span[class*='tempIcon_']::before {
   font-size: 20px;
 }
 
-.icon-btn-RMB{
+.icon-btn-RMB {
   font-size: 28px !important;
 }
 
-.icon-btn-bingtu{
+.icon-btn-bingtu {
   font-size: 25px !important;
 }
 
-.icon-btn-xiazai{
+.icon-btn-xiazai {
   font-size: 27px !important;
 }
 
-.icon-btn-tishi{
+.icon-btn-tishi {
   font-size: 23px !important;
 }
 
-.jstree-default .jstree-disabled.jstree-clicked{
+.jstree-default .jstree-disabled.jstree-clicked {
   cursor: not-allowed;
 }
 
@@ -2516,4 +2534,18 @@ span[class*='tempIcon_']::before {
   float: right;
   margin-right: 20px;
 }
+
+.valtd {
+  padding-left: 50px;
+}
+
+.lasttd {
+  text-align: center;
+}
+
+.tab-content {
+  margin: 0 !important;
+  width: 100% !important;
+}
+
 /** end page**/

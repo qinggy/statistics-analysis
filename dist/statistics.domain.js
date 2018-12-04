@@ -16,13 +16,13 @@ $(function () {
     areaConfigureMetersClone = [];
   let areaConfigure = {};
   let now_Sum = 0;
-  let sortColor = ['#2782e0','#e8dd23','#94c629','#039b46','#1ebd95','#1fb6ff','#5e74f8','#3949ab','#7e57c2','#c753e0','#f3c325','#ef6100','#e82239',
-  '#7d4538','#e89014','#ec4310','#ec407a','#ef5350','#8d6e63','#5f96b2', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
+  let sortColor = ['#2782e0', '#e8dd23', '#94c629', '#039b46', '#1ebd95', '#1fb6ff', '#5e74f8', '#3949ab', '#7e57c2', '#c753e0', '#f3c325', '#ef6100', '#e82239',
+    '#7d4538', '#e89014', '#ec4310', '#ec407a', '#ef5350', '#8d6e63', '#5f96b2', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
   ];
   let usageColor = ['#e8dd23', '#94c629', '#039b46', '#39B0DB', '#00FA9A', '#4B0082', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
   let costColor = ['#f3c325', '#e89014', '#ef6100', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
-  let usageColor_yestoday = ['#1fb6ff','#1479e1','#3949ab'];
-  let costColor_yestoday = ['#ec4310','#fb7013','#7d4538'];
+  let usageColor_yestoday = ['#1fb6ff', '#1479e1', '#3949ab'];
+  let costColor_yestoday = ['#ec4310', '#fb7013', '#7d4538'];
   //alarm field
   let areaTotalRecord = 0;
   let areaAlarmList = [];
@@ -254,7 +254,7 @@ $(function () {
   };
   let getExceptionState = () => {
     let exceptionDom = $('.graph-data .exception-manager');
-    if (exceptionDom) return exceptionDom.attr('data-toggle') === 'open';
+    if (exceptionDom) return $(exceptionDom[0]).attr('data-toggle') === 'open';
     return false;
   };
   let getAreaDefaultSTimeAndETime = function (type) {
@@ -469,50 +469,50 @@ $(function () {
       }
       if ($("#button").is(':checked') && exceptionData) {
         let newSeries = [],
-         exceptionSeries = [],
-         expDate = [],  
-         startTime = [],
-         endTime = [],
-         val = [];
-        _.each(exceptionData,data =>{
+          exceptionSeries = [],
+          expDate = [],
+          startTime = [],
+          endTime = [],
+          val = [];
+        _.each(exceptionData, data => {
           expDate.push(data.date);
-          startTime.push( data.original_time.substring(0,xAxisData[0].length) );
-          endTime.push( data.original_time.substring(20,xAxisData[0].length + 20));
+          startTime.push(data.original_time.substring(0, xAxisData[0].length));
+          endTime.push(data.original_time.substring(20, xAxisData[0].length + 20));
           val.push(data.val);
         })
         series.stack = '堆积',
-        exceptionSeries = {
-          data: [],
-          name: '异常数据',
-          type:'bar',
-          stack: "堆积",
-          itemStyle: {
-            normal: {
-              color: '#f6bb43'
-            }
-          },
-          tooltip: {
-            formatter: function(params){
-              // return _exceptionData.dataList.length > 0?
-              // _exceptionData.dataList[0].val + chartSeries
-            // }
-            // console.log(params)
-            return params.seriesName + ': ' + params.value;
+          exceptionSeries = {
+            data: [],
+            name: '异常数据',
+            type: 'bar',
+            stack: "堆积",
+            itemStyle: {
+              normal: {
+                color: '#f6bb43'
+              }
+            },
+            tooltip: {
+              formatter: function (params) {
+                // return _exceptionData.dataList.length > 0?
+                // _exceptionData.dataList[0].val + chartSeries
+                // }
+                // console.log(params)
+                return params.seriesName + ': ' + params.value;
+              }
             }
           }
-        }
         exceptionSeries.length = xAxisData.length;
-        for(let k in endTime){
-          for(let i in xAxisData){
-            if(endTime[k] == xAxisData[i]){
-              for(let j in data.now_data_list){
-                if(endTime[k] == data.now_data_list[j].date){
+        for (let k in endTime) {
+          for (let i in xAxisData) {
+            if (endTime[k] == xAxisData[i]) {
+              for (let j in data.now_data_list) {
+                if (endTime[k] == data.now_data_list[j].date) {
                   series.data[i] = Number(data.now_data_list[j].val - val[k]).toFixed(3);
                   exceptionSeries.data[i] = Number(val[k]).toFixed(3);
                 }
               }
-            }else{
-              if(exceptionSeries.data[i]){
+            } else {
+              if (exceptionSeries.data[i]) {
                 continue;
               }
               exceptionSeries.data[i] = 0;
@@ -521,10 +521,10 @@ $(function () {
         }
         newSeries.push(series)
         newSeries.push(exceptionSeries);
-        for(let i = 0 ;i < newSeries.length;i++){
+        for (let i = 0; i < newSeries.length; i++) {
           seriesArray.push(newSeries[i])
         }
-      }else{
+      } else {
         seriesArray.push(series);
       }
     });
@@ -676,7 +676,9 @@ $(function () {
         name: meter.text,
         value: numberFormat((data.sum_val || data.now_sum_val || 0).toFixed(2))
       };
-      let legend = {isChecked: false};
+      let legend = {
+        isChecked: false
+      };
       if (data['ischecked']) {
         legend.isChecked = true;
       }
@@ -714,7 +716,9 @@ $(function () {
         name: meter.text,
         value: numberFormat((_.sum(_.map((data.data_list || data.now_data_list), a => a.cost))).toFixed(2))
       };
-      let legend = {isChecked: false};
+      let legend = {
+        isChecked: false
+      };
       if (data['ischecked']) {
         legend.isChecked = true;
       }
@@ -731,12 +735,12 @@ $(function () {
     });
   };
   let searchMeterData = function (exceptionData) {
-    
+
     if (currentMeterParameters.length <= 0) {
       toastr.warning('请先选择查询仪表');
       return;
     }
-    if($('.btn-grp div.date-active').attr('data-value') != 5){
+    if ($('.btn-grp div.date-active').attr('data-value') != 5) {
       $('.on-off-button').show();
     }
     let currentSelectedParameters = _.filter(currentMeterParameters, a => a.isChecked);
@@ -844,7 +848,7 @@ $(function () {
             datas,
             checkedParameters,
           };
-          assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, datas, checkedParameters, 'chart-instance', getChartType(),exceptionData);
+          assembleChartComponent(parameter.unit, chartLegend, chartXaxisData, datas, checkedParameters, 'chart-instance', getChartType(), exceptionData);
           // 当前数据的值
           if (currentSelectedNode.modeltype === 'meter') {
             $('#summary-container').show();
@@ -904,7 +908,7 @@ $(function () {
               };
               let templateHtml = template('vmeter-data-comparison', summaryData);
               $('#vmeter-content').html(templateHtml);
-              now_Sum = (summaryData.vMeterFeatureData[0].val.replace(/,/g,'')-summaryData.vMeterFeatureData[2].val.replace(/,/g,'')).toFixed(2);
+              now_Sum = (summaryData.vMeterFeatureData[0].val.replace(/,/g, '') - summaryData.vMeterFeatureData[2].val.replace(/,/g, '')).toFixed(2);
             }
             generateGraphData(parameter.unit, searchParaType);
             generateOriginalData();
@@ -1041,12 +1045,12 @@ $(function () {
     generateChart(unit, chartLegend, chartXaxisData, chartSeries, chartDom);
   };
   let _exceptionData = {
-    dataList : [],
-    mfid : ''
+    dataList: [],
+    mfid: ''
   };
-  let getExceptionData = function(dataList,mfid){
+  let getExceptionData = function (dataList, mfid) {
     _exceptionData.dataList.length = 0;
-    _.each(dataList,a => {
+    _.each(dataList, a => {
       _exceptionData.dataList.push(a)
     });
     _exceptionData.mfid = mfid;
@@ -1081,7 +1085,7 @@ $(function () {
         itemWidth: 15,
         itemHeight: 13,
         formatter: function (name) {
-          return (name.length > 8 ? (name.slice(0,8)+"...") : name ); 
+          return (name.length > 8 ? (name.slice(0, 8) + "...") : name);
         },
         tooltip: {
           show: true
@@ -1101,14 +1105,15 @@ $(function () {
       }],
       series: chartSeries
     };
-    if($('#button')[0].checked){
-      option.tooltip.formatter = function (params){
-        return params.length > 1 ? (params[0].name + '<br/>'
-                + "<div class='white space'></div>" + '总用量：'+ Number(params[0].value) + Number(params[1].value) + '<br/>'
-                +"<div class='yellow space'></div>" + params[1].seriesName + ' : ' + params[1].value + '<br/>'
-                +"<div class='blue space'></div>" + params[0].seriesName + ' : ' + params[0].value):
-                 params[0].name + '<br/>' + "<div class='blue space'></div>" + params[0].seriesName + ' : ' + params[0].value;
-     }
+    if ($('#button')[0].checked) {
+      option.tooltip.formatter = function (params) {
+        // console.log(params)
+        return params.length > 1 ? (params[0].name + '<br/>' +
+            "<div class='white space'></div>" + '总用量：' + (Number(params[0].value ? params[0].value : 0) + Number(params[1].value)) + '<br/>' +
+            "<div class='yellow space'></div>" + params[1].seriesName + ' : ' + params[1].value + '<br/>' +
+            "<div class='blue space'></div>" + params[0].seriesName + ' : ' + (params[0].value ? params[0].value : 0)) :
+          params[0].name + '<br/>' + "<div class='blue space'></div>" + params[0].seriesName + ' : ' + (params[0].value ? params[0].value : 0);
+      }
     }
     if (selected) {
       option.legend.selected = selected;
@@ -1119,61 +1124,59 @@ $(function () {
     if ($("#button").is(':checked')) {
       analysisChart.off('click');
       analysisChart.on('click', function (params) {
-        // e.stopPropagation();
-        if(params.seriesName != '异常数据'){
+        if (params.seriesName != '异常数据') {
           return;
         }
         setTimeout(() => {
-          layui.use(['layer','laydate','table'], function () {
-            // let table = layui.table;
+          layui.use(['layer', 'laydate', 'table'], function () {
             let exceptionVal = Number(params.value).toFixed(2)
             let lay = layui.layer;
             let setTop = function () {
-              let expDate = [],  
-              startTime = [],
-              endTime = [],
-              val = [],
-              dayTotal = 0,
-              data = {};
-             _.each(_exceptionData.dataList,eData =>{
-               expDate.push(eData.date);
-               startTime.push(eData.original_time.substring(0,19));
-               endTime.push(eData.original_time.substring(20));
-               val.push(eData.val);
-             })
-             $('.abnormal-total').html(exceptionVal);
-             $('.apportion').html($('.abnormal-total').html());
-             let dayList = [];
-             let exceptionItem = {};
+              let expDate = [],
+                startTime = [],
+                endTime = [],
+                val = [],
+                dayTotal = 0,
+                data = {};
+              _.each(_exceptionData.dataList, eData => {
+                expDate.push(eData.date);
+                startTime.push(eData.original_time.substring(0, 19));
+                endTime.push(eData.original_time.substring(20));
+                val.push(eData.val);
+              })
+              $('.abnormal-total').html(exceptionVal);
+              $('.apportion').html($('.abnormal-total').html());
+              let dayList = [];
+              let exceptionItem = {};
               let dateLength = params.name.length;
-             for(let i = 0;i < endTime.length;i++){
-                if(endTime[i].substring(0,dateLength) == params.name){
+              for (let i = 0; i < endTime.length; i++) {
+                if (endTime[i].substring(0, dateLength) == params.name) {
                   $('.abnormal-start-time').html(startTime[i]);
                   $('.abnormal-end-time').html(endTime[i]);
-                  dayTotal = (endTime[i].substring(5,7) - startTime[i].substring(5,7))*30 + 
-                  endTime[i].substring(8,10) - startTime[i].substring(8,10) + 1;
-                  for(let j = 0;j < dayTotal;j++){
-                    let num = parseInt(startTime[i].substring(8,10))+j
-                    dayList.push(startTime[i].substring(0,8) + (num < 10? ('0'+num) : num))
+                  dayTotal = (endTime[i].substring(5, 7) - startTime[i].substring(5, 7)) * 30 +
+                    endTime[i].substring(8, 10) - startTime[i].substring(8, 10) + 1;
+                  for (let j = 0; j < dayTotal; j++) {
+                    let num = parseInt(startTime[i].substring(8, 10)) + j
+                    dayList.push(startTime[i].substring(0, 8) + (num < 10 ? ('0' + num) : num))
                   }
                   data = {
                     dayList,
-                    startTm: startTime[i].substring(0,13),
-                    endTm: endTime[i].substring(0,13)
+                    startTm: startTime[i].substring(0, 13),
+                    endTm: endTime[i].substring(0, 13)
                   }
                   exceptionItem.mfid = _exceptionData.mfid;
                   exceptionItem.data_list = []
                 }
               }
-              if(dayTotal > 30){
+              if (dayTotal > 30) {
                 layer.open({
                   title: 0,
-                  content: '异常数据区间不可超过30天，请确认',
+                  content: '异常数据区间不可超过30天，请确认!',
                   skin: 'warning-class',
                   time: 2500,
                   shadeClose: true,
                   success: (params) => {
-                    params[0].style.zIndex = $('.layui-layer')[0].style.zIndex -0+1;
+                    params[0].style.zIndex = $('.layui-layer')[0].style.zIndex - 0 + 1;
                     document.onkeydown = function (e) {
                       e = e || window.event;
                       if ((e.keyCode || e.which) == 13) {
@@ -1184,7 +1187,7 @@ $(function () {
                 });
                 return;
               }
-              let templateHtmlAbnormal = template('abnormal-data-template',data);
+              let templateHtmlAbnormal = template('abnormal-data-template', data);
               $('.abnormal-data').html(templateHtmlAbnormal);
               let createInput = document.createElement('input');
               createInput.type = 'number';
@@ -1192,12 +1195,11 @@ $(function () {
               //可分摊数据
               let apportionValue = Number($('.apportion').html());
               // 每日分配数量
-              let dayInputs = $('.apportion-num'); 
-              let remaining = 0;  //分配天后剩余数
+              let dayInputs = $('.apportion-num');
+              let remaining = 0; //分配天后剩余数
               let dayTotalValue = 0;
               let remainingHour = 0; //分配小时后剩余数
-              $('.share-datas td').append('<input type="number" class="every-hour" name="" id="" onmousewheel="return false;">');
-             
+              $('.share-datas td.hour-data').append('<input type="number" class="every-hour" name="" id="" onmousewheel="return false;">');
               lay.open({
                 type: 1,
                 area: ['90%', '80%'],
@@ -1209,31 +1211,63 @@ $(function () {
                 btn: ['保存', '取消'],
                 success: function (layero) {
                   $('.layui-layer-title').remove();
-                     
-                  for(let i = 0;i < $('td.hour').length-1;i++){
-                    let sStr = $('td.hour')[i].innerText.replace(/\s+/g,"");
-                    $('.share-datas td')[i].innerHTML = '<i class="icon iconfont icon-Ankerwebicon-"></i>'
-                    if(data.startTm.substring(11) - 1 == sStr.substring(0,sStr.length-1) ){
+                  for (let i = 0; i < $('td.hour').length - 1; i++) {
+                    let sStr = $('td.hour')[i].innerText.replace(/\s+/g, "");
+                    $('.share-datas td.hour-data')[i].innerHTML = '<i class="icon iconfont icon-Ankerwebicon-"></i>'
+                    if (data.startTm.substring(11) - 1 == sStr.substring(0, sStr.length - 1)) {
                       break;
                     }
                   }
-                  for(let j = $('td.hour').length - 1;j > 0;j--){
-                    let eStr = $('td.hour')[j].innerText.replace(/\s+/g,"");
-                    $('.share-datas td')[j].innerHTML = '<i class="icon iconfont icon-Ankerwebicon-"></i>'
-                    if(data.endTm.substring(11) - 0 == eStr.substring(0,eStr.length-1) - 1){
+                  for (let j = $('td.hour').length - 1; j > 0; j--) {
+                    let eStr = $('td.hour')[j].innerText.replace(/\s+/g, "");
+                    $('.share-datas td.hour-data')[j].innerHTML = '<i class="icon iconfont icon-Ankerwebicon-"></i>'
+                    if (data.endTm.substring(11) - 0 == eStr.substring(0, eStr.length - 1) - 1) {
                       break;
                     }
                   }
-                  let getDayTotalValue = function(){
+                  let getDayTotalValue = function () {
                     dayTotalValue = 0;
-                    for(let i = 0; i < dayTotal; i++){
+                    for (let i = 0; i < dayTotal; i++) {
                       dayTotalValue += Number((dayInputs)[i].value);
                     }
                     return dayTotalValue;
                   }
                   remaining = apportionValue - dayTotalValue;
+                  let hourInputs = $('.share-datas td input');
+                  let thisDayValue = [];
+                  let hourTotalValue = [];
+                  let hourInputsValue = 0;
+                  let getThisDayValue = () => {
+                    hourTotalValue.length = 0;
+                    thisDayValue.length = 0;
+                    for (let i = 0; i < dayTotal; i++) {
+                      thisDayValue.push(Number($('.apportion-num')[i].value));
+                      $('.remaining>span')[i].innerHTML = (dayInputs[i].value - thisDayValue[i]).toFixed(2);
+                      hourTotalValue.push(0);
+                    }
+                  }
+                  let getHourTotalValue = () => {
+                    // hourTotalValue.length = 0;
+                    for (let i = 0; i < dayTotal; i++) {
+                      if (i == 0) {
+                        for (let j = 0; j < firstDayHours; j++) {
+                          hourInputsValue = hourInputs[j].value == '' ? 0 : hourInputs[j].value
+                          hourTotalValue[i] += Number(hourInputsValue);
+                        }
+                      } else if (i == dayTotal - 1) {
+                        for (let k = hourInputs.length - 1; k > hourInputs.length - lastDayHours - 1; k--) {
+                          hourInputsValue = hourInputs[k].value == '' ? 0 : hourInputs[k].value
+                          hourTotalValue[i] += Number(hourInputsValue);
+                        }
+                      } else {
+                        for (let l = (i - 1) * 24 + firstDayHours; l < 24 + (i - 1) * 24 + firstDayHours; l++) {
+                          hourInputsValue = hourInputs[l].value == '' ? 0 : hourInputs[l].value
+                          hourTotalValue[i] += Number(hourInputsValue);
+                        }
+                      }
+                    }
+                  }
                   $('.abnormal-total-data .to-everyday').off('click').on('click', function (e) {
-
                     e.stopPropagation();
                     getDayTotalValue();
                     if (apportionValue - dayTotalValue <= 0) {
@@ -1250,182 +1284,208 @@ $(function () {
                     }
                     let tempDay = 0;
                     for (let i = 0; i < dayTotal; i++) {
-                      if(dayInputs[i].value){
+                      if (dayInputs[i].value) {
                         tempDay++;
                       }
+                      hourTotalValue[i] = 0;
                     }
+                    getHourTotalValue();
+                    // console.log(hourTotalValue)
                     for (let j = 0; j < dayTotal; j++) {
-                      if(dayInputs[j].value){
+                      if (dayInputs[j].value) {
+                        $('.remaining>span')[j].innerHTML = Math.abs(dayInputs[j].value - (hourTotalValue[j] ? hourTotalValue[j] : 0)).toFixed(2) < 0.06 ? 0 :
+                          (dayInputs[j].value - (hourTotalValue[j] ? hourTotalValue[j] : 0)).toFixed(2);
                         continue;
-                      }else{
-                        dayInputs[j].value = ((apportionValue - dayTotalValue)/(dayTotal - tempDay)).toFixed(2);
+                      } else {
+                        dayInputs[j].value = ((apportionValue - dayTotalValue) / (dayTotal - tempDay)).toFixed(2);
+                        $('.remaining>span')[j].innerHTML = Math.abs(dayInputs[j].value - (hourTotalValue[j] ? hourTotalValue[j] : 0)).toFixed(2) < 0.06 ? 0 :
+                          (dayInputs[j].value - (hourTotalValue[j] ? hourTotalValue[j] : 0)).toFixed(2);
                       }
                     }
                     getDayTotalValue();
                     remaining = apportionValue - dayTotalValue;
-                    if(Math.abs(remaining) <= 0.3){
+                    if (Math.abs(remaining) <= 0.3) {
                       $('.apportion').html(0);
                     }
                   });
-                  let shareDatas = $('.share-datas td')
-                  let hourInputs = $('.share-datas td input');
-                  
-                  let firstDayHours = 0,lastDayHours = 0 , onlyOneDayHours = 0;
 
-                  if(dayTotal > 1){
+
+                  let firstDayHours = 0,
+                    lastDayHours = 0,
+                    onlyOneDayHours = 0;
+
+                  if (dayTotal > 1) {
                     firstDayHours = 24 - (data.startTm.substring(11) - 1);
                     lastDayHours = data.endTm.substring(11) - 0;
-                  }else{
+                  } else {
                     onlyOneDayHours = 24 - (data.startTm.substring(11) - 0) - (data.endTm.substring(11) - 0);
                   }
+                  $('.form-reset').on('click', function () {
+                    $('.expForm')[0].reset();
+                    for (let i = 0; i < dayTotal; i++) {
+                      $('.remaining>span')[i].innerHTML = 0;
+                    }
+                    $('.apportion').html($('.abnormal-total').html());
+                  })
                   $('.abnormal-total-data .to-everyhour').off('click').on('click', function (e) {
                     e.stopPropagation();
                     // getDayTotalValue();
                     exceptionItem.data_list.length = 0;
-                    if($('.apportion').html() != 0){
+                    if ($('.apportion').html() != 0) {
                       layer.open({
                         title: 0,
-                        content: '操作无效',
+                        content: '操作无效! ',
                         skin: 'warning-class',
                         time: 2500,
                         shadeClose: true,
                         success: (params) => {
-                          params[0].style.zIndex = $('.layui-layer')[0].style.zIndex -0+1;
+                          params[0].style.zIndex = $('.layui-layer')[0].style.zIndex - 0 + 1;
                           document.onkeydown = function (e) {
                             e = e || window.event;
                             if ((e.keyCode || e.which) == 13) {
-                              layer.close(layer.index)          
+                              layer.close(layer.index)
                             }
                           }
                         }
                       });
                       return;
                     }
-                    let thisDayValue = [];
-                    let hourTotalValue = [];
-                    let hourInputsValue = 0;
-                    let getThisDayValue = ()=>{
-                      for (let i = 0; i < dayTotal; i++) {
-                        thisDayValue.push(Number($('.apportion-num')[i].value));
-                        hourTotalValue.push(0);
+                    let hasVal = 0;
+                    for (let i = 0; i < hourInputs.length; i++) {
+                      if (hourInputs[i].value) {
+                        hasVal++;
                       }
                     }
-                    let getHourTotalValue = () =>{
-                      for (let i = 0; i < dayTotal; i++) {
-                        if(i == 0){
-                          for(let j = 0; j <  firstDayHours; j++){
-                            hourInputsValue = hourInputs[j].value == ''? 0 : hourInputs[j].value
-                            hourTotalValue[i] += Number(hourInputsValue);
+                    for (let j = 0; j < dayTotal; j++) {
+                      if (hasVal == hourInputs.length && $('.remaining>span')[j].innerHTML) {
+                        layer.open({
+                          title: 0,
+                          content: '无法分配! ',
+                          skin: 'warning-class',
+                          time: 2500,
+                          shadeClose: true,
+                          success: (params) => {
+                            params[0].style.zIndex = $('.layui-layer')[0].style.zIndex - 0 + 1;
+                            document.onkeydown = function (e) {
+                              e = e || window.event;
+                              if ((e.keyCode || e.which) == 13) {
+                                layer.close(layer.index)
+                              }
+                            }
                           }
-                        }else if(i == dayTotal-1){
-                          for(let k = hourInputs.length-1; k > hourInputs.length-lastDayHours-1; k--){
-                            hourInputsValue = hourInputs[k].value == ''? 0 : hourInputs[k].value
-                            hourTotalValue[i] += Number(hourInputsValue);
-                          }
-                        }else{
-                          for(let l = (i-1)*24+firstDayHours;l < 24 + (i-1)*24+firstDayHours;l++){
-                            hourInputsValue = hourInputs[l].value == ''? 0 : hourInputs[l].value
-                            hourTotalValue[i] += Number(hourInputsValue);
-                          }
-                        }
+                        });
+                        return;
                       }
                     }
                     getThisDayValue();
                     getHourTotalValue();
-                    for(let i = 0; i < hourInputs.length; i++){
-                        let day = 0,hour = 0;
-                        hour = data.startTm.substring(11)-0+i;
-                        day = data.startTm.substring(9,10)-0
-                        if(i >= firstDayHours){
-                          day = day + parseInt((i-firstDayHours+24)/24);
-                        }
-                        hour = hour%24;
-                        if(hour == 0){
-                          day = day + 1;
-                        }
-                        exceptionItem.data_list.push({
-                          val: 0,
-                          cost: 0,
-                          date: data.startTm.substring(0,8) + (day<10?'0'+day:day) + ' '+ ( hour < 10?'0'+hour:hour ) + ':00:00',
-                          datetype: 1,
-                          original_time: '',
-                          deal_time: ''
-                        })
-                     
+                    for (let i = 0; i < hourInputs.length; i++) {
+                      let day = 0,
+                        hour = 0;
+                      hour = data.startTm.substring(11) - 0 + i;
+                      day = data.startTm.substring(9, 10) - 0
+                      if (i >= firstDayHours) {
+                        day = day + parseInt((i - firstDayHours + 24) / 24);
+                      }
+                      hour = hour % 24;
+                      if (hour == 0) {
+                        day = day + 1;
+                      }
+                      exceptionItem.data_list.push({
+                        val: 0,
+                        cost: 0,
+                        date: data.startTm.substring(0, 8) + (day < 10 ? '0' + day : day) + ' ' + (hour < 10 ? '0' + hour : hour) + ':00:00',
+                        datetype: 1,
+                        original_time: '',
+                        deal_time: ''
+                      })
+
                     }
                     let tempHour = 0;
                     for (let i = 0; i < dayTotal; i++) {
-                      if(i == 0){
+                      if (i == 0) {
                         tempHour = 0;
-                        for(let j = 0; j < firstDayHours; j++){
-                          if(hourInputs[j].value){
+                        for (let j = 0; j < firstDayHours; j++) {
+                          if (hourInputs[j].value) {
                             tempHour++;
                           }
                         }
-                        for(let j = 0; j < firstDayHours; j++){
-                          if(hourInputs[j].value){
-                            exceptionItem.data_list[j].val = (hourInputs[j].value).toFixed(5);
+                        for (let j = 0; j < firstDayHours; j++) {
+                          if (hourInputs[j].value) {
+                            exceptionItem.data_list[j].val = Number(hourInputs[j].value).toFixed(5);
                             continue;
                           }
-                          hourInputs[j].value = ((thisDayValue[i] - hourTotalValue[i])/(firstDayHours - tempHour)).toFixed(2);
+                          hourInputs[j].value = ((thisDayValue[i] - hourTotalValue[i]) / (firstDayHours - tempHour)).toFixed(2);
                           // exceptionItem.data_list[j].val = hourInputs[j].value;
-                          exceptionItem.data_list[j].val = ((thisDayValue[i] - hourTotalValue[i])/(firstDayHours - tempHour)).toFixed(5);
+                          exceptionItem.data_list[j].val = ((thisDayValue[i] - hourTotalValue[i]) / (firstDayHours - tempHour)).toFixed(5);
                         }
-                      }else if(i == dayTotal-1){
+                      } else if (i == dayTotal - 1) {
                         tempHour = 0;
-                        for(let k = hourInputs.length-1; k > hourInputs.length-lastDayHours-1; k--){
-                          if(hourInputs[k].value){
+                        for (let k = hourInputs.length - 1; k > hourInputs.length - lastDayHours - 1; k--) {
+                          if (hourInputs[k].value) {
                             tempHour++;
                           }
                         }
-                        for(let k = hourInputs.length-1; k > hourInputs.length-lastDayHours-1; k--){
-                          if(hourInputs[k].value){
-                            exceptionItem.data_list[k].val = hourInputs[k].value.toFixed(5);
+                        for (let k = hourInputs.length - 1; k > hourInputs.length - lastDayHours - 1; k--) {
+                          if (hourInputs[k].value) {
+                            exceptionItem.data_list[k].val = Number(hourInputs[k].value).toFixed(5);
                             continue;
                           }
-                          hourInputs[k].value = ((thisDayValue[i] - hourTotalValue[i])/(lastDayHours-tempHour)).toFixed(2);
+                          hourInputs[k].value = ((thisDayValue[i] - hourTotalValue[i]) / (lastDayHours - tempHour)).toFixed(2);
                           // exceptionItem.data_list[k].val = hourInputs[k].value;
-                          exceptionItem.data_list[k].val = ((thisDayValue[i] - hourTotalValue[i])/(lastDayHours - tempHour)).toFixed(5);
+                          exceptionItem.data_list[k].val = ((thisDayValue[i] - hourTotalValue[i]) / (lastDayHours - tempHour)).toFixed(5);
                         }
-                      }else{
+                      } else {
                         tempHour = 0;
-                        for(let l = (i-1)*24+firstDayHours;l < 24 + (i-1)*24 + firstDayHours;l++){
-                          if(hourInputs[l].value){
+                        for (let l = (i - 1) * 24 + firstDayHours; l < 24 + (i - 1) * 24 + firstDayHours; l++) {
+                          if (hourInputs[l].value) {
                             tempHour++;
                           }
                         }
-                        for(let l = (i-1)*24+firstDayHours;l < 24 + (i-1)*24 + firstDayHours;l++){
-                          if(hourInputs[l].value){
-                            exceptionItem.data_list[l].val = hourInputs[l].value.toFixed(5);
+                        for (let l = (i - 1) * 24 + firstDayHours; l < 24 + (i - 1) * 24 + firstDayHours; l++) {
+                          if (hourInputs[l].value) {
+                            exceptionItem.data_list[l].val = Number(hourInputs[l].value).toFixed(5);
                             continue;
                           }
-                          hourInputs[l].value = ((thisDayValue[i] - hourTotalValue[i])/(24-tempHour)).toFixed(2);
+                          hourInputs[l].value = ((thisDayValue[i] - hourTotalValue[i]) / (24 - tempHour)).toFixed(2);
                           // exceptionItem.data_list[l].val = hourInputs[l].value;
-                          exceptionItem.data_list[l].val = ((thisDayValue[i] - hourTotalValue[i])/(24-tempHour)).toFixed(5);
+                          exceptionItem.data_list[l].val = ((thisDayValue[i] - hourTotalValue[i]) / (24 - tempHour)).toFixed(5);
                         }
                       }
                     }
-                    // console.log(exceptionItem)
+
+
                   });
                   $('.apportion-num:input').on('input propertychange', function () {
-                   dayTotalValue = 0;
+                    dayTotalValue = 0;
+                    for (let i = 0; i < hourInputs.length; i++) {
+                      hourInputs[i].value = '';
+                    }
                     for (let i = 0; i < dayInputs.length; i++) {
                       dayTotalValue += Number(dayInputs[i].value);
                     }
-                    $('.apportion').html(apportionValue - dayTotalValue);
+                    $('.apportion').html((apportionValue - dayTotalValue).toFixed(2));
+                  })
+                  $('.every-hour:input').on('input propertychange', function () {
+                    getThisDayValue();
+                    getHourTotalValue();
+                    for (let i = 0; i < dayInputs.length; i++) {
+                      $('.remaining>span')[i].innerHTML = (Math.abs(dayInputs[i].value - (hourTotalValue[i] ? hourTotalValue[i] : 0)).toFixed(2)) < 0.06 ? 0 :
+                        ((dayInputs[i].value - (hourTotalValue[i] ? hourTotalValue[i] : 0)).toFixed(2));
+                    }
                   })
                 },
-                yes: function (index,layero) {
+                yes: function (index, layero) {
                   let apportionData = parseInt($('.apportion').html());
                   if (apportionData) {
                     layer.open({
                       title: 0,
-                      content: '还存在异常数据未分摊完，无法保存',
+                      content: '分摊方案不合理，无法保存！',
                       skin: 'warning-class',
                       time: 2500,
                       shadeClose: true,
                       success: (params) => {
-                        params[0].style.zIndex = $('.layui-layer')[0].style.zIndex -0+1;
+                        params[0].style.zIndex = $('.layui-layer')[0].style.zIndex - 0 + 1;
                         document.onkeydown = function (e) {
                           e = e || window.event;
                           if ((e.keyCode || e.which) == 13) {
@@ -1435,10 +1495,10 @@ $(function () {
                       }
                     });
                     return;
-                  }else{
+                  } else {
                     let hourInputs = $('.share-datas td input');
                     let sumDay = 0,
-                    sumHour = 0;
+                      sumHour = 0;
                     hourTotalValue = [];
                     for (let i = 0; i < dayTotal; i++) {
                       sumDay += Number(dayInputs[i].value);
@@ -1448,7 +1508,7 @@ $(function () {
                     }
                     // console.log(sumDay)
                     // console.log(sumHour)
-                    if(Math.abs(sumDay - sumHour) > 0.5){ 
+                    if (Math.abs(sumDay - sumHour) > 0.5) {
                       layer.open({
                         title: 0,
                         content: "分摊不合理，请检查",
@@ -1456,7 +1516,7 @@ $(function () {
                         time: 2500,
                         shadeClose: true,
                         success: (params) => {
-                          params[0].style.zIndex = $('.layui-layer')[0].style.zIndex -0+1;
+                          params[0].style.zIndex = $('.layui-layer')[0].style.zIndex - 0 + 1;
                           document.onkeydown = function (e) {
                             e = e || window.event;
                             if ((e.keyCode || e.which) == 13) {
@@ -1470,15 +1530,15 @@ $(function () {
                   }
                   esdpec.framework.core.doPostOperation('exceptionData/savedata', exceptionItem, function (response) {
                     if (response.IsSuccess) {
-                      setTimeout(function(){
+                      setTimeout(function () {
                         reloadMeterChartData();
                       }, 300);
                       // window.location.reload();//修改成功后刷新页面
                       $("#button")[0].checked = false;
                       layer.close(index);
-                      setTimeout(function(){
+                      setTimeout(function () {
                         toastr.info('保存成功!');
-                      },3000);
+                      }, 3000);
                       return false;
                     }
                   });
@@ -1495,14 +1555,14 @@ $(function () {
               }
             })
           });
-        },300);
+        }, 300);
       })
     }
     window.addEventListener('resize', function () {
       analysisChart.resize();
     });
   };
-  let getException = (sTime, eTime, level, pageIndex,dayTotal) => {
+  let getException = (sTime, eTime, level, pageIndex, dayTotal) => {
     let selectedItem = _.filter(currentMeterParameters, a => a.isChecked);
     let mIds = _.map(selectedItem, a => a.id);
     let expObj = `mfid=${_.join(mIds, ',')}&dateType=${searchDateType}&sTime=${sTime}&eTime=${eTime}`;
@@ -1519,7 +1579,7 @@ $(function () {
             curr: pageIndex,
             layout: ['count', 'prev', 'page', 'next', 'skip'],
             jump: function (page, first) {
-              if (!first) getException(sTime, eTime, level, page.curr,page.count);
+              if (!first) getException(sTime, eTime, level, page.curr, page.count);
             }
           });
         });
@@ -1567,10 +1627,10 @@ $(function () {
         //   width: '30%',
         // },
         formatter: function (name) {
-          return (name.length > 8 ? (name.slice(0,8)+"...") : name ); 
+          return (name.length > 8 ? (name.slice(0, 8) + "...") : name);
         },
         tooltip: {
-            show: true,
+          show: true,
         }
       },
       calculable: true,
@@ -1681,7 +1741,6 @@ $(function () {
         graphDataList: originalList
       }
     };
-    //_.each(originalDatas.data.graphDataList, a => a.isChecked = true);
     let originalDataHtml = template('graph-table-template', originalDatas);
     $('#graph-table').html(originalDataHtml);
     setTimeout(() => {
@@ -1712,8 +1771,13 @@ $(function () {
         }
       });
       let exception = $('.graph-data .exception-manager');
-      // if (exception.attr('data-toggle') === 'open') $('.inException').show();
-      // else $('.inException').hide();
+      if (exception.attr('data-toggle') === 'open') {
+        $('.inException').show();
+        $('.valtd').removeClass('lasttd');
+      } else {
+        $('.inException').hide();
+        $('.valtd').addClass('lasttd');
+      }
     }, 300);
   }
   let generateGraphData = function (unit, type) {
@@ -1747,6 +1811,7 @@ $(function () {
         let originalList = _.find(searchResult.datas, item => item.mfid === mfid);
         let graphData = originalList ? originalList.now_data_list || [] : [];
         _.each(graphData, a => a.isChecked = true);
+        assembleExceptionTable(graphData, mfid, unit, type);
         if (getExceptionState()) {
           let dateType = getSearchDateType();
           let searchDateType = dateType === -1 ? 2 : dateType;
@@ -1767,11 +1832,10 @@ $(function () {
                 });
                 let graphList = _.concat(graphData, exceptionDatas);
                 assembleExceptionTable(graphList, mfid, unit, type);
+                return;
               }
             }
           });
-        } else {
-          assembleExceptionTable(graphData, mfid, unit, type);
         }
       });
     }, 100);
@@ -1846,8 +1910,13 @@ $(function () {
           }
         });
         let exception = $('.graph-data .exception-manager');
-        if (exception.attr('data-toggle') === 'open') $('.inException').show();
-        else $('.inException').hide();
+        if (exception.attr('data-toggle') === 'open') {
+          $('.inException').show();
+          $('.valtd').removeClass('lasttd');
+        } else {
+          $('.inException').hide();
+          $('.valtd').addClass('lasttd');
+        }
       }, 300);
     }
   };
@@ -2437,7 +2506,7 @@ $(function () {
     window.addEventListener('resize', function () {
       meterFgpChart.resize();
     });
-    $('#fgp-tab').on('click',function(){
+    $('#fgp-tab').on('click', function () {
       meterFgpChart.resize();
     });
   };
@@ -2526,7 +2595,10 @@ $(function () {
         sumVal.pieColor = sortColor[index];
       }
       datas.push(sumVal);
-      legends.push({name: data.meter_name, isChecked: true});
+      legends.push({
+        name: data.meter_name,
+        isChecked: true
+      });
     });
     let option = generatePieForAggregateData(legends, datas, searchResult.unit, '能耗对比', showColor);
     if (analysisChart) analysisChart.clear();
@@ -2767,6 +2839,7 @@ $(function () {
               $('.binding-data>span').removeClass('finish');
               $('.page-configure-func').show();
               $('.page-binding-data').hide();
+              $('.layui-tab-content').removeClass('tab-content');
             } else if (id === 'binding-data') {
               $('.binding-data').addClass('layui-this');
               $('.binding-data>span').addClass('finish');
@@ -2775,6 +2848,7 @@ $(function () {
               if ($('.open .meter-tree').html() === '')
                 bindingMeterTree('.open .meter-tree');
               bindSelectedMeterList();
+              $('.layui-tab-content').addClass('tab-content');
             }
           });
           $('.open .func-list>div').on('click', function (e) {
@@ -3378,6 +3452,7 @@ $(function () {
             let alarmName = $('#myAlarmName_' + id).text();
             let preWarnValue = $('#myPreValue_' + id).text();
             let onWarnValue = $('#myOnValue_' + id).text();
+
             function getItem(element) {
               return element.Id == id
             }
@@ -3466,7 +3541,7 @@ $(function () {
                 let inputDom = $(e.currentTarget).children().first();
                 let type = inputDom.attr('data-type');
                 inputDom.prop('checked', true);
-                $('.alarmTypetd>.opt').find('input').prop('checked',false);
+                $('.alarmTypetd>.opt').find('input').prop('checked', false);
               });
               $('.alarmTypetd>.opt').off('click').on('click', function (e) {
                 e.stopPropagation();
@@ -3477,16 +3552,16 @@ $(function () {
                   $(this).parent('td').parent('tr').find('.validate-container').removeAttr('disabled');
                   $(this).parent('td').parent('tr').find('.magic-checkbox').removeAttr('disabled');
                   $('.validate-container').show();
-                  $('.weektd .magic-checkbox').prop('checked','checked');
+                  $('.weektd .magic-checkbox').prop('checked', 'checked');
                   $('.validate-container').val('00:00 -- 23:59')
-                  if(!$('div.enable_box').hasClass('hidden')){
+                  if (!$('div.enable_box').hasClass('hidden')) {
                     $('.enable_box').addClass('hidden');
                   }
                 } else {
                   $(this).parent('td').parent('tr').find('.validate-container').attr('disabled', 'disabled').val('');
                   $(this).parent('td').parent('tr').find('.magic-checkbox').attr('disabled', 'disabled').prop('checked', false);
                   $('.validate-container').hide();
-                  $('.enable_box').removeClass('hidden').attr('disabled',true)
+                  $('.enable_box').removeClass('hidden').attr('disabled', true)
                 }
                 if (alarmInput.is(':disabled')) return;
                 $('.alarmTypetd>.opt>input').prop('checked', false);
@@ -3496,9 +3571,9 @@ $(function () {
                 e.stopPropagation();
                 let currentDom = e.currentTarget;
                 let currentInput = $(currentDom).children().first();
-                
+
                 currentInput.prop('checked', !$(currentInput)[0].checked);
-                if(currentInput.prop('disabled')){
+                if (currentInput.prop('disabled')) {
                   currentInput.prop('checked', false);
                 }
               });
@@ -3529,7 +3604,7 @@ $(function () {
                 };
               }
 
-              
+
 
 
               $('#ok_' + ruleId).off('click').on('click', function (e) {
@@ -4265,7 +4340,7 @@ $(function () {
         };
         let newRow = template('new-rule-template', data);
         $('.alarm-condition').prepend(newRow);
-        $('.weektd .magic-checkbox').prop('checked','checked');
+        $('.weektd .magic-checkbox').prop('checked', 'checked');
         if ($('.alarm-condition>.alaram-condition-norecord').length > 0)
           $('.alarm-condition>.alaram-condition-norecord').remove();
         setTimeout(() => {
@@ -4349,7 +4424,7 @@ $(function () {
             let inputDom = $(e.currentTarget).children().first();
             let type = inputDom.attr('data-type');
             inputDom.prop('checked', true);
-            $('.alarmTypetd>.opt').find('input').prop('checked',false);
+            $('.alarmTypetd>.opt').find('input').prop('checked', false);
 
             // if (type === '0') {
             //   $('#' + ruleId + '_1').removeAttr('disabled');
@@ -4377,17 +4452,17 @@ $(function () {
               //可选
               $(this).parent('td').parent('tr').find('.validate-container').removeAttr('disabled');
               $(this).parent('td').parent('tr').find('.magic-checkbox').removeAttr('disabled');
-              $('.weektd .magic-checkbox').prop('checked','checked');
+              $('.weektd .magic-checkbox').prop('checked', 'checked');
               $('.validate-container').val('00:00 -- 23:59')
               $('.validate-container').show();
-              if(!$('div.enable_box').hasClass('hidden')){
+              if (!$('div.enable_box').hasClass('hidden')) {
                 $('.enable_box').addClass('hidden');
               }
             } else {
               $(this).parent('td').parent('tr').find('.validate-container').attr('disabled', 'disabled').val('');
               $(this).parent('td').parent('tr').find('.magic-checkbox').attr('disabled', 'disabled').prop('checked', false);
               $('.validate-container').hide();
-              $('.enable_box').removeClass('hidden').attr('disabled',true)
+              $('.enable_box').removeClass('hidden').attr('disabled', true)
             }
             if (alarmInput.is(':disabled')) return;
             $('.alarmTypetd>.opt>input').prop('checked', false);
@@ -4397,9 +4472,9 @@ $(function () {
             e.stopPropagation();
             let currentDom = e.currentTarget;
             let currentInput = $(currentDom).children().first();
-            
+
             currentInput.prop('checked', !$(currentInput)[0].checked);
-            if(currentInput.prop('disabled')){
+            if (currentInput.prop('disabled')) {
               currentInput.prop('checked', false);
             }
             // if (flag&&flag2) {
@@ -5250,7 +5325,7 @@ $(function () {
               instance.open_node(target);
               let disableNode = instance.get_node(currentSelectedNode.id);
               instance.select_node(disableNode);
-              instance.disable_node(disableNode);             
+              instance.disable_node(disableNode);
               _.each(comparsionSelectedMeters, meter => {
                 instance.select_node(instance.get_node(meter.id));
               });
@@ -5259,22 +5334,22 @@ $(function () {
               let instance = data.instance;
               let node = data.node.original;
               if (!isInit) {
-                let nodeIds = $(".open .choose-meter-list").jstree("get_checked");              
+                let nodeIds = $(".open .choose-meter-list").jstree("get_checked");
                 if (nodeIds.length > 6) {
                   toastr.warning('对比仪表个数不能超过6个');
                   instance.deselect_node(instance.get_node(node.id));
                   return;
                 }
-                esdpec.framework.core.getJsonResult('dataanalysis/getparasbymeterid?meterId=' + node.id, function(response){
-                  if(response.IsSuccess){
-                    if(response.Content && response.Content.length <= 0){
+                esdpec.framework.core.getJsonResult('dataanalysis/getparasbymeterid?meterId=' + node.id, function (response) {
+                  if (response.IsSuccess) {
+                    if (response.Content && response.Content.length <= 0) {
                       toastr.warning('无法获取当前仪表的相关参数，无法进行相关对比');
                       instance.deselect_node(instance.get_node(node.id));
                       return;
                     }
                     let selectedPara = _.find(currentMeterParameters, a => a.isChecked);
                     let exists = _.find(response.Content, a => a.name === selectedPara.name);
-                    if(!exists){
+                    if (!exists) {
                       toastr.warning('无法获取当前仪表的相关参数，无法进行相关对比');
                       instance.deselect_node(instance.get_node(node.id));
                       return;
@@ -5413,6 +5488,7 @@ $(function () {
       $(currentDom).attr('data-toggle', 'open');
       $(currentDom).children(0).children(0).removeClass('icon-xiaotuziCduan_').addClass('icon-xiaotuziCduan_1');
       $('.inException').show();
+      $('.valtd').removeClass('lasttd');
       if (currentPara) {
         getExceptionOriginData(mfid);
       } else {
@@ -5581,6 +5657,7 @@ $(function () {
       $(currentDom).attr('data-toggle', 'close');
       $(currentDom).children(0).children(0).removeClass('icon-xiaotuziCduan_1').addClass('icon-xiaotuziCduan_');
       $('.inException').hide();
+      $('.valtd').addClass('lasttd');
       $('.graph-data-list tr.shouldremove').remove();
     }
   });
@@ -5915,7 +5992,7 @@ $(function () {
                   }
                   // reset exception box
                   let defaultChecked = _.find(currentMeterParameters, a => a.isChecked);
-                  if(defaultChecked.type === 0){
+                  if (defaultChecked.type === 0) {
                     if ($('.exception-manager').is(':visible')) {
                       $('.exception-box').hide();
                       $('.exception-manager').attr('data-toggle', 'close');
@@ -6055,7 +6132,7 @@ $(function () {
         let timeArray = defaultTimeStr.split(' -- ');
         let sTime = timeArray[0];
         let eTime = timeArray[1];
-        if($('.btn-grp div.date-active').attr('data-value') == 4){
+        if ($('.btn-grp div.date-active').attr('data-value') == 4) {
           sTime = sTime + ' 00:00:00';
           eTime = eTime + ' 23:59:59';
           searchDateType = 2;
@@ -6068,19 +6145,19 @@ $(function () {
           if (response.IsSuccess) {
             // console.log(response)
             searchMeterData(response.Content.data_list)
-            getExceptionData(response.Content.data_list,response.Content.mfid);
+            getExceptionData(response.Content.data_list, response.Content.mfid);
           }
         });
-      }else{
+      } else {
         reloadMeterChartData();
       }
     })
   });
-  $('.subscribe').on('click',function(){
+  $('.subscribe').on('click', function () {
     $('.subscribe').toggleClass('isSubscribe');
-    $(this).hasClass('isSubscribe')? $(this).html('- 已关注') : $(this).html('+ 关注')
+    $(this).hasClass('isSubscribe') ? $(this).html('- 已关注') : $(this).html('+ 关注')
   })
-  $('.parameter div').on('click',function(){
+  $('.parameter div').on('click', function () {
     $('#button')[0].checked = false;
   })
 })
