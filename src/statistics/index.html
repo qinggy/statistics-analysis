@@ -96,12 +96,21 @@
                 </div>
                 <div class="chart-container">
                   <div class="bottom-chart1">
-                    <div class="area-operate-grp">
-                      <i class="icon iconfont icon-RMB-area icon-btn-RMB" data-value="rmb"></i>
-                      <i class="icon iconfont should-uniq icon-icon- btn-active" data-value="bar"></i>
-                      <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
-                      <i class="icon iconfont icon-Group- icon-btn-xiazai" data-value="download"></i>
-                      <i class="icon iconfont icon-tooltip-outline show-tip-area icon-btn-tishi" data-value="tip"></i>
+                    <div class="legend__icon">
+                      <div class="chart-legend">
+                      <span class="scroll-left">〈</span>
+                      <span class="scroll-right">〉</span>
+                        <div>
+                          <ul class="legend-ul"></ul>
+                        </div>
+                      </div>
+                      <div class="area-operate-grp">
+                        <i class="icon iconfont icon-RMB-area icon-btn-RMB" data-value="rmb"></i>
+                        <i class="icon iconfont should-uniq icon-icon- btn-active" data-value="bar"></i>
+                        <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
+                        <i class="icon iconfont icon-Group- icon-btn-xiazai" data-value="download"></i>
+                        <i class="icon iconfont icon-tooltip-outline show-tip-area icon-btn-tishi" data-value="tip"></i>
+                      </div>
                     </div>
                     <div id="area-chart-instance" class="chart">
                       图表数据加载中...
@@ -146,6 +155,9 @@
                   </div>
                   <div class="proportion-chart-container">
                     <div class="proportion-chart-instance" id="proportion-chart-instance"></div>
+                    <div class="pie-legend">
+                      <ul class="pie-legend-ul"></ul>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -201,18 +213,27 @@
 
                     <!-- echart和图标 -->
                     <div class="bottom-chart">
-                      <div class="operate-grp">
-                        <div class="on-off-button">
-                          <input type="checkbox" name="button" id="button">
-                          <label for="button" class="blue"></label>
+                      <div class="legend__icon">
+                        <div class="chart-legend">
+                        <span class="scroll-left">〈</span>
+                        <span class="scroll-right">〉</span>
+                          <div>
+                            <ul class="legend-ul-meter"></ul>
+                          </div>
                         </div>
-                        <i class="icon iconfont icon-RMB icon-btn-RMB" data-value="rmb"></i>
-                        <i class="icon iconfont should-uniq icon-icon- btn-active" id="bar" data-value="bar"></i>
-                        <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
-                        <i class="icon iconfont should-uniq icon-tubiao-bingtu icon-btn-bingtu hidden" id="pie"
-                          data-value="pie"></i>
-                        <i class="icon iconfont icon-Group- icon-btn-xiazai" data-value="download"></i>
-                        <i class="icon iconfont icon-tooltip-outline show-tip icon-btn-tishi" data-value="tip"></i>
+                        <div class="operate-grp">
+                          <div class="on-off-button">
+                            <input type="checkbox" name="button" id="button">
+                            <label for="button" class="blue"></label>
+                          </div>
+                          <i class="icon iconfont icon-RMB icon-btn-RMB" data-value="rmb"></i>
+                          <i class="icon iconfont should-uniq icon-icon- btn-active" id="bar" data-value="bar"></i>
+                          <i class="icon iconfont should-uniq icon-line-chart_icon" data-value="line"></i>
+                          <i class="icon iconfont should-uniq icon-tubiao-bingtu icon-btn-bingtu hidden" id="pie"
+                            data-value="pie"></i>
+                          <i class="icon iconfont icon-Group- icon-btn-xiazai" data-value="download"></i>
+                          <i class="icon iconfont icon-tooltip-outline show-tip icon-btn-tishi" data-value="tip"></i>
+                        </div>
                       </div>
                       <div id="chart-instance" class="chart"></div>
                     </div>
@@ -1131,14 +1152,14 @@
   <table>
     <tbody>
       <tr>
-        <td>区域名称：{{data.areaName}}</td>
-        <td>仪表地址：{{data.MeterAddress}}</td>
-        <td>数据类型：{{data.DataType}}</td>
+        <td style='width: 33%'>区域名称：{{data.areaName}}</td>
+        <td style='text-align: center'>仪表地址：{{data.MeterAddress}}</td>
+        <td style='text-align: center'>数据类型：{{data.DataType}}</td>
       </tr>
       <tr>
-        <td>仪表型号：{{data.MeterModelName}}</td>
-        <td>串口：{{data.SpPortName}}</td>
-        <td id='alarm-status'>仪表状态：{{data.MeterStatus}}</td>
+        <td style='width: 33%'>仪表型号：{{data.MeterModelName}}</td>
+        <td style='text-align: center'>串口：{{data.SpPortName}}</td>
+        <td style='text-align: center' id='alarm-status'>仪表状态：{{data.MeterStatus}}</td>
       </tr>
     </tbody>
   </table>
@@ -1395,6 +1416,20 @@
       {{/each}}
       {{/if}}
     </tbody>
+</script>
+<script type='text/html' id="legendDataTemplate">
+  {{if legendData.length > 0}}
+  {{each legendData legend index}}
+  <li data-name="{{legend.name}}" title="{{legend}}"><span select='' class='legend-color'></span>{{legend}}</li>
+  {{/each}}
+  {{/if}}
+</script>
+<script type='text/html' id="pieLegendDataTemplate">
+  {{if legendData.length > 0}}
+  {{each legendData legend index}}
+  <li title="{{legend}}"><span select='' class='legend-color'></span>{{legend}}</li>
+  {{/each}}
+  {{/if}}
 </script>
 
 </html>

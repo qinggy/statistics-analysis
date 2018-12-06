@@ -249,7 +249,7 @@
 .search-container-detail {
   display: flex;
   justify-content: flex-start;
-  height: 84px;
+  height: 58px;
   padding: 20px 5px 20px 20px;
   flex: 1;
   /* width: calc(50% - 25px); */
@@ -258,7 +258,7 @@
 
 .condition {
   width: 100%;
-  height: 105px;
+  height: 99px;
   margin: 0;
   border: none;
   /* padding-right: 20px; */
@@ -359,7 +359,7 @@
 
 .comparison-sort {
   border-bottom: 1px solid #dce3e6;
-  padding: 20px;
+  padding: 20px 0 20px 20px;
   height: 257px;
 }
 
@@ -375,44 +375,16 @@
 .top-chart {
   display: flex;
   flex-flow: nowrap;
+  /* height: 84px; */
+  width: 100%;
   /* justify-content: space-around; */
 }
-
-/* #area-chart-instance div:first-child,canvas,.comparison-proportion>div:first-child,.proportion-chart-instance div:first-child{
-    width: 100% ! important;
-} */
-/* canvas{
-  width: 100% ! important;
-  height: 100% !important;
-} */
-.parameter {
-  /* min-width: 280px; */
-  border: none;
-  border-left: 1px solid #dce3e6;
-  height: 84px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  width: calc(50% - 40px);
-}
-
-.top-chart {
-  display: flex;
-  flex-flow: nowrap;
-  /* justify-content: space-around; */
-}
-
-/* #area-chart-instance div,
-canvas,
-.comparison-proportion>div,
-.proportion-chart-instance div {
-  width: 100% ! important;
-} */
 
 .parameter {
   /* min-width: 280px; */
   border: none;
   border-left: 1px solid #dce3e6;
-  height: 84px;
+  height: 58px;
   overflow-y: auto;
   overflow-x: hidden;
   width: calc(50% - 40px);
@@ -449,7 +421,7 @@ canvas,
     background-color: #dce3e6;
 }
 .comparsion {
-  height: 84px;
+  height: 58px;
   border-bottom: 1px solid #dce3e6;
 }
 
@@ -458,17 +430,17 @@ canvas,
 }
 
 .comparison-proportion {
-  padding: 20px;
+  /* padding: 20px; */
   height: 257px;
   overflow: hidden;
-  width: calc(100% - 40px);
+  width: 100%
 }
 
 .comparison-proportion>div:first-of-type {
   border: none;
-  margin: 0;
-  height: 22px;
+  margin: 20px 20px 0;
   line-height: 22px;
+  width: calc(100% - 40px);
 }
 
 /* .comparison-proportion>div,.proportion-chart-instance div{
@@ -477,14 +449,49 @@ canvas,
 .proportion-chart-container {
   min-height: 177px;
 }
-
-.proportion-chart-instance {
-  /* height: auto; */
-  /* height: 177px; */
+.proportion-chart-container .pie-legend{
   width: 100%;
-  margin-top: 20px;
-  height: 100%;
+  height: 72px;
+  overflow-y: auto;
+  position: relative;
 }
+.proportion-chart-container .pie-legend::-webkit-scrollbar {
+    width: 5px;
+    background-color: #F5F5F5;
+}
+.proportion-chart-container .pie-legend::-webkit-scrollbar-thumb{
+    background-color: gray;
+}
+.pie-legend-ul{
+  width: calc(100% - 25px);
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin-left: 20px;
+  display: flex;
+  flex-flow: wrap;
+  justify-content: flex-start;
+}
+.pie-legend-ul li{
+  padding-left: 18px;
+  font-size: 12px;
+  height: 24px;
+  position: relative;
+  cursor: pointer;
+  color: #3e4b5b;
+  margin-right: 5px;
+}
+
+.pie-legend-ul li .legend-color{
+  width: 15px;
+  height: 13px;
+  position: absolute;
+  top: 2px;
+  left: 0;
+  border-radius: 2px;
+}
+/* .proportion-chart-instance {
+} */
 
 /* .proportion-chart-instance div:first-child{
   height: 100% !important;
@@ -561,10 +568,87 @@ canvas,
 .fgp-item-pie>div {
   width: 50% ! important;
 }
-
+.legend__icon{
+  display: flex;
+  justify-content: space-between;
+  height: 84px;
+  width: 100%;
+}
+.chart-legend{
+  height: 84px;
+  width: 70%;
+  flex: 1 1 70%;
+}
+.chart-legend div{
+  width: calc(100% - 50px);
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  margin: 0 20px;
+}
+.chart-legend div::-webkit-scrollbar{
+  width:0px
+}
+.scroll-left {
+  /* content: '〈'; */
+  position: absolute;
+  top: 44px;
+  left: 20px;
+  height: 30px;
+  width: 20px;
+  /* background: #38BC9B; */
+  cursor: pointer;
+}
+.scroll-right {
+  /* content: "<div class='scroll-left'>〉</div>"; */
+  position: absolute;
+  top: 44px;
+  right: 29%;
+  height: 30px;
+  width: 20px;
+  /* background: #38BC9B; */
+  cursor: pointer;
+}
+.chart-legend ul{
+  /* width: auto; */
+  height: 100%;
+  position: absolute;
+  /* display: flex;
+  flex-flow: nowrap;
+  justify-content: flex-start;
+  align-items: flex-start; */
+  transition: all 0.3s;
+}
+.chart-legend ul li{
+  width: 132px;
+  height: 24px;
+  padding-left: 18px;
+  float: left;
+  font-size: 12px;
+  position: relative;
+  cursor: pointer;
+  color: #3e4b5b;
+  margin-right: 5px;
+}
+.chart-legend ul li .legend-color {
+  /* content: ''; */
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 15px;
+  height: 13px;
+  /* background: #1479e1; */
+  border-radius: 2px;
+}
+.bg-gray {
+  background: #bcc9d3 !important;
+}
+.font-gray{
+  color: #bcc9d3 !important;
+}
 .chart {
-  height: 100%;
-  height: 100%;
+  height: calc(100% - 84px);
 }
 
 /* #chart-instance{
@@ -581,7 +665,21 @@ canvas,
   /* justify-items: center; */
   align-items: center;
 }
-
+.bottom-chart .chart-legend{
+  flex: 1 1 50%;
+  width: 50%;
+}
+.bottom-chart .operate-grp{
+  flex: 1 1 50%;
+  width: 50%;
+}
+.bottom-chart .scroll-right{
+  right: 50%;
+}
+.legend__icon .area-operate-grp{
+  position: unset;
+  flex: 1 1 30%;
+}
 /** 设置滚动条样式 */
 /* .content-right::-webkit-scrollbar {
     width: 5px;
@@ -678,13 +776,17 @@ canvas,
 }
 
 .bottom-chart {
-  display: flex;
-  padding: 25px 20px 20px 20px;
+  /* display: flex; */
+  /* padding: 25px 20px 20px 20px; */
   border-top: 1px solid #dce3e6;
   position: relative;
-  width: 96%;
-  flex-flow: nowrap;
-  height: 65%;
+  /* width: 96%; */
+  /* flex-flow: nowrap; */
+  /* height: 65%; */
+    padding-top: 20px;
+    padding-left: 25px;
+    height: 80%;
+    width: calc(100% - 25px);
 }
 
 .alarm-content {
@@ -698,6 +800,7 @@ canvas,
 
 .op-grp>input {
   line-height: 21px;
+  width: 66px;
 }
 
 /* tr td,
@@ -852,7 +955,7 @@ tr td {
 }
 
 .on-off-button {
-  width: 50%;
+  width: 30%;
   display: block;
   line-height: 40px;
   text-align: center;
@@ -898,7 +1001,7 @@ input[type="checkbox"]+label.blue:after {
   content: "异常处理";
   position: absolute;
   bottom: 10px;
-  right: 60px;
+  right: 45px;
   width: 60px;
   height: 20px;
   font-size: 14px;

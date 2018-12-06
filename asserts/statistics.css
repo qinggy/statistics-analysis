@@ -370,7 +370,7 @@ html body {
 .area-btn-grp>.btn:nth-of-type(2),
 .btn-grp>.btn:nth-of-type(2) {
   border-right: transparent;
-  border-left: transparent;
+  border-left: none;
   margin-left: -4px;
   margin-right: -4px;
 }
@@ -383,19 +383,24 @@ html body {
   margin-right: -4px;
 }
 
+.btn-grp>.btn:last-of-type {
+  border-left: 1px solid #708195;
+  margin-left: -5px;
+}
+
 .date-active {
   background-color: #1479e1;
   color: #fff;
   border: 1px solid #1479e1;
 }
 
-.area-operate-grp,
+ .area-operate-grp,
 .operate-grp {
-  position: absolute;
+  /* position: absolute;
   right: 20px;
-  top: 25px;
+  top: 25px; */
   /* display: inline-flex; */
-}
+} 
 
 .area-operate-grp>i,
 .operate-grp>i {
@@ -616,7 +621,7 @@ html body {
 }
 
 .usage-value-progress {
-  height: 14px;
+  height: 8px;
   width: 100%;
   background-color: #1479e1;
   border-radius: 0 14px 14px 0;
@@ -996,7 +1001,7 @@ html body {
   height: 21px;
   border-left: 1px solid #dce3e6;
   border-right: transparent;
-  left: calc(51% - 1px);
+  left: calc(51% - 2px);
   top: -0px;
 }
 
@@ -1006,7 +1011,7 @@ html body {
   height: 21px;
   border-left: 1px solid #dce3e6;
   border-right: transparent;
-  left: calc(51% - 1px);
+  left: calc(51% - 2px);
   bottom: -0px;
 }
 
@@ -1359,7 +1364,7 @@ html body {
   top: 50%;
   margin-top: -4px;
   transform: translateY(-50%);
-  width: calc(100% - 130px);
+  width: calc(100% - 140px);
 }
 
 .meter-name {
@@ -1383,7 +1388,7 @@ html body {
 
 .area-progress-container {
   width: 100%;
-  height: 6px;
+  height: 8px;
   background-color: #ddd;
   border: transparent;
   border-radius: 4px;
@@ -1391,7 +1396,7 @@ html body {
 }
 
 .area-progress-value {
-  height: 6px;
+  height: 8px;
   background-color: red;
   border: transparent;
   border-radius: 4px;
@@ -1405,13 +1410,12 @@ html body {
 
 .proportion-chart-container {
   width: 100%;
-  height: 85%;
+  height: 81%;
 }
 
 .proportion-chart-instance {
-  height: 100%;
+  height: calc(100% - 72px);
   width: 100%;
-  margin-top: 30px;
 }
 
 .fgp-container {
@@ -1480,8 +1484,8 @@ html body {
 }
 
 .fgp-cost-chart-instance {
-  height: 360px;
-  flex: 2 !important;
+  /* height: 360px; */
+  /* flex: 2 !important; */
   margin-top: 20px;
   position: relative;
 }
@@ -1803,12 +1807,12 @@ html body {
 .navigate-back>span {
   position: absolute;
   cursor: pointer;
-  left: 20px;
-  top: 9px;
+  left: 28px;
+  top: 10px;
 }
 
 .navigate-back:before {
-  font-size: 19px;
+  font-size: 26px;
   font-weight: bold;
 }
 

@@ -16,13 +16,12 @@ $(function () {
     areaConfigureMetersClone = [];
   let areaConfigure = {};
   let now_Sum = 0;
+  let tempIndex = null;
   let sortColor = ['#2782e0', '#e8dd23', '#94c629', '#039b46', '#1ebd95', '#1fb6ff', '#5e74f8', '#3949ab', '#7e57c2', '#c753e0', '#f3c325', '#ef6100', '#e82239',
-    '#7d4538', '#e89014', '#ec4310', '#ec407a', '#ef5350', '#8d6e63', '#5f96b2', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC'
+    '#7d4538', '#e89014', '#ec4310', '#ec407a', '#ef5350', '#8d6e63', '#5f96b2', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC','#756294','#c7aef0','#e5caee'
   ];
-  let usageColor = ['#e8dd23', '#94c629', '#039b46', '#39B0DB', '#00FA9A', '#4B0082', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
+  let usageColor = ['#2782e0', '#72a2ac', '#94c629', '#039b46', '#1ebd95','#e8dd23', '#94c629', '#039b46', '#39B0DB', '#00FA9A', '#4B0082', '#3CB371', '#90EE90', '#32CD32', '#008000', '#ADFF2F', '#808000', '	#FFE4C4', '#F5DEB3'];
   let costColor = ['#f3c325', '#e89014', '#ef6100', '#778899', '#B0C4DE', '#6495ED', '#4169E1', '#0000FF', '#9370DB', '#9932CC', '#40E0D0', '#7FFFAA', '#008B8B'];
-  let usageColor_yestoday = ['#1fb6ff', '#1479e1', '#3949ab'];
-  let costColor_yestoday = ['#ec4310', '#fb7013', '#7d4538'];
   //alarm field
   let areaTotalRecord = 0;
   let areaAlarmList = [];
@@ -246,7 +245,7 @@ $(function () {
     }
   };
   let getDefaultSTimeAndETime = function (type) {
-    let stimeAndetime = $('#datevalue').val();
+    let stimeAndetime = $('div[class="date-component icon iconfont icon-rili"]').val();
     if (stimeAndetime === '') {
       return resetSTimeAndETime(type);
     }
@@ -656,7 +655,7 @@ $(function () {
     $('.area-sort-list').html(templateHtml);
   }
   // 区域饼图
-  let generateAreaPie = function () {
+  let generateAreaPie = function (selected) {
     let datas = [];
     let legends = [];
     let meterAndMfIdMap = [];
@@ -676,18 +675,47 @@ $(function () {
         name: meter.text,
         value: numberFormat((data.sum_val || data.now_sum_val || 0).toFixed(2))
       };
-      let legend = {
-        isChecked: false
-      };
-      if (data['ischecked']) {
-        legend.isChecked = true;
-      }
+      // let legend = {
+      //   isChecked: false
+      // };
+      // if (data['ischecked']) {
+      //   legend.isChecked = true;
+      // }
       datas.push(sumVal);
-      legend.name = meter.text;
+      // legend.name = meter.text;
+      legend = meter.text;
       legends.push(legend);
     });
+    let newLegends = legends;
+    let legendHtml = template('pieLegendDataTemplate', {
+      legendData: newLegends
+    });
+   
+    let len = legends.length;
+    $('.pie-legend-ul')[0].innerHTML = legendHtml;
+    $('.pie-legend-ul')[0].height = Math.ceil(len/3)*26 + 'px';
+    for(let i =0;i < len;i++){
+      let legendName = $('.pie-legend-ul li')[i].innerText;
+      if(selected[0]){
+        $('.pie-legend-ul li .legend-color')[i].style.background = sortColor[i];
+      }else{
+        if(!selected[legendName]){
+          $($('.pie-legend-ul li span')[i]).attr('select','selected')
+          $($('.pie-legend-ul li span')[i]).addClass('bg-gray');
+          $($('.pie-legend-ul li')[i]).addClass('font-gray');
+        }else{
+          $('.pie-legend-ul li .legend-color')[i].style.background = sortColor[i];
+          // option.legend.selected[$('.pie-legend-ul li')[i].innerText] = true;
+          $($('.pie-legend-ul li span')[i]).attr('select','')
+              $($('.pie-legend-ul li span')[i]).removeClass('bg-gray');
+              $($('.pie-legend-ul li')[i]).removeClass('font-gray');
+        }
+      }
+    }
     // 区域分项占比实例化
-    let option = generatePieForAggregateData(legends, datas, searchResult.unit);
+    let option = generatePieForAggregateData(newLegends,selected,datas, searchResult.unit);
+    // console.log(option)
+    // $('#proportion-chart-instance div:first').height('calc(100% + '+option.legend.data.length/9*22+'px)')
     let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
     areaChart.off('legendselectchanged');
     areaChart.setOption(option, true);
@@ -695,6 +723,33 @@ $(function () {
     window.addEventListener('resize', function () {
       areaChart.resize();
     });
+    $('.pie-legend-ul li').on('click',function(e){
+      // e.stopPropagation();
+      let name = $(e.currentTarget).attr('data-name');
+      let isSelected = $(this).children('span').attr('select')
+      if(isSelected == ''){
+        $(this).children('span').attr('select','selected');
+        $(this).children('span').addClass('bg-gray');
+        $(this).addClass('font-gray');
+        console.log(option)
+        option.legend.selected[this.innerText] = false;
+      }else{
+        $(this).children('span').attr('select','');
+        $(this).children('span').removeClass('bg-gray');
+        $(this).removeClass('font-gray');
+        option.legend.selected[this.innerText] = true;
+      }
+      // let selected = option.legend.selected;
+      // generateAreaPie(selected);
+      areaChart.setOption(option, true);
+    })
+
+    if($(this).children('span').attr('select')){
+      option.legend.selected[this.innerText] = true;
+    }else{
+      option.legend.selected[this.innerText] = false;
+    }
+    areaChart.setOption(option, true);
   };
   let generateAreaCostPie = function () {
     let datas = [];
@@ -726,7 +781,8 @@ $(function () {
       legend.name = meter.text;
       legends.push(legend);
     });
-    let option = generatePieForAggregateData(legends, datas, '元', '费用对比');
+    let none = '';
+    let option = generatePieForAggregateData(legends,none, datas, '元', '费用对比');
     let areaChart = echarts.init(document.getElementById('proportion-chart-instance'), e_macarons);
     areaChart.setOption(option, true);
     areaChart.resize();
@@ -758,6 +814,7 @@ $(function () {
     if (comparsionSelectedMeters.length > 0) {
       $('.comparison-tab').show();
       $('.func-tab').hide();
+      $('.on-off-button').hide();
       $('.parameter-container .bottom-chart').width('142%');
       $('.parameter-container').css('border-right', 'none');
       $('.top-chart').css('border-right', '1px solid #dce3e6');
@@ -820,6 +877,7 @@ $(function () {
     } else {
       $('.comparison-tab').hide();
       $('.func-tab').show();
+      $('.on-off-button').show();
       $('#summary-container').show();
       $('.parameter-container .bottom-chart').width('96%');
       $('.parameter-container').css('border-right', '1px solid #dce3e6');
@@ -1063,8 +1121,8 @@ $(function () {
       title: {
         subtext: '单位：' + unit,
         padding: [-6, 0, 0, 0],
-        right: '40',
-        top: '80'
+        right: 40,
+        top: 20
       },
       tooltip: {
         trigger: 'axis',
@@ -1073,9 +1131,10 @@ $(function () {
         left: 70,
         right: 50,
         bottom: 20,
-        top: 130
+        top: 100
       },
       legend: {
+        show: false,
         orient: 'vertical',
         data: orderLegend,
         padding: [0, 50, 50, 80],
@@ -1089,7 +1148,8 @@ $(function () {
         },
         tooltip: {
           show: true
-        }
+        },
+        selected: {}
       },
       calculable: true,
       xAxis: [{
@@ -1105,6 +1165,7 @@ $(function () {
       }],
       series: chartSeries
     };
+    // console.log(option)
     if ($('#button')[0].checked) {
       option.tooltip.formatter = function (params) {
         // console.log(params)
@@ -1115,12 +1176,72 @@ $(function () {
           params[0].name + '<br/>' + "<div class='blue space'></div>" + params[0].seriesName + ' : ' + (params[0].value ? params[0].value : 0);
       }
     }
-    if (selected) {
-      option.legend.selected = selected;
-    }
+    // if (selected) {
+    //   option.legend.selected = selected;
+    // }
     analysisChart = echarts.init(document.getElementById(chartDom), e_macarons);
     analysisChart.setOption(option, true);
     analysisChart.resize();
+    let legendHtml = template('legendDataTemplate', {
+      legendData: orderLegend
+    });
+    let left = 0
+    let btn1,btn2;
+    let len = orderLegend.length;
+    $('.legend-ul-meter')[0].innerHTML = legendHtml;
+    $('.legend-ul-meter')[0].style.width =  Math.ceil(len/3)*155 + 'px';
+    for(let i =0;i < $('.legend-ul-meter li').length;i++){
+      $('.legend-ul-meter li .legend-color')[i].style.background = sortColor[i];
+      option.legend.selected[$('.legend-ul-meter li')[i].innerText] = true;
+    }
+    
+    $('.legend-ul-meter li').on('click',function(e){
+      // e.stopPropagation();
+      let name = $(e.currentTarget).attr('data-name');
+      let isSelected = $(this).children('span').attr('select')
+      if(isSelected == ''){
+        $(this).children('span').attr('select','selected');
+        $(this).children('span').addClass('bg-gray');
+        $(this).addClass('font-gray');
+        option.legend.selected[this.innerText] = false;
+      }else{
+        $(this).children('span').attr('select','');
+        $(this).children('span').removeClass('bg-gray');
+        $(this).removeClass('font-gray');
+        option.legend.selected[this.innerText] = true;
+      }
+        areaChart.setOption(option, true);
+        // let selected = option.legend.selected;
+        // generateAreaPie(selected);
+    })
+    $('.scroll-right').on('mousedown',function(e){
+      btn1 = setInterval(function(e){
+      left -= 20;
+      if(left < -Math.ceil(len/3)*155 +155){
+        left = -Math.ceil(len/3)*155 + 155;
+        $('.legend-ul-meter')[0].style.left = left + 'px'
+        return;
+      }
+        $('.legend-ul-meter')[0].style.left = left + 'px'
+      },50)
+    })
+    $('.scroll-left').on('mousedown',function(){
+      btn2 = setInterval(function(e){
+        left += 20;
+        if(left > 0){
+          left = 0;
+          $('.legend-ul-meter')[0].style.left = left + 'px'
+          return;
+        }
+        $('.legend-ul-meter')[0].style.left = left + 'px'
+      },50)
+    })
+    $('.scroll-right').on('mouseup',function(){
+      clearInterval(btn1)
+    })
+    $('.scroll-left').on('mouseup',function(){
+      clearInterval(btn2)
+    })
     if ($("#button").is(':checked')) {
       analysisChart.off('click');
       analysisChart.on('click', function (params) {
@@ -1588,7 +1709,8 @@ $(function () {
   }
   //创建区域echart表格,第一张
   let generateAreaChart = function (unit, chartLegend, chartXaxisData, datas, checkedParameters, chartDom, chartType = 'bar') {
-    let orderLegend = _.orderBy(chartLegend, a => a, 'asc');
+    // let orderLegend = _.orderBy(chartLegend, a => a, 'asc');
+    let orderLegend = chartLegend;
     let chartSeries = getChartSeries(datas, _.map(checkedParameters, a => {
       return {
         id: a.id,
@@ -1602,8 +1724,8 @@ $(function () {
       title: {
         subtext: '单位：' + unit,
         padding: [-6, 0, 0, 0],
-        right: '40',
-        top: '80'
+        right: 40,
+        top: 20
       },
       tooltip: {
         trigger: 'axis',
@@ -1612,26 +1734,38 @@ $(function () {
         left: 70,
         right: 50,
         bottom: 20,
-        top: 130
+        top: 100
       },
       legend: {
-        orient: 'vertical',
+        show: false,
+        orient: 'horizontal',
         data: orderLegend,
-        padding: [0, 50, 80, 80],
-        width: 'auto',
-        height: '25%',
+        padding: [0, 20, 80, 80],
+        width: '80%',
+        height: 85,
         left: -80,
         itemWidth: 15,
         itemHeight: 13,
-        // textStyle: {
-        //   width: '30%',
-        // },
         formatter: function (name) {
-          return (name.length > 8 ? (name.slice(0, 8) + "...") : name);
+          // '{a|这段文本采用样式a}',
+          let arr = []
+          let nameStr = name.length > 14 ? (name.substring(0, 10) + "..." + name.substring(name.length-4)) : name
+          for (var i = 0; i < orderLegend.length; i++) {
+            arr.push( '{a|'+nameStr + '}')
+            return arr.join('\n');
+          }
+        },
+        textStyle: {
+          rich: {
+            a: {
+              width: 120,
+            }
+          }
         },
         tooltip: {
           show: true,
-        }
+        },
+        selected: {}
       },
       calculable: true,
       xAxis: [{
@@ -1647,7 +1781,6 @@ $(function () {
       }],
       series: chartSeries,
     };
-    //console.log(option)
     areaChart = echarts.init(document.getElementById(chartDom), e_macarons);
     areaChart.off('legendselectchanged');
     areaChart.setOption(option, true);
@@ -1655,11 +1788,120 @@ $(function () {
     window.addEventListener('resize', function () {
       areaChart.resize();
     });
+    let legendHtml = template('legendDataTemplate', {
+      legendData: orderLegend
+    });
+    let left = 0
+    let btn1,btn2;
+    let len = orderLegend.length;
+    console.log(orderLegend)
+    $('.chart-legend ul')[0].innerHTML = legendHtml;
+    $('.chart-legend ul')[0].style.width = Math.ceil(len/3)*155 + 'px';
+    for(let i =0;i < $('.legend-ul li').length;i++){
+      $('.legend-ul li .legend-color')[i].style.background = sortColor[i];
+      option.legend.selected[$('.legend-ul li')[i].innerText] = true;
+    }
+    
+    $('.legend-ul li').on('click',function(e){
+      // e.stopPropagation();
+      let name = $(e.currentTarget).attr('data-name');
+      let isSelected = $(this).children('span').attr('select')
+      if(isSelected == ''){
+        $(this).children('span').attr('select','selected');
+        $(this).children('span').addClass('bg-gray');
+        $(this).addClass('font-gray');
+        option.legend.selected[this.innerText] = false;
+      }else{
+        $(this).children('span').attr('select','');
+        $(this).children('span').removeClass('bg-gray');
+        $(this).removeClass('font-gray');
+        option.legend.selected[this.innerText] = true;
+      }
+        areaChart.setOption(option, true);
+        let selected = option.legend.selected;
+        // console.log(selected)
+        let nameArr = [];
+        for(let name in selected){
+          if(!selected[name]){
+            nameArr.push(name)
+          }
+        }
+        // for(let i = 0;i < len;i++){
+        //   let legendName = $('.pie-legend-ul li')[i].innerText;
+        //   if(!selected[legendName]){
+        //     $($('.pie-legend-ul li span')[i]).attr('select','selected')
+        //     $($('.pie-legend-ul li span')[i]).addClass('bg-gray');
+        //     $($('.pie-legend-ul li')[i]).addClass('font-gray');
+        //   }else{
+        //     $($('.pie-legend-ul li span')[i]).attr('select','')
+        //     $($('.pie-legend-ul li span')[i]).removeClass('bg-gray');
+        //     $($('.pie-legend-ul li')[i]).removeClass('font-gray');
+        //   }
+        // }
+        generateAreaPie(selected);
+    })
+
+    $('.scroll-right').on('mousedown',function(e){
+      btn1 = setInterval(function(e){
+      left -= 20;
+      if(left < -Math.ceil(len/3)*155 +155){
+        left = -Math.ceil(len/3)*155 + 155;
+        $('.legend-ul')[0].style.left = left + 'px'
+        return;
+      }
+        $('.legend-ul')[0].style.left = left + 'px'
+      },50)
+    })
+    $('.scroll-left').on('mousedown',function(){
+      btn2 = setInterval(function(e){
+        left += 20;
+        if(left > 0){
+          left = 0;
+          $('.legend-ul')[0].style.left = left + 'px'
+          return;
+        }
+        $('.legend-ul')[0].style.left = left + 'px'
+      },50)
+    })
+    $('.scroll-right').on('mouseup',function(){
+      clearInterval(btn1)
+    })
+    $('.scroll-left').on('mouseup',function(){
+      clearInterval(btn2)
+    })
+       /* var x,timer;
+        var start = $('.legend-ul').offset().left+16;
+        $('.chart-legend').bind('mousemove', function(e) {//追踪鼠标位置  
+          x= e.pageX;
+          x-=start;
+          // console.log(x)
+        });
+        $('.legend-ul').bind('mousedown', function() {//点击创建定时器
+            timer = setInterval(function(){
+            $('.legend-ul').css('left', -x);
+            if(left < -(orderLegend.length/9-1)*456){
+              $('#start').css('left', -orderLegend.length/9*456+405);
+              clearInterval(timer);
+              timer=null;x=null;
+              //location.href='Mike Smith.html';
+            }else if(x>=0){
+              $('.legend-ul').css('left', 0);
+              clearInterval(timer);
+            }
+          }, 50)
+        });
+        $('.chart-legend').on('mouseup',function() {//松开鼠标清除定时器
+          clearInterval(timer);
+          if(x<204){
+            $('.legend-ul').css('left', 0);
+          }
+        });*/
     _.each(datas, a => a.ischecked = true);
     areaChart.on('legendselectchanged', function (params) {
       let entity = _.find(searchResult.meterAndParaMap, a => a.name === params.name);
       let data = _.find(datas, b => b.mfid === entity.mfid);
       data.ischecked = params.selected[params.name];
+      // console.log(datas)
       if ($('.proportion-grp i.comparison-rmb').hasClass('btn-active')) {
         generateAreaCostPie();
       } else {
@@ -2108,7 +2350,7 @@ $(function () {
           data: getStackSeriesData(datas.now_data_list, b, chartType, 'm'),
           itemStyle: {
             normal: {
-              color: chartType === 0 ? usageColor_yestoday[index] : costColor_yestoday[index]
+              color: chartType === 0 ? usageColor[index] : costColor[index]
             },
           }
         });
@@ -2247,7 +2489,8 @@ $(function () {
         padding: [5, 5, 5, 10]
       },
       legend: {
-        itemHeight: 15,
+        itemHeight: 13,
+        itemWidth: 15,
         data: [],
       },
       grid: {
@@ -2315,6 +2558,8 @@ $(function () {
         top: '65%',
         width: '90%',
         data: legend,
+        itemHeight: 13,
+        itemWidth: 15
       },
       calculable: true,
       series: [{
@@ -2600,7 +2845,8 @@ $(function () {
         isChecked: true
       });
     });
-    let option = generatePieForAggregateData(legends, datas, searchResult.unit, '能耗对比', showColor);
+    let none = '';
+   let option = generatePieForAggregateData(legends ,none, datas, searchResult.unit, '能耗对比', showColor);
     if (analysisChart) analysisChart.clear();
     // 仪表详情 增加对比表饼图 实例化
     analysisChart = echarts.init(document.getElementById('chart-instance'), e_macarons);
@@ -2894,18 +3140,18 @@ $(function () {
     });
   };
   //分项占比&能耗对比 option数据
-  let generatePieForAggregateData = (xAxisData, seriesData, unit, tooltip = '能耗对比', showLegend = false) => {
+  let generatePieForAggregateData = (xAxisData,selected, seriesData, unit, tooltip = '能耗对比', showLegend = false) => {
     let orderLegend = _.orderBy(xAxisData, a => a.name, 'asc');
-    let selected = {};
-    _.each(xAxisData, a => {
-      selected[a.name] = a.isChecked;
-    });
-    let option = {
+    let _selected = {};
+      _selected = selected
+      let option = {
       color: sortColor,
       title: {
         show: true,
         subtext: '单位：' + unit,
-        padding: [-6, 0, 0, 0]
+        padding: [-6, 0, 0, 0],
+        left: 20,
+        top:10
       },
       tooltip: {
         trigger: 'item',
@@ -2914,19 +3160,23 @@ $(function () {
         }
       },
       legend: {
-        show: showLegend,
-        left: '5%',
-        bottom: '-5',
-        height: '100%',
-        width: '100%',
+        show: $('.comparsion-right')[0].children.length > 0? true: false,
+        // type: 'scroll',
+        orient: 'vertical',
+        right: '5%',
+        bottom: '10%',
+        height: '80%',
+        width: '20%',
+        itemHeight: 13,
+        itemWidth:15,
         data: orderLegend,
-        selected: selected
+        selected: _selected
       },
       series: [{
         name: tooltip,
         type: 'pie',
-        center: ['50%', '55%'],
-        radius: '60%',
+        center: ['50%', '50%'],
+        radius: '80%',
         padding: [10, 10, 100, 10],
         label: {
           normal: {
@@ -2952,6 +3202,17 @@ $(function () {
         }
       }]
     };
+    // console.log(getChartType())
+    if(getChartType() == 'pie'){
+      $('.chart-legend').hide();
+    }else{
+      $('.chart-legend').show();
+    }
+    if(getChartType() != 'bar'){
+      $('.on-off-button').hide();
+    }else{
+      $('.on-off-button').show();
+    }
     return option;
   };
   let reloadMeterChartData = function () {
@@ -3541,7 +3802,25 @@ $(function () {
                 let inputDom = $(e.currentTarget).children().first();
                 let type = inputDom.attr('data-type');
                 inputDom.prop('checked', true);
-                $('.alarmTypetd>.opt').find('input').prop('checked', false);
+                $('.alarmTypetd>.opt').find('input').prop('checked',false);
+
+                
+            if (type === '0') {
+              $('#' + ruleId + '_1').removeAttr('disabled');
+              $('#' + ruleId + '_2').removeAttr('disabled');
+              $('#' + ruleId + '_3').removeAttr('disabled');
+              $('#' + ruleId + '_4').removeAttr('disabled');
+              flag = true;
+            } else {
+              $('#' + ruleId + '_1').attr('disabled', 'disabled');
+              $('#' + ruleId + '_2').attr('disabled', 'disabled');
+              $('#' + ruleId + '_3').attr('disabled', 'disabled');
+              $('#' + ruleId + '_4').attr('disabled', 'disabled');
+              let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
+              if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4'){
+                $('.alarmTypetd>.opt>input').prop('checked', false);
+              }
+            }
               });
               $('.alarmTypetd>.opt').off('click').on('click', function (e) {
                 e.stopPropagation();
@@ -4426,23 +4705,22 @@ $(function () {
             inputDom.prop('checked', true);
             $('.alarmTypetd>.opt').find('input').prop('checked', false);
 
-            // if (type === '0') {
-            //   $('#' + ruleId + '_1').removeAttr('disabled');
-            //   $('#' + ruleId + '_2').removeAttr('disabled');
-            //   $('#' + ruleId + '_3').removeAttr('disabled');
-            //   $('#' + ruleId + '_4').removeAttr('disabled');
-            //   flag = true;
-            // } else {
-            //   $('#' + ruleId + '_1').attr('disabled', 'disabled');
-            //   $('#' + ruleId + '_2').attr('disabled', 'disabled');
-            //   $('#' + ruleId + '_3').attr('disabled', 'disabled');
-            //   $('#' + ruleId + '_4').attr('disabled', 'disabled');
-            //   let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
-            //   if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4'){
-            //     $('.alarmTypetd>.opt>input').prop('checked', false);
-            //   }
-            //   flag = false;
-            // }
+            if (type === '0') {
+              $('#' + ruleId + '_1').removeAttr('disabled');
+              $('#' + ruleId + '_2').removeAttr('disabled');
+              $('#' + ruleId + '_3').removeAttr('disabled');
+              $('#' + ruleId + '_4').removeAttr('disabled');
+              flag = true;
+            } else {
+              $('#' + ruleId + '_1').attr('disabled', 'disabled');
+              $('#' + ruleId + '_2').attr('disabled', 'disabled');
+              $('#' + ruleId + '_3').attr('disabled', 'disabled');
+              $('#' + ruleId + '_4').attr('disabled', 'disabled');
+              let alarmInput = $('.alarmTypetd>.opt>input:checked').val();
+              if (alarmInput === '1' || alarmInput === '2' || alarmInput === '3' || alarmInput === '4'){
+                $('.alarmTypetd>.opt>input').prop('checked', false);
+              }
+            }
           });
           $('.alarmTypetd>.opt').off('click').on('click', function (e) {
             e.stopImmediatePropagation();
@@ -4807,6 +5085,7 @@ $(function () {
     $(currentDom).toggleClass('date-active');
     let parameter = _.find(currentMeterParameters, a => a.type === 0 && a.isChecked);
     $(".total_Unit").text(parameter.unit)
+    tempIndex = $(currentDom).attr('data-value');
     if (parameter && getSearchDateType() !== -1) {
       $('.exception-manager').attr('data-toggle', 'close').hide();
       $('.exception-box').hide();
@@ -4913,12 +5192,20 @@ $(function () {
     } else {
       $(currentDom).toggleClass('btn-active');
     }
+    if(getChartType() == 'pie' || getChartType() == 'line'){
+      $('.on-off-button').hide()
+    }else if($('.comparsion-right')[0].children.length > 0){
+      $('.on-off-button').hide()
+    }else{
+      $('.on-off-button').show()
+    }
     //TODO
     let chartSeries = [];
     switch (flag) {
       //#region rmb
       case 'rmb':
         if (ifShowPieChart()) return;
+        $('.chart-legend').show();
         if (comparsionSelectedMeters.length > 0) {
           chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, getChartType(),
             $('.show-tip').hasClass('btn-active') ? true : false);
@@ -4950,6 +5237,7 @@ $(function () {
         //#endregion
         //#region bar
       case 'bar':
+      $('.chart-legend').show();
         if (comparsionSelectedMeters.length > 0) {
           chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, 'bar',
             $('.show-tip').hasClass('btn-active') ? true : false);
@@ -4980,6 +5268,7 @@ $(function () {
         //#endregion
         //#region line
       case 'line':
+      $('.chart-legend').show();
         if (comparsionSelectedMeters.length > 0) {
           chartSeries = getChartSeries(searchResult.datas, searchResult.meterAndParaMap, searchResult.chartXaxisData, 'line',
             $('.show-tip').hasClass('btn-active') ? true : false);
@@ -5012,7 +5301,6 @@ $(function () {
         generatePieChart(true);
         return;
       case 'download':
-
         return;
         //#region tip
       case 'tip':
@@ -5047,6 +5335,7 @@ $(function () {
         break;
         //#endregion
     }
+    searchMeterData();
     generateChart(searchResult.unit, searchResult.chartLegend, searchResult.chartXaxisData, chartSeries, 'chart-instance');
   });
 
@@ -5228,7 +5517,7 @@ $(function () {
   //增加对比
   $('.comparsion-left>.meter-choose').on('click', function (e) {
     e.stopPropagation();
-    $('#button')[0].checked = false;
+    $('.on-off-button').hide();
     let tempPara = "";
     $(".parameter-right div.para-item[class*='para-active']").each(function () {
       tempPara += $(this).text();
@@ -5910,6 +6199,14 @@ $(function () {
           comparsionSelectedMeters = [];
           $('.comparsion-right').html("");
           backSource = '';
+          // tempIndex = $('.btn-grp>.btn.date-active').attr('data-value');
+          if ($('.parameter-right>div.para-active').attr("data-type") === '1') {
+            $('.btn-grp>div.btn:nth-child(n+2)').hide();
+            $('.btn-grp>div.btn:first-child').addClass('date-active');
+          } else {
+            $('.btn-grp>div.btn:nth-child(n+2)').show();
+            $('.btn-grp>div.btn:first-child').removeClass('borderRight');
+          }
           $('.meterName').text(node.original.text);
           $('.content__header--title span:first').text(node.original.text);
           if (globalCurrentPage === 'analysis') {
@@ -5952,6 +6249,11 @@ $(function () {
                 if (response.IsSuccess) {
                   let selectedItem = _.filter(currentMeterParameters, a => a.isChecked);
                   currentMeterParameters = response.Content;
+                  if($('.btn-grp>div.btn.date-active.borderRight').attr('data-value')!=tempIndex){
+                    if($('.parameter-right>.para-item.choose-para.para-active').text()!=selectedItem[0].name){
+                      $('.btn-grp>div.btn:first-child').removeClass('date-active');
+                    }
+                  }
                   if (selectedItem && selectedItem.length > 0) {
                     _.each(selectedItem, item => {
                       let select = _.find(currentMeterParameters, a => a.name === item.name);
@@ -5981,6 +6283,11 @@ $(function () {
                   };
                   let templateHtml = template('parameter-list-template', parameters);
                   $('.parameter-right').html(templateHtml);
+                  if($('.para-item.choose-para.para-active').attr('data-type')==='0'){
+                    $('#meter-zone .icon-icon-').addClass('btn-active').siblings().removeClass('btn-active');
+                  }else if($('.para-item.choose-para.para-active').attr('data-type')==='1'){
+                    $('#meter-zone .icon-line-chart_icon').addClass('btn-active').siblings().removeClass('btn-active');
+                  }
                   if ($('.icon-tubiao-bingtu').hasClass('btn-active')) {
                     let checkedParam = _.find(currentMeterParameters, a => a.isChecked);
                     if (checkedParam.type === 0) {
@@ -6001,16 +6308,41 @@ $(function () {
                     }
                   }
                   // end reset exception box
-                  searchMeterData();
+                  
                   setTimeout(() => {
                     //表参数选择
+                    if($('.btn-grp>div.btn:first-child').hasClass('date-active')){
+                      $('#day').parent().show()
+                      $('#day').removeClass('hidden').siblings().addClass('hidden');
+                    }
+                    if($('.btn-grp>div.btn:nth-child(2)').hasClass('date-active')){
+                      $('#day').parent().hide();
+                    }
+                    if($('.btn-grp>div.btn:nth-child(3)').hasClass('date-active')){
+                      $('#month').parent().show()
+                      $('#month').removeClass('hidden').siblings().addClass('hidden');
+                    }
+                    if($('.btn-grp>div.btn:nth-child(4)').hasClass('date-active')){
+                      $('#year').parent().show()
+                      $('#year').removeClass('hidden').siblings().addClass('hidden');
+                    }else{
+                      $('.btn-grp>div.btn:first-child').addClass('date-active');
+                    }
                     if ($('.parameter-right>div.para-active').attr("data-type") === '1') {
                       $('.btn-grp>div.btn:nth-child(n+2)').hide();
                       $('.btn-grp>div.btn:first-child').addClass('date-active borderRight');
+                      $('#day').removeClass('hidden').siblings().addClass('hidden');
                     } else {
                       $('.btn-grp>div.btn:nth-child(n+2)').show();
                       $('.btn-grp>div.btn:first-child').removeClass('borderRight');
                     }
+                    $('.btn-grp>div.btn:nth-child(n+2)').each(function(){
+                      if($(this).hasClass('date-active')){
+                        if($('.parameter-right>.para-item.choose-para.para-active').attr('data-type')==='0'){
+                          $('.btn-grp>div.btn:first-child').removeClass('date-active');
+                        }
+                      }
+                    })
                     $('.parameter').on('click', 'div.para-item', function (e) {
                       e.stopImmediatePropagation();
                       $("div[id*='layui-laydate']").remove();
@@ -6024,6 +6356,7 @@ $(function () {
                         $('#meter-zone .icon-line-chart_icon').addClass('btn-active');
                         $("#day").removeClass('hidden').siblings().addClass('hidden');
                         $('#datevalue').val(resetSTimeAndETime(parseInt($(currentDom).attr('data-value'))));
+                        $('.date-grp').show();
                       } else {
                         $('.btn-grp>div.btn:nth-child(n+2)').show();
                         $('.btn-grp>div.btn:first-child').removeClass('borderRight').siblings().removeClass('date-active');
@@ -6063,10 +6396,16 @@ $(function () {
                       }
                       searchMeterData();
                     });
+                    searchMeterData();
                   }, 100);
                 }
               });
               $("#button")[0].checked = false;
+              if($('.comparsion-right').innerHTML){
+                $('.on-off-button').hide();
+              }else{
+                $('.on-off-button').show();
+              }
               esdpec.framework.core.getJsonResult('dataanalysis/getmeterinfobymeterid?meterId=' + nodeId, function (response) {
                 if (response.IsSuccess) {
                   let meterInfo = response.Content;
