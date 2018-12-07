@@ -162,6 +162,19 @@ $(function () {
     });
     return flag;
   };
+  let excpButton = function(){
+    if($('#button')[0].checked){
+      $('.green span:first').show();
+      $('.green span:last').hide();
+      // $('.green span')[0].style.zIndex = 1;
+      // $('.green span')[1].style.zIndex = -1;
+    }else{
+      $('.green span:first').hide();
+      $('.green span:last').show();
+      // $('.green span')[0].style.zIndex = -1;
+      // $('.green span')[1].style.zIndex = 1;
+    }
+  }
   let getChartCostLine = function (selector, flag = false) {
     if ($(selector + ' .icon-btn-RMB').hasClass('btn-active')) {
       let costSeries = [];
@@ -245,7 +258,8 @@ $(function () {
     }
   };
   let getDefaultSTimeAndETime = function (type) {
-    let stimeAndetime = $('div[class="date-component icon iconfont icon-rili"]').val();
+    // let stimeAndetime = $('div[class="date-component icon iconfont icon-rili"]').val();
+    let stimeAndetime = $('#datevalue').val();
     if (stimeAndetime === '') {
       return resetSTimeAndETime(type);
     }
@@ -527,6 +541,7 @@ $(function () {
         seriesArray.push(series);
       }
     });
+    excpButton();
     // console.log(seriesArray)
     return seriesArray;
   };
@@ -725,6 +740,7 @@ $(function () {
     });
     $('.pie-legend-ul li').on('click',function(e){
       // e.stopPropagation();
+      console.log(getChartType())
       let name = $(e.currentTarget).attr('data-name');
       let isSelected = $(this).children('span').attr('select')
       if(isSelected == ''){
@@ -739,8 +755,6 @@ $(function () {
         $(this).removeClass('font-gray');
         option.legend.selected[this.innerText] = true;
       }
-      // let selected = option.legend.selected;
-      // generateAreaPie(selected);
       areaChart.setOption(option, true);
     })
 
@@ -796,9 +810,12 @@ $(function () {
       toastr.warning('请先选择查询仪表');
       return;
     }
-    if ($('.btn-grp div.date-active').attr('data-value') != 5) {
-      $('.on-off-button').show();
-    }
+    // if ($('.btn-grp div.date-active').attr('data-value') != 5) {
+    //   $('.on-off-button').show();
+    // }else{
+    //   $('.on-off-button').hide();
+    // }
+   
     let currentSelectedParameters = _.filter(currentMeterParameters, a => a.isChecked);
     if (currentSelectedParameters.length <= 0) currentSelectedParameters = currentMeterParameters;
     let parameter = _.head(currentSelectedParameters);
@@ -812,9 +829,10 @@ $(function () {
     $(window).resize();
     $('#vmeter-summary').hide();
     if (comparsionSelectedMeters.length > 0) {
+     
       $('.comparison-tab').show();
       $('.func-tab').hide();
-      $('.on-off-button').hide();
+      // $('.on-off-button').hide();
       $('.parameter-container .bottom-chart').width('142%');
       $('.parameter-container').css('border-right', 'none');
       $('.top-chart').css('border-right', '1px solid #dce3e6');
@@ -877,7 +895,12 @@ $(function () {
     } else {
       $('.comparison-tab').hide();
       $('.func-tab').show();
-      $('.on-off-button').show();
+      // if ($('.btn-grp div.date-active').attr('data-value') != 5) {
+      //   $('.on-off-button').show();
+      // }else{
+      //   $('.on-off-button').hide();
+      // }
+      // $('.on-off-button').show();
       $('#summary-container').show();
       $('.parameter-container .bottom-chart').width('96%');
       $('.parameter-container').css('border-right', '1px solid #dce3e6');
@@ -1009,6 +1032,13 @@ $(function () {
           }
         }
       });
+    }
+    console.log(getChartType());
+    if ($('.btn-grp div.date-active').attr('data-value') != 5 && getChartType() == 'bar' && $('.comparsion-right')[0].children.length === 0
+    && $('.parameter-right>.para-item.choose-para.para-active').attr('data-type')==='0') {
+      $('.on-off-button').show();
+    }else{
+      $('.on-off-button').hide();
     }
   };
   let searchAreaData = function () {
@@ -1194,9 +1224,9 @@ $(function () {
       $('.legend-ul-meter li .legend-color')[i].style.background = sortColor[i];
       option.legend.selected[$('.legend-ul-meter li')[i].innerText] = true;
     }
-    
     $('.legend-ul-meter li').on('click',function(e){
       // e.stopPropagation();
+      // console.log(getChartType())
       let name = $(e.currentTarget).attr('data-name');
       let isSelected = $(this).children('span').attr('select')
       if(isSelected == ''){
@@ -1210,7 +1240,7 @@ $(function () {
         $(this).removeClass('font-gray');
         option.legend.selected[this.innerText] = true;
       }
-        areaChart.setOption(option, true);
+      analysisChart.setOption(option, true);
         // let selected = option.legend.selected;
         // generateAreaPie(selected);
     })
@@ -1734,7 +1764,7 @@ $(function () {
         left: 70,
         right: 50,
         bottom: 20,
-        top: 100
+        top: 60
       },
       legend: {
         show: false,
@@ -1794,16 +1824,33 @@ $(function () {
     let left = 0
     let btn1,btn2;
     let len = orderLegend.length;
-    console.log(orderLegend)
     $('.chart-legend ul')[0].innerHTML = legendHtml;
     $('.chart-legend ul')[0].style.width = Math.ceil(len/3)*155 + 'px';
     for(let i =0;i < $('.legend-ul li').length;i++){
       $('.legend-ul li .legend-color')[i].style.background = sortColor[i];
       option.legend.selected[$('.legend-ul li')[i].innerText] = true;
     }
-    
-    $('.legend-ul li').on('click',function(e){
-      // e.stopPropagation();
+    if(len<=9){
+      $('.scroll-left')[0].style.zIndex = -1;
+      $('.scroll-right')[0].style.zIndex = -1;
+    }else{
+      $('.scroll-left')[0].style.zIndex = 1;
+      $('.scroll-right')[0].style.zIndex = 1;
+    }
+    $('.chart-legend').on('mouseover',function(){
+      $('.scroll-left').show();
+      $('.scroll-right').show();
+    })
+    $('.chart-legend').on('mouseleave',function(){
+      $('.scroll-left').hide();
+      $('.scroll-right').hide();
+    })
+    setTimeout(() =>{
+      $('.legend-ul li').on('click',function(e){
+        // e.stopPropagation();
+        for(let i = 0;i < len;i++){
+        option.series[i].type = $('.area-operate-grp .btn-active').attr('data-value');
+      }
       let name = $(e.currentTarget).attr('data-name');
       let isSelected = $(this).children('span').attr('select')
       if(isSelected == ''){
@@ -1817,35 +1864,17 @@ $(function () {
         $(this).removeClass('font-gray');
         option.legend.selected[this.innerText] = true;
       }
-        areaChart.setOption(option, true);
+      areaChart.setOption(option, true);
         let selected = option.legend.selected;
-        // console.log(selected)
-        let nameArr = [];
-        for(let name in selected){
-          if(!selected[name]){
-            nameArr.push(name)
-          }
-        }
-        // for(let i = 0;i < len;i++){
-        //   let legendName = $('.pie-legend-ul li')[i].innerText;
-        //   if(!selected[legendName]){
-        //     $($('.pie-legend-ul li span')[i]).attr('select','selected')
-        //     $($('.pie-legend-ul li span')[i]).addClass('bg-gray');
-        //     $($('.pie-legend-ul li')[i]).addClass('font-gray');
-        //   }else{
-        //     $($('.pie-legend-ul li span')[i]).attr('select','')
-        //     $($('.pie-legend-ul li span')[i]).removeClass('bg-gray');
-        //     $($('.pie-legend-ul li')[i]).removeClass('font-gray');
-        //   }
-        // }
         generateAreaPie(selected);
     })
-
+  },500)
+    
     $('.scroll-right').on('mousedown',function(e){
       btn1 = setInterval(function(e){
       left -= 20;
-      if(left < -Math.ceil(len/3)*155 +155){
-        left = -Math.ceil(len/3)*155 + 155;
+      if(left <= -Math.ceil(len/3)*155 +400){
+        left = -Math.ceil(len/3)*155 + 400;
         $('.legend-ul')[0].style.left = left + 'px'
         return;
       }
@@ -5192,13 +5221,13 @@ $(function () {
     } else {
       $(currentDom).toggleClass('btn-active');
     }
-    if(getChartType() == 'pie' || getChartType() == 'line'){
-      $('.on-off-button').hide()
-    }else if($('.comparsion-right')[0].children.length > 0){
-      $('.on-off-button').hide()
-    }else{
-      $('.on-off-button').show()
-    }
+    // if(getChartType() == 'pie' || getChartType() == 'line'){
+    //   $('.on-off-button').hide()
+    // }else if($('.comparsion-right')[0].children.length > 0){
+    //   $('.on-off-button').hide()
+    // }else{
+    //   $('.on-off-button').show()
+    // }
     //TODO
     let chartSeries = [];
     switch (flag) {
@@ -5517,7 +5546,7 @@ $(function () {
   //增加对比
   $('.comparsion-left>.meter-choose').on('click', function (e) {
     e.stopPropagation();
-    $('.on-off-button').hide();
+    // $('.on-off-button').hide();
     let tempPara = "";
     $(".parameter-right div.para-item[class*='para-active']").each(function () {
       tempPara += $(this).text();
@@ -5579,6 +5608,11 @@ $(function () {
           });
         }, 150);
         searchMeterData();
+        // if($('.comparsion-right')[0].children.length > 0){
+        //   $('.on-off-button').hide();
+        // }else{
+        //   $('.on-off-button').show();
+        // }
       },
       onCancelBut: function () {},
       onLoad: function () {
@@ -6203,6 +6237,7 @@ $(function () {
           if ($('.parameter-right>div.para-active').attr("data-type") === '1') {
             $('.btn-grp>div.btn:nth-child(n+2)').hide();
             $('.btn-grp>div.btn:first-child').addClass('date-active');
+
           } else {
             $('.btn-grp>div.btn:nth-child(n+2)').show();
             $('.btn-grp>div.btn:first-child').removeClass('borderRight');
@@ -6255,6 +6290,7 @@ $(function () {
                     }
                   }
                   if (selectedItem && selectedItem.length > 0) {
+                    
                     _.each(selectedItem, item => {
                       let select = _.find(currentMeterParameters, a => a.name === item.name);
                       if (select) {
@@ -6268,6 +6304,7 @@ $(function () {
                   }
                   if (_.filter(currentMeterParameters, a => a.isChecked).length <= 0) {
                     _.head(currentMeterParameters).isChecked = true;
+                    
                   }
                   if (currentMeterParameters.length > 6) {
                     $('#onshowmoreparameter').removeClass('hidden');
@@ -6357,11 +6394,13 @@ $(function () {
                         $("#day").removeClass('hidden').siblings().addClass('hidden');
                         $('#datevalue').val(resetSTimeAndETime(parseInt($(currentDom).attr('data-value'))));
                         $('.date-grp').show();
+                        $('.on-off-button').hide();
                       } else {
                         $('.btn-grp>div.btn:nth-child(n+2)').show();
                         $('.btn-grp>div.btn:first-child').removeClass('borderRight').siblings().removeClass('date-active');
                         $('.operate-grp>i.should-uniq').removeClass('btn-active');
                         $('.operate-grp>i.should-uniq').first().addClass('btn-active');
+                        $('.on-off-button').show();
                       }
                       if (type === 0 && getSearchDateType() !== -1) {
                         $('.exception-manager').attr('data-toggle', 'close').hide();
@@ -6395,17 +6434,23 @@ $(function () {
                         $(currentDom).toggleClass('para-active');
                       }
                       searchMeterData();
+                      // if(type === 1){
+                      //   $('.on-off-button').hide();
+                      // }else{
+                      //   $('.on-off-button').show();
+                      // }
                     });
                     searchMeterData();
                   }, 100);
                 }
               });
               $("#button")[0].checked = false;
-              if($('.comparsion-right').innerHTML){
-                $('.on-off-button').hide();
-              }else{
-                $('.on-off-button').show();
-              }
+              // if($('.comparsion-right').innerHTML){
+              //   $('.on-off-button').hide();
+              // }else{
+              //   $('.on-off-button').show();
+              // }
+             
               esdpec.framework.core.getJsonResult('dataanalysis/getmeterinfobymeterid?meterId=' + nodeId, function (response) {
                 if (response.IsSuccess) {
                   let meterInfo = response.Content;

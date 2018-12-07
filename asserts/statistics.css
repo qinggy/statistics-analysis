@@ -298,7 +298,6 @@ html body {
 .param-title,
 .meter-title {
   color: #3e4b5b;
-  /* margin-top: 3px; */
   font-size: 14px;
 }
 
@@ -394,14 +393,6 @@ html body {
   border: 1px solid #1479e1;
 }
 
- .area-operate-grp,
-.operate-grp {
-  /* position: absolute;
-  right: 20px;
-  top: 25px; */
-  /* display: inline-flex; */
-} 
-
 .area-operate-grp>i,
 .operate-grp>i {
   font-size: 22px;
@@ -413,35 +404,6 @@ html body {
 .operate-grp>i:before {
   color: #708195;
 }
-
-/* 
-.area-operate-grp>i:last-of-type,
-.operate-grp>i:last-of-type {
-  margin-right: 0px;  
-  margin-top: 4px;
-}
-
-.area-operate-grp>i:nth-of-type(3),
-.operate-grp>i:nth-of-type(3){
-  margin-top: 3px;
-}
-
-.area-operate-grp>i:nth-of-type(4),
-.operate-grp>i:nth-of-type(4) {
-  font-size: 22px;
-  margin-top: 0px;
-}
-
-.area-operate-grp>i:nth-of-type(2),
-.operate-grp>i:nth-of-type(2) {
-  margin-top: 4px;
-}
-
-.area-operate-grp>i:nth-of-type(6),
-.operate-grp>i:nth-of-type(6) {
-  font-size: 21px;
-  margin-top: 3px;
-} */
 
 .btn-active:before {
   color: #1479e1 !important;

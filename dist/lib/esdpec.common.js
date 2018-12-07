@@ -243,8 +243,6 @@ if ($.blockUI) {
       css: {
         border: 'transparent',
         backgroundColor: 'transparent',
-        // zIndex: 200000000
-        // baseZ: 200000000, 
       },
     })
   ).ajaxStop(
