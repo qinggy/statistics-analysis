@@ -144,7 +144,7 @@
   margin: 20px 20px 0 20px;
   padding-bottom: 20px;
   width: calc(100% - 40px);
-  height: calc(100% + 45px);
+  /* height: calc(100% + 45px); */
   box-shadow: 0px 0px 6px 1px #dce3e6;
 }
 .area-fgp .layui-tab-title{
@@ -529,7 +529,7 @@
   display: flex;
   flex-flow: column;
   width: 100%;
-  height: calc(100% - 20px);
+  /* height: calc(100% - 20px); */
 }
 
 
@@ -542,10 +542,6 @@
 .fgp-cost-piechart-now-instance>div,.fgp-cost-piechart-yes-instance>div{
     width: 100% ! important;
 } */
-.fgp-cost-chart-instance {
-  height: auto;
-  min-height: 280px;
-}
 
 /* .chart-instance>div,
 .fgp-usage-piechart-now-instance>div,
@@ -555,7 +551,7 @@
   width: 100% ! important;
 } */
 
-.fgp-cost-chart-instance {
+.fgp-cost-chart-instance ,.fgp-usage-chart-instance{
   height: auto;
   min-height: 280px;
 }
@@ -622,6 +618,7 @@
   /* width: auto; */
   height: 72px;
   position: absolute;
+  left: 0;
   display: flex;
   flex-flow: wrap;
   justify-content: flex-start;
@@ -707,6 +704,7 @@
   background: #e0e5ec;
   width: 100%;
   border-radius: 14px;
+  position: relative;
 }
 
 .usage-value-progress {
@@ -787,7 +785,6 @@
 
 .bottom-chart {
   /* display: flex; */
-  /* padding: 25px 20px 20px 20px; */
   border-top: 1px solid #dce3e6;
   position: relative;
   /* width: 96%; */
@@ -795,8 +792,9 @@
   /* height: 65%; */
     padding-top: 20px;
     padding-left: 25px;
-    height: 80%;
     width: calc(100% - 25px);
+    height: calc(80% - 20px);
+    padding-bottom: 20px;
 }
 
 .alarm-content {
@@ -938,6 +936,7 @@ tr td {
 }
 .btn-group {
   margin: 20px 20px 20px 0;
+  display: flex;
 }
 
 #device-alarm-list tr td:first-child {
@@ -970,7 +969,7 @@ tr td {
   line-height: 40px;
   text-align: center;
   height: 30px;
-  margin-right: 5px;
+  margin-right: 15px;
 }
 
 .on-off-button input[type="checkbox"] {
@@ -1136,8 +1135,12 @@ input[type="checkbox"]+label.green:after {
 .abnormal-data td {
   border: 1px solid #dce3e6;
   max-height: 113px;
+  height: 33px;
+  width: 6%;
 }
-
+.share-datas{
+  height: 33px;
+}
 .abnormal-total-data li:nth-child(1) {
   flex: 1 1 16%;
 }

@@ -12,15 +12,15 @@
   <link rel="stylesheet" href="../../dist/lib/jquery.popmodal/popModal.min.css">
   <link rel="stylesheet" href="../../dist/lib/magic-check/magic-check.css">
   <link rel="stylesheet" href="../../dist/lib/jstree/dist/themes/default/style.min.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../dist/lib/toastr.min.css">
   <link rel="stylesheet" href="../../asserts/newStatistics.css">
   <link rel="stylesheet" href="../../asserts/font_ALi/iconfont.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70.0-2014.11.23/jquery.blockUI.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.1.0.rc2/echarts.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.min.js"></script>
+  <script src="../../dist/lib/jquery.min.js"></script>
+  <script src="../../dist/lib/jquery.blockUI.min.js"></script>
+  <script src="../../dist/lib/echarts/echarts.min.js"></script>
+  <script src="../../dist/lib/toastr.min.js"></script>
+  <script src="../../dist/lib/lodash.min.js"></script>
+  <script src="../../dist/lib/moment.min.js"></script>
   <script src="../../dist/lib/echarts/macarons.js"></script>
   <script src="../../dist/lib/jstree/dist/jstree.min.js"></script>
   <script src="../../dist/lib/arttemplate-3.0/lib/template-web.js"></script>
@@ -98,8 +98,8 @@
                   <div class="bottom-chart1">
                     <div class="legend__icon">
                       <div class="chart-legend">
-                      <span class="scroll-left">〈</span>
-                      <span class="scroll-right">〉</span>
+                        <span class="scroll-left">〈</span>
+                        <span class="scroll-right">〉</span>
                         <div>
                           <ul class="legend-ul"></ul>
                         </div>
@@ -215,8 +215,8 @@
                     <div class="bottom-chart">
                       <div class="legend__icon">
                         <div class="chart-legend">
-                        <span class="scroll-left">〈</span>
-                        <span class="scroll-right">〉</span>
+                          <span class="scroll-left">〈</span>
+                          <span class="scroll-right">〉</span>
                           <div>
                             <ul class="legend-ul-meter"></ul>
                           </div>
@@ -942,7 +942,7 @@
   </tr>
   <tr>
     <td>仪表型号：{{data.metermodel_name}}</td>
-    <td>串口：{{data.port_name}}</td>
+    <td>通讯：{{data.port_name}} - {{data.com_name}}</td>
     <td>信号连接：{{data.status}}</td>
   </tr>
 </script>
@@ -969,23 +969,23 @@
         <div style="width:{{data.now_sum_width}}">
           <!--remark: Set the maximum to 98%, then divide by the maximum and multiply by 98% -->
           <div class="usage-value-progress">
-            <div class="progress-title" id="now_sum_val" style="left: calc(100% - 10px);"><span>{{data.firstTitle}}用量</span><span>{{data.now_sum_val}}{{data.unit}}</span></div>
           </div>
         </div>
+        <div class="progress-title" id="now_sum_val"><span>{{data.firstTitle}}用量</span><span>{{data.now_sum_val}}{{data.unit}}</span></div>
       </div>
         <div>
         <div style="width: {{data.last_sum_width}}">
           <div class="usage-value-progress same-time-value">
-            <div class="progress-title" id="last_sum_val" style="left: calc(100% - 10px);"><span>{{data.lastTitle}}同期</span><span>{{data.last_sum_val}}{{data.unit}}</span></div>
           </div>
         </div>
+        <div class="progress-title" id="last_sum_val"><span>{{data.lastTitle}}同期</span><span>{{data.last_sum_val}}{{data.unit}}</span></div>
       </div>
       <div>
         <div style="width: {{data.avg_val_width}}">
-            <div class="usage-value-progress average-comparsion-value">
-              <div class="progress-title" id="avg_val" style="left: calc(100% - 10px);"><span>同期平均值</span><span>{{data.avg_val}}{{data.unit}}</span></div>
-            </div>
+          <div class="usage-value-progress average-comparsion-value">
+          </div>
         </div>
+        <div class="progress-title" id="avg_val"><span>同期平均值</span><span>{{data.avg_val}}{{data.unit}}</span></div>
       </div>
     </div>
 </script>
@@ -1161,7 +1161,7 @@
       </tr>
       <tr>
         <td style='width: 33%'>仪表型号：{{data.MeterModelName}}</td>
-        <td style='text-align: center'>串口：{{data.SpPortName}}</td>
+        <td style='text-align: center'>通讯：{{data.SpPortName}} - {{data.com_name}}</td>
         <td style='text-align: center' id='alarm-status'>仪表状态：{{data.MeterStatus}}</td>
       </tr>
     </tbody>

@@ -246,6 +246,8 @@ $(function () {
   }
   let resetSTimeAndETime = function (type) {
     switch (type) {
+      case 1:
+        return new Date().format('yyyy-MM-dd') + ' 00:00:00 -- ' + new Date().format('yyyy-MM-dd') + ' 23:59:59';
       case 2:
         return new Date().format('yyyy-MM-dd') + ' 00:00:00 -- ' + new Date().format('yyyy-MM-dd') + ' 23:59:59';
       case 3:
@@ -709,6 +711,7 @@ $(function () {
     let len = legends.length;
     $('.pie-legend-ul')[0].innerHTML = legendHtml;
     $('.pie-legend-ul')[0].height = Math.ceil(len/3)*26 + 'px';
+    
     for(let i =0;i < len;i++){
       let legendName = $('.pie-legend-ul li')[i].innerText;
       if(selected[0]){
@@ -740,14 +743,14 @@ $(function () {
     });
     $('.pie-legend-ul li').on('click',function(e){
       // e.stopPropagation();
-      console.log(getChartType())
+      // console.log(getChartType())
       let name = $(e.currentTarget).attr('data-name');
       let isSelected = $(this).children('span').attr('select')
       if(isSelected == ''){
         $(this).children('span').attr('select','selected');
         $(this).children('span').addClass('bg-gray');
         $(this).addClass('font-gray');
-        console.log(option)
+        // console.log(option)
         option.legend.selected[this.innerText] = false;
       }else{
         $(this).children('span').attr('select','');
@@ -1033,7 +1036,7 @@ $(function () {
         }
       });
     }
-    console.log(getChartType());
+    // console.log(getChartType());
     if ($('.btn-grp div.date-active').attr('data-value') != 5 && getChartType() == 'bar' && $('.comparsion-right')[0].children.length === 0
     && $('.parameter-right>.para-item.choose-para.para-active').attr('data-type')==='0') {
       $('.on-off-button').show();
@@ -1161,7 +1164,7 @@ $(function () {
         left: 70,
         right: 50,
         bottom: 20,
-        top: 100
+        top: 80
       },
       legend: {
         show: false,
@@ -1200,10 +1203,10 @@ $(function () {
       option.tooltip.formatter = function (params) {
         // console.log(params)
         return params.length > 1 ? (params[0].name + '<br/>' +
-            "<div class='white space'></div>" + '总用量：' + (Number(params[0].value ? params[0].value : 0) + Number(params[1].value)) + '<br/>' +
-            "<div class='yellow space'></div>" + params[1].seriesName + ' : ' + params[1].value + '<br/>' +
-            "<div class='blue space'></div>" + params[0].seriesName + ' : ' + (params[0].value ? params[0].value : 0)) :
-          params[0].name + '<br/>' + "<div class='blue space'></div>" + params[0].seriesName + ' : ' + (params[0].value ? params[0].value : 0);
+            "<div class='white space'></div>" + '总用量：' + ((Number(params[0].value ? params[0].value : 0) + Number(params[1].value))).toFixed(2) + '<br/>' +
+            "<div class='yellow space'></div>" + params[1].seriesName + ' : ' + Number(params[1].value).toFixed(2) + '<br/>' +
+            "<div class='blue space'></div>" + params[0].seriesName + ' : ' + Number(params[0].value ? params[0].value : 0).toFixed(2)) :
+          params[0].name + '<br/>' + "<div class='blue space'></div>" + params[0].seriesName + ' : ' + Number(params[0].value ? params[0].value : 0).toFixed(2);
       }
     }
     // if (selected) {
@@ -1220,6 +1223,9 @@ $(function () {
     let len = orderLegend.length;
     $('.legend-ul-meter')[0].innerHTML = legendHtml;
     $('.legend-ul-meter')[0].style.width =  Math.ceil(len/3)*155 + 'px';
+    if(len <= 3){
+      $('.legend-ul-meter')[0].style.width = 465+'px';
+    }
     for(let i =0;i < $('.legend-ul-meter li').length;i++){
       $('.legend-ul-meter li .legend-color')[i].style.background = sortColor[i];
       option.legend.selected[$('.legend-ul-meter li')[i].innerText] = true;
@@ -1376,14 +1382,25 @@ $(function () {
                       break;
                     }
                   }
+                  let dayTotalArr = new Array(dayTotal),count = 0;
                   let getDayTotalValue = function () {
-                    dayTotalValue = 0;
+                    remaining = apportionValue;
+                    dayTotalArr.fill(0)
+                    // dayTotalValue = 0;
+                    count = 0;
                     for (let i = 0; i < dayTotal; i++) {
-                      dayTotalValue += Number((dayInputs)[i].value);
+                      let val = dayInputs[i].value;
+                      if(val){
+                       count++;
+                       dayTotalArr[i] = Number(val);
+                       remaining = remaining - dayTotalArr[i];
+                      }
+                      // dayTotalValue += Number((dayInputs)[i].value);
                     }
-                    return dayTotalValue;
+                    // return dayTotalValue;
                   }
-                  remaining = apportionValue - dayTotalValue;
+                 
+                  // remaining = apportionValue - dayTotalValue;
                   let hourInputs = $('.share-datas td input');
                   let thisDayValue = [];
                   let hourTotalValue = [];
@@ -1401,6 +1418,12 @@ $(function () {
                     // hourTotalValue.length = 0;
                     for (let i = 0; i < dayTotal; i++) {
                       if (i == 0) {
+                        if(dayTotal == 1){
+                          for (let j = 0; j < onlyOneDayHours; j++) {
+                            hourInputsValue = hourInputs[j].value == '' ? 0 : hourInputs[j].value
+                            hourTotalValue[i] += Number(hourInputsValue);
+                          }
+                        }
                         for (let j = 0; j < firstDayHours; j++) {
                           hourInputsValue = hourInputs[j].value == '' ? 0 : hourInputs[j].value
                           hourTotalValue[i] += Number(hourInputsValue);
@@ -1420,9 +1443,13 @@ $(function () {
                   }
                   $('.abnormal-total-data .to-everyday').off('click').on('click', function (e) {
                     e.stopPropagation();
-                    getDayTotalValue();
-                    if (apportionValue - dayTotalValue <= 0) {
-                      layer.style(layer.msg("<div class='abnormal-msg'>无可分配数据</div>", {
+                    count = 0;
+                    for(let i = 0;i < dayTotal;i++){
+                      let val = dayInputs[i].value;
+                      if(val){ count++; continue; }
+                    }
+                    if (count == dayTotal && remaining == 0) {
+                      layer.style(layer.msg("<div class='abnormal-msg'>无法继续分配</div>", {
                         time: 1500,
                         id: 'layui-msg'
                       }), {
@@ -1433,30 +1460,26 @@ $(function () {
                       });
                       return;
                     }
-                    let tempDay = 0;
-                    for (let i = 0; i < dayTotal; i++) {
-                      if (dayInputs[i].value) {
-                        tempDay++;
-                      }
-                      hourTotalValue[i] = 0;
-                    }
-                    getHourTotalValue();
-                    // console.log(hourTotalValue)
-                    for (let j = 0; j < dayTotal; j++) {
-                      if (dayInputs[j].value) {
-                        $('.remaining>span')[j].innerHTML = Math.abs(dayInputs[j].value - (hourTotalValue[j] ? hourTotalValue[j] : 0)).toFixed(2) < 0.06 ? 0 :
-                          (dayInputs[j].value - (hourTotalValue[j] ? hourTotalValue[j] : 0)).toFixed(2);
-                        continue;
-                      } else {
-                        dayInputs[j].value = ((apportionValue - dayTotalValue) / (dayTotal - tempDay)).toFixed(2);
-                        $('.remaining>span')[j].innerHTML = Math.abs(dayInputs[j].value - (hourTotalValue[j] ? hourTotalValue[j] : 0)).toFixed(2) < 0.06 ? 0 :
-                          (dayInputs[j].value - (hourTotalValue[j] ? hourTotalValue[j] : 0)).toFixed(2);
-                      }
-                    }
                     getDayTotalValue();
-                    remaining = apportionValue - dayTotalValue;
-                    if (Math.abs(remaining) <= 0.3) {
-                      $('.apportion').html(0);
+                    
+                    for(let i = 0;i < dayTotal;i++){
+                      let val = dayInputs[i].value;
+                      if(val){
+                        $('.remaining>span')[i].innerHTML = val;
+                        continue;
+                      }
+                      dayTotalArr[i] = remaining/(dayTotal - count);
+                      dayInputs[i].value = dayTotalArr[i].toFixed(2);
+                      $('.remaining>span')[i].innerHTML = dayTotalArr[i].toFixed(2);;
+                    }
+                    function getSum(total, num) {
+                      return total + num;
+                    }
+                    remaining = apportionValue - dayTotalArr.reduce(getSum)
+                    if (Math.abs(remaining) >= 0.0001) {
+                      alert('分配不合理')
+                    }else{
+                      $('.apportion').html(remaining.toFixed(3));
                     }
                   });
 
@@ -1469,7 +1492,7 @@ $(function () {
                     firstDayHours = 24 - (data.startTm.substring(11) - 1);
                     lastDayHours = data.endTm.substring(11) - 0;
                   } else {
-                    onlyOneDayHours = 24 - (data.startTm.substring(11) - 0) - (data.endTm.substring(11) - 0);
+                    onlyOneDayHours =  (data.endTm.substring(11) - 0) - (data.startTm.substring(11) - 0) + 1;
                   }
                   $('.form-reset').on('click', function () {
                     $('.expForm')[0].reset();
@@ -1478,11 +1501,12 @@ $(function () {
                     }
                     $('.apportion').html($('.abnormal-total').html());
                   })
+                
                   $('.abnormal-total-data .to-everyhour').off('click').on('click', function (e) {
                     e.stopPropagation();
                     // getDayTotalValue();
                     exceptionItem.data_list.length = 0;
-                    if ($('.apportion').html() != 0) {
+                    if ($('.apportion').html() != 0 || Math.abs(remaining) >= 0.0001) {
                       layer.open({
                         title: 0,
                         content: '操作无效! ',
@@ -1502,6 +1526,8 @@ $(function () {
                       return;
                     }
                     let hasVal = 0;
+                    let hourValueArr = new Array(hourInputs.length);
+                    hourValueArr.fill(0)
                     for (let i = 0; i < hourInputs.length; i++) {
                       if (hourInputs[i].value) {
                         hasVal++;
@@ -1525,27 +1551,30 @@ $(function () {
                             }
                           }
                         });
+                        for (let i = 0; i < hourInputs.length; i++) {
+                          hourInputs[i].value = '';
+                        }
                         return;
                       }
                     }
                     getThisDayValue();
                     getHourTotalValue();
                     for (let i = 0; i < hourInputs.length; i++) {
-                      let day = 0,
+                      let eDay = 0,
                         hour = 0;
                       hour = data.startTm.substring(11) - 0 + i;
-                      day = data.startTm.substring(9, 10) - 0
-                      if (i >= firstDayHours) {
-                        day = day + parseInt((i - firstDayHours + 24) / 24);
+                      eDay = parseInt(data.startTm.substring(8, 10))
+                      if (i >= firstDayHours && dayTotal > 1) {
+                        eDay = eDay + parseInt((i - firstDayHours + 24) / 24);
                       }
                       hour = hour % 24;
-                      if (hour == 0) {
-                        day = day + 1;
+                      if (hour == 0 && dayTotal > 1) {
+                          eDay = eDay + 1;
                       }
                       exceptionItem.data_list.push({
                         val: 0,
                         cost: 0,
-                        date: data.startTm.substring(0, 8) + (day < 10 ? '0' + day : day) + ' ' + (hour < 10 ? '0' + hour : hour) + ':00:00',
+                        date: data.startTm.substring(0, 8) + (eDay < 10 ? '0' + eDay : eDay) + ' ' + (hour < 10 ? '0' + hour : hour) + ':00:00',
                         datetype: 1,
                         original_time: '',
                         deal_time: ''
@@ -1553,9 +1582,28 @@ $(function () {
 
                     }
                     let tempHour = 0;
+                    let dayArr = [];
                     for (let i = 0; i < dayTotal; i++) {
                       if (i == 0) {
                         tempHour = 0;
+                        if(dayTotal == 1){
+                          for (let j = 0; j < onlyOneDayHours; j++) {
+                            if (hourInputs[j].value) {
+                              tempHour++;
+                            }
+                          }
+                          for (let j = 0; j < onlyOneDayHours; j++) {
+                            if (hourInputs[j].value) {
+                              exceptionItem.data_list[j].val = Number(hourInputs[j].value).toFixed(5);
+                              continue;
+                            }
+                            hourValueArr[j] = (dayTotalArr[i] - hourTotalValue[i]) / (onlyOneDayHours - tempHour)
+                            hourInputs[j].value = hourValueArr[j].toFixed(2);
+                            // exceptionItem.data_list[j].val = hourInputs[j].value;
+                            exceptionItem.data_list[j].val = hourValueArr[j];
+                          }
+                          break;
+                        }
                         for (let j = 0; j < firstDayHours; j++) {
                           if (hourInputs[j].value) {
                             tempHour++;
@@ -1566,9 +1614,10 @@ $(function () {
                             exceptionItem.data_list[j].val = Number(hourInputs[j].value).toFixed(5);
                             continue;
                           }
-                          hourInputs[j].value = ((thisDayValue[i] - hourTotalValue[i]) / (firstDayHours - tempHour)).toFixed(2);
+                          hourValueArr[j] = (dayTotalArr[i] - hourTotalValue[i]) / (firstDayHours - tempHour)
+                          hourInputs[j].value = hourValueArr[j].toFixed(2);
                           // exceptionItem.data_list[j].val = hourInputs[j].value;
-                          exceptionItem.data_list[j].val = ((thisDayValue[i] - hourTotalValue[i]) / (firstDayHours - tempHour)).toFixed(5);
+                          exceptionItem.data_list[j].val = hourValueArr[j];
                         }
                       } else if (i == dayTotal - 1) {
                         tempHour = 0;
@@ -1582,9 +1631,10 @@ $(function () {
                             exceptionItem.data_list[k].val = Number(hourInputs[k].value).toFixed(5);
                             continue;
                           }
-                          hourInputs[k].value = ((thisDayValue[i] - hourTotalValue[i]) / (lastDayHours - tempHour)).toFixed(2);
+                          hourValueArr[k] = (dayTotalArr[i] - hourTotalValue[i]) / (lastDayHours - tempHour)
+                          hourInputs[k].value = hourValueArr[k].toFixed(2);
                           // exceptionItem.data_list[k].val = hourInputs[k].value;
-                          exceptionItem.data_list[k].val = ((thisDayValue[i] - hourTotalValue[i]) / (lastDayHours - tempHour)).toFixed(5);
+                          exceptionItem.data_list[k].val = hourValueArr[k];
                         }
                       } else {
                         tempHour = 0;
@@ -1598,14 +1648,25 @@ $(function () {
                             exceptionItem.data_list[l].val = Number(hourInputs[l].value).toFixed(5);
                             continue;
                           }
-                          hourInputs[l].value = ((thisDayValue[i] - hourTotalValue[i]) / (24 - tempHour)).toFixed(2);
+                          hourValueArr[l] = (dayTotalArr[i] - hourTotalValue[i]) / (24 - tempHour)
+                          hourInputs[l].value = hourValueArr[l].toFixed(2);
                           // exceptionItem.data_list[l].val = hourInputs[l].value;
-                          exceptionItem.data_list[l].val = ((thisDayValue[i] - hourTotalValue[i]) / (24 - tempHour)).toFixed(5);
+                          exceptionItem.data_list[l].val = hourValueArr[l];
                         }
                       }
                     }
-
-
+                    for (let i = 0; i < dayTotal; i++) {
+                      let eDay = parseInt(data.startTm.substring(8, 10)) + i
+                      exceptionItem.data_list.push({
+                        val: dayTotalArr[i],
+                        cost: 0,
+                        date: data.startTm.substring(0, 8) + (eDay < 10 ? '0' + eDay : eDay),
+                        datetype: 2,
+                        original_time: '',
+                        deal_time: ''
+                      })
+                    }
+                    // console.log(exceptionItem)
                   });
                   $('.apportion-num:input').on('input propertychange', function () {
                     dayTotalValue = 0;
@@ -1650,16 +1711,17 @@ $(function () {
                     let hourInputs = $('.share-datas td input');
                     let sumDay = 0,
                       sumHour = 0;
-                    hourTotalValue = [];
-                    for (let i = 0; i < dayTotal; i++) {
-                      sumDay += Number(dayInputs[i].value);
+                  
+                    for(let i = 0;i < exceptionItem.data_list.length - dayTotal;i++){
+                      sumDay += Number(exceptionItem.data_list[i].val);
                     }
-                    for (let i = 0; i < hourInputs.length; i++) {
-                      sumHour += Number(exceptionItem.data_list[i].val = hourInputs[i].value);
+                    for(let i = exceptionItem.data_list.length-1;i >= exceptionItem.data_list.length - dayTotal;i--){
+                      sumHour += Number(exceptionItem.data_list[i].val);
                     }
-                    // console.log(sumDay)
-                    // console.log(sumHour)
-                    if (Math.abs(sumDay - sumHour) > 0.5) {
+
+                      // console.log(sumDay)
+                      // console.log(sumHour)
+                    if (Math.abs(sumDay - sumHour) > 0.0001) {
                       layer.open({
                         title: 0,
                         content: "分摊不合理，请检查",
@@ -1676,6 +1738,9 @@ $(function () {
                           }
                         }
                       });
+                      for (let i = 0; i < hourInputs.length; i++) {
+                        hourInputs[i].value = '';
+                      }
                       return;
                     }
                   }
@@ -1764,7 +1829,7 @@ $(function () {
         left: 70,
         right: 50,
         bottom: 20,
-        top: 60
+        top: 80
       },
       legend: {
         show: false,
@@ -1826,6 +1891,9 @@ $(function () {
     let len = orderLegend.length;
     $('.chart-legend ul')[0].innerHTML = legendHtml;
     $('.chart-legend ul')[0].style.width = Math.ceil(len/3)*155 + 'px';
+    if(len <= 3){
+      $('.chart-legend ul')[0].style.width = 320+'px';
+    }
     for(let i =0;i < $('.legend-ul li').length;i++){
       $('.legend-ul li .legend-color')[i].style.background = sortColor[i];
       option.legend.selected[$('.legend-ul li')[i].innerText] = true;
@@ -1869,12 +1937,13 @@ $(function () {
         generateAreaPie(selected);
     })
   },500)
-    
-    $('.scroll-right').on('mousedown',function(e){
+  $('.legend-ul')[0].style.left = 0;
+  $('.scroll-right').on('mousedown',function(e){
+    let move = parseInt($('.chart-legend div').css('width')) - parseInt($('.chart-legend ul').css('width'));
       btn1 = setInterval(function(e){
       left -= 20;
-      if(left <= -Math.ceil(len/3)*155 +400){
-        left = -Math.ceil(len/3)*155 + 400;
+      if(left <= move){
+        left = move;
         $('.legend-ul')[0].style.left = left + 'px'
         return;
       }
@@ -1898,33 +1967,6 @@ $(function () {
     $('.scroll-left').on('mouseup',function(){
       clearInterval(btn2)
     })
-       /* var x,timer;
-        var start = $('.legend-ul').offset().left+16;
-        $('.chart-legend').bind('mousemove', function(e) {//追踪鼠标位置  
-          x= e.pageX;
-          x-=start;
-          // console.log(x)
-        });
-        $('.legend-ul').bind('mousedown', function() {//点击创建定时器
-            timer = setInterval(function(){
-            $('.legend-ul').css('left', -x);
-            if(left < -(orderLegend.length/9-1)*456){
-              $('#start').css('left', -orderLegend.length/9*456+405);
-              clearInterval(timer);
-              timer=null;x=null;
-              //location.href='Mike Smith.html';
-            }else if(x>=0){
-              $('.legend-ul').css('left', 0);
-              clearInterval(timer);
-            }
-          }, 50)
-        });
-        $('.chart-legend').on('mouseup',function() {//松开鼠标清除定时器
-          clearInterval(timer);
-          if(x<204){
-            $('.legend-ul').css('left', 0);
-          }
-        });*/
     _.each(datas, a => a.ischecked = true);
     areaChart.on('legendselectchanged', function (params) {
       let entity = _.find(searchResult.meterAndParaMap, a => a.name === params.name);
@@ -1981,23 +2023,7 @@ $(function () {
     };
     let templateHtml = template('contemporary-Comparison-template', data);
     $('#summary-container').html(templateHtml);
-    setTimeout(() => {
-      if ($('#now_sum_val').parent().parent().width() <= 130) {
-        $('#now_sum_val').css('left', '0');
-      } else {
-        $('#now_sum_val').css('transform', 'translateX(-100%)');
-      }
-      if ($('#last_sum_val').parent().parent().width() <= 130) {
-        $('#last_sum_val').css('left', '0');
-      } else {
-        $('#last_sum_val').css('transform', 'translateX(-100%)');
-      }
-      if ($('#avg_val').parent().parent().width() <= 130) {
-        $('#avg_val').css('left', '0');
-      } else {
-        $('#avg_val').css('transform', 'translateX(-100%)');
-      }
-    }, 100);
+  
   };
   let assembleExceptionTable = (originalList, mfid, unit, type) => {
     originalList = _.uniqBy(_.orderBy(originalList, a => a.date, 'asc'), a => a.date);
@@ -2013,7 +2039,9 @@ $(function () {
       }
     };
     let originalDataHtml = template('graph-table-template', originalDatas);
-    $('#graph-table').html(originalDataHtml);
+    if($('.exception-manager').attr('data-toggle') == 'open'){
+      $('#graph-table').html(originalDataHtml);
+    }
     setTimeout(() => {
       $('.switch-box input.exception-switch').on('click', function (e) {
         e.stopPropagation();
@@ -4375,6 +4403,7 @@ $(function () {
     let uriparam = `meterId=${currentSelectedNode.id}&stime=${sTime}&etime=${eTime}&isHistory=${isHistory}&pageIndex=${pageIndex}&warnLevel=${level}`;
     esdpec.framework.core.getJsonResult('alarmcenter/getalarmruledata?meterId=' + currentSelectedNode.id + '&pageIndex=' + pageIndex, function (response) {
       if (response.IsSuccess) {
+        
         // 报警条件总数
         // $('.content__header--title span').html(node.original.text + ' - 仪表数据详情');
         let totalSize = parseInt(response.Remark);
@@ -4390,6 +4419,7 @@ $(function () {
 
     esdpec.framework.core.getJsonResult('alarmcenter/getmeterdata?' + uriparam, function (response) {
       if (response.IsSuccess) {
+        
         // 当前报警事件总数
         let totalSize = response.Remark;
         if (!totalSize) {
@@ -5073,9 +5103,11 @@ $(function () {
     if ($('.meter-info-container').hasClass('close')) {
       $('.meter-info-container').hide(300);
       $('#onshowmeterinfo>span:first-of-type').html('展开表计详情 <i class="icon iconfont icon-xiaotuziCduan_"></i>');
+      $('.content')[0].style.height = 706 +'px';
     } else {
       $('.meter-info-container').show(300);
       $('#onshowmeterinfo>span:first-of-type').html('收起表计详情 <i class="icon iconfont icon-xiaotuziCduan_1"></i>');
+      $('.content')[0].style.height = 780 +'px';
     }
   });
 
@@ -6034,14 +6066,14 @@ $(function () {
       },
     });
 
-    lay('.area-grp').on('mouseleave', function (e) {
-      lay('.area-grp').on('mouseleave', function (e) {
+    // lay('.area-grp').on('mouseleave', function (e) {
+      // lay('.area-grp').on('mouseleave', function (e) {
         laydate.render({
           elem: '#daycontainer',
           show: false,
           closeStop: '.area-grp',
         });
-      });
+      // });
       laydate.render({
         elem: '#monthcontainer',
         btns: ['confirm'],
@@ -6071,7 +6103,7 @@ $(function () {
           searchMeterData();
         }
       });
-    });
+    // });
 
     layui.use('laydate', function () {
       let laydate = layui.laydate;
@@ -6453,6 +6485,7 @@ $(function () {
              
               esdpec.framework.core.getJsonResult('dataanalysis/getmeterinfobymeterid?meterId=' + nodeId, function (response) {
                 if (response.IsSuccess) {
+                  // console.log(response)
                   let meterInfo = response.Content;
                   meterInfo.area = getMeterBelongArea(nodeId);
                   // meterInfo.status = getMeterStatus(meterInfo.state);
@@ -6510,14 +6543,14 @@ $(function () {
     $('#button').off('click').on('click', function (e) {
       e.stopPropagation();
       if ($("#button").is(':checked')) {
-        let dateType = getSearchDateType();
-        let searchDateType = dateType === -1 ? 2 : dateType;
+        let dateType = (getSearchDateType() - 1 == -1) ? 1 : (getSearchDateType() - 1);
+        let searchDateType = dateType === 3 ? 2 : dateType;
         let defaultTimeStr = getDefaultSTimeAndETime(searchDateType);
         let timeArray = defaultTimeStr.split(' -- ');
         let sTime = timeArray[0];
         let eTime = timeArray[1];
         if ($('.btn-grp div.date-active').attr('data-value') == 4) {
-          sTime = sTime + ' 00:00:00';
+          sTime = sTime + ' 00:00:00'; 
           eTime = eTime + ' 23:59:59';
           searchDateType = 2;
         }
